@@ -23,11 +23,17 @@ export ESY_PASSWORD="your-password"
 python fetch_today.py
 ```
 
-The GitHub Actions workflow runs daily at 00:00 UTC and can also be started
-manually. Add `ESY_ACCESS_TOKEN` and/or `ESY_REFRESH_TOKEN` as repository
+The GitHub Actions workflow can be started manually from the Actions tab. Add
+`ESY_ACCESS_TOKEN` and/or `ESY_REFRESH_TOKEN` as repository
 Actions secrets. If neither is set, configure both `ESY_USERNAME` and
 `ESY_PASSWORD` secrets instead. The workflow writes the latest result to
-`data/today.json` and commits it to `main` only when its contents change.
+`data/data.json` and commits it to `main` only when its contents change.
+To persist tokens rotated by the ESY API, also add an
+`ESY_SECRETS_UPDATE_TOKEN` repository secret containing a fine-grained GitHub
+PAT with **Secrets: Read and write** access to this repository. The workflow
+uses that PAT to replace `ESY_ACCESS_TOKEN` and, when returned, the rotated
+`ESY_REFRESH_TOKEN`. Token state is written only to a permission-restricted
+temporary file on the Actions runner and is never committed.
 
 The JSON output contains daily PV generation, electricity bought from the
 grid, electricity sold to the grid, total consumption, and battery SOC. An

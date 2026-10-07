@@ -253,7 +253,9 @@ class ESYSunhomeAPI:
                     data = await response.json()
                     # Extract new tokens and expiration time
                     self.access_token = data["data"].get("access_token")
-                    self.refresh_token = data["data"].get("refresh_token")
+                    self.refresh_token = (
+                        data["data"].get("refresh_token") or self.refresh_token
+                    )
                     expires_in = data["data"].get("expires_in", 0)
                     self.token_expiry = datetime.utcnow() + timedelta(
                         seconds=expires_in

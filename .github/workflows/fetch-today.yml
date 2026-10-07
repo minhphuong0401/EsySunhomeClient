@@ -33,9 +33,33 @@ jobs:
           ESY_REFRESH_TOKEN: ${{ secrets.ESY_REFRESH_TOKEN }}
           ESY_USERNAME: ${{ secrets.ESY_USERNAME }}
           ESY_PASSWORD: ${{ secrets.ESY_PASSWORD }}
+          ESY_TOKEN_OUTPUT_FILE: ${{ runner.temp }}/esy-tokens.json
         run: |
           mkdir -p data
           python fetch_today.py > data/data.json
+
+      - name: Update ESY token secrets
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.ESY_SECRETS_UPDATE_TOKEN }}
+          ESY_TOKEN_FILE: ${{ runner.temp }}/esy-tokens.json
+        run: |
+          if [[ ! -s "$ESY_TOKEN_FILE" ]]; then
+            echo "::error::Token state was not written; cannot update repository secrets."
+            exit 1
+          fi
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Add the ESY_SECRETS_UPDATE_TOKEN repository secret with permission to write Actions secrets."
+            exit 1
+          fi
+
+          jq -er '.access_token | strings | select(length > 0)' "$ESY_TOKEN_FILE" \
+            | gh secret set ESY_ACCESS_TOKEN
+
+          if jq -e '.refresh_token | strings | select(length > 0)' "$ESY_TOKEN_FILE" >/dev/null; then
+            jq -r '.refresh_token' "$ESY_TOKEN_FILE" \
+              | gh secret set ESY_REFRESH_TOKEN
+          fi
 
       - name: Commit updated data
         run: |

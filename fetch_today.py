@@ -39,6 +39,29 @@ CERT_DIR = Path(__file__).parent / ".certs"
 WAIT_SECONDS = 35
 
 
+def write_token_state(api: ESYSunhomeAPI) -> None:
+    output_path = os.environ.get("ESY_TOKEN_OUTPUT_FILE")
+    if not output_path:
+        return
+
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    file_descriptor = os.open(
+        path,
+        os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+        0o600,
+    )
+    with os.fdopen(file_descriptor, "w", encoding="utf-8") as token_file:
+        json.dump(
+            {
+                "access_token": api.access_token,
+                "refresh_token": api.refresh_token,
+            },
+            token_file,
+        )
+    path.chmod(0o600)
+
+
 def build_tls_context(credentials) -> ssl.SSLContext | None:
     if not credentials.use_tls:
         return None
@@ -181,7 +204,10 @@ async def fetch_once() -> dict:
         raise RuntimeError("MQTT connection closed before any telemetry arrived")
 
     finally:
-        await api.close_session()
+        try:
+            write_token_state(api)
+        finally:
+            await api.close_session()
 
 
 async def main() -> None:
