@@ -4,5 +4,5 @@
   "sellingElectricityToday_kWh": 9.944,
   "totalConsumptionToday_kWh": 35.021,
   "batterySoc_percent": 72,
-  "mqttCurrentTime": "2026-10-07T12:44:22+00:00"
+  "mqttCurrentTime": "2026-10-07T12:48:09+00:00"
 }
