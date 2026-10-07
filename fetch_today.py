@@ -89,8 +89,8 @@ async def fetch_once() -> dict:
     access_token = os.environ.get("ESY_ACCESS_TOKEN")
     refresh_token = os.environ.get("ESY_REFRESH_TOKEN")
     has_tokens = bool(access_token or refresh_token)
-    username = None if has_tokens else os.environ.get("ESY_USERNAME")
-    password = None if has_tokens else os.environ.get("ESY_PASSWORD")
+    username = os.environ.get("ESY_USERNAME")
+    password = os.environ.get("ESY_PASSWORD")
 
     if not has_tokens and (not username or not password):
         raise RuntimeError(

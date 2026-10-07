@@ -144,7 +144,10 @@ class ESYSunhomeAPI:
             
             # Handle 401 Unauthorized - token may have expired
             if status == 401 and retry_auth:
-                _LOGGER.warning("Received 401, attempting to refresh token and retry")
+                _LOGGER.warning(
+                    "API rejected the current access token (401); "
+                    "trying refresh token, then password login if refresh fails"
+                )
                 
                 # Try to refresh the token
                 self.access_token = None  # Force token refresh
@@ -158,6 +161,11 @@ class ESYSunhomeAPI:
                         data = await retry_response.json()
                     except:
                         data = await retry_response.text()
+                    if status == 401:
+                        _LOGGER.error(
+                            "API still rejected authentication after token recovery; "
+                            "no further authentication retry will be attempted"
+                        )
                     return status, data
             
             # Parse response
@@ -176,15 +184,27 @@ class ESYSunhomeAPI:
         if self.access_token and (
             self.token_expiry is None or not self.is_token_expired()
         ):
+            _LOGGER.info(
+                "Using the configured access token; the API will determine whether it is still valid"
+                if self.token_expiry is None
+                else "Using the access token because it has not expired"
+            )
             return
 
-        if self.refresh_token and await self.refresh_access_token():
-            return
+        if self.refresh_token:
+            _LOGGER.info("Access token is missing or expired; trying the refresh token")
+            if await self.refresh_access_token():
+                return
+            _LOGGER.warning("Refresh token was rejected or failed")
 
         if self.username and self.password:
+            _LOGGER.info("Falling back to ESY username/password login")
             await self.authenticate()
             return
 
+        _LOGGER.error(
+            "Cannot authenticate: no usable access/refresh token and no username/password fallback"
+        )
         raise AuthenticationError(
             "No usable access token or refresh token is available"
         )
@@ -200,6 +220,7 @@ class ESYSunhomeAPI:
     @retry_with_backoff(max_retries=2, initial_delay=1.0)
     async def authenticate(self):
         """Authenticate and retrieve the initial bearer token."""
+        _LOGGER.info("Requesting new tokens with ESY username/password")
         url = f"{ESY_API_BASE_URL}{ESY_API_LOGIN_ENDPOINT}"
         headers = {"Content-Type": "application/json"}
         login_data = {
@@ -236,9 +257,10 @@ class ESYSunhomeAPI:
     async def refresh_access_token(self) -> bool:
         """Use the refresh token to get a new access token."""
         if not self.refresh_token:
-            _LOGGER.warning("No refresh token available, will re-authenticate")
+            _LOGGER.warning("No refresh token is available")
             return False
 
+        _LOGGER.info("Exchanging refresh token for a new access token")
         url = f"{ESY_API_BASE_URL}/token"  # Adjust URL if needed for the refresh endpoint
         headers = {"Content-Type": "application/json"}
         refresh_data = {
@@ -264,11 +286,16 @@ class ESYSunhomeAPI:
                     _LOGGER.info("Access token successfully refreshed")
                     return True
                 else:
-                    error_text = await response.text()
-                    _LOGGER.error(f"Failed to refresh access token: {response.status} - {error_text}")
+                    _LOGGER.warning(
+                        "Refresh-token exchange failed with HTTP %s",
+                        response.status,
+                    )
                     return False
         except Exception as e:
-            _LOGGER.error(f"Exception while refreshing token: {e}")
+            _LOGGER.warning(
+                "Refresh-token exchange failed with %s",
+                type(e).__name__,
+            )
             return False
 
     def is_token_expired(self) -> bool:
