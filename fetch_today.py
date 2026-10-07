@@ -3,10 +3,13 @@
 from an ESY Sunhome / BenBen Energy inverter (HM6 and similar models).
 
 Reuses the login + mTLS cert + binary telemetry parsing logic from the
-branko-lazarevic/esysunhome Home Assistant integration (vendored, unmodified,
-under esy_lib/) without depending on Home Assistant itself.
+branko-lazarevic/esysunhome Home Assistant integration (vendored under
+esy_lib/) without depending on Home Assistant itself.
 
 Usage:
+    export ESY_ACCESS_TOKEN="..."
+    export ESY_REFRESH_TOKEN="..."
+    # Or, when tokens are unavailable:
     export ESY_USERNAME="you@example.com"
     export ESY_PASSWORD="your-password"
     python3 fetch_today.py
@@ -60,15 +63,24 @@ def build_tls_context(credentials) -> ssl.SSLContext | None:
 
 
 async def fetch_once() -> dict:
-    username = os.environ["ESY_USERNAME"]
-    password = os.environ["ESY_PASSWORD"]
+    access_token = os.environ.get("ESY_ACCESS_TOKEN")
+    refresh_token = os.environ.get("ESY_REFRESH_TOKEN")
+    has_tokens = bool(access_token or refresh_token)
+    username = None if has_tokens else os.environ.get("ESY_USERNAME")
+    password = None if has_tokens else os.environ.get("ESY_PASSWORD")
+
+    if not has_tokens and (not username or not password):
+        raise RuntimeError(
+            "Set ESY_ACCESS_TOKEN or ESY_REFRESH_TOKEN, or provide both "
+            "ESY_USERNAME and ESY_PASSWORD"
+        )
 
     api = ESYSunhomeAPI(username, password, device_id=None)
+    api.access_token = access_token
+    api.refresh_token = refresh_token
 
     try:
-        # Each run starts with a new login rather than attempting to refresh
-        # a token retained by any prior process.
-        await api.authenticate()
+        await api.get_bearer_token()
         if not api.access_token:
             raise RuntimeError("Authentication succeeded without an access token")
         await api.ensure_device_id()

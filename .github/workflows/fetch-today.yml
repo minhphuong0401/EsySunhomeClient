@@ -1,0 +1,50 @@
+name: Fetch today's energy data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-today-main
+  cancel-in-progress: false
+
+jobs:
+  fetch-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Fetch today's data
+        env:
+          ESY_ACCESS_TOKEN: ${{ secrets.ESY_ACCESS_TOKEN }}
+          ESY_REFRESH_TOKEN: ${{ secrets.ESY_REFRESH_TOKEN }}
+          ESY_USERNAME: ${{ secrets.ESY_USERNAME }}
+          ESY_PASSWORD: ${{ secrets.ESY_PASSWORD }}
+        run: |
+          mkdir -p data
+          python fetch_today.py > data/data.json
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/data.json
+          if git diff --cached --quiet; then
+            echo "Data has not changed; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update today's energy data"
+          git push origin HEAD:main

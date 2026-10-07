@@ -173,14 +173,21 @@ class ESYSunhomeAPI:
         
         This method ONLY handles token management. Device fetching is separate.
         """
-        if not self.access_token:
+        if self.access_token and (
+            self.token_expiry is None or not self.is_token_expired()
+        ):
+            return
+
+        if self.refresh_token and await self.refresh_access_token():
+            return
+
+        if self.username and self.password:
             await self.authenticate()
             return
 
-        # Check if the token has expired
-        if self.is_token_expired():
-            if not self.refresh_token or not await self.refresh_access_token():
-                await self.authenticate()
+        raise AuthenticationError(
+            "No usable access token or refresh token is available"
+        )
 
     async def ensure_device_id(self):
         """Ensure we have a device ID, fetching if necessary.

@@ -11,13 +11,23 @@ python3 -m venv .venv
 pip install -r requirements.txt
 ```
 
-Set your ESY account credentials and run the client:
+When available, the client uses API tokens. If neither token is configured,
+it falls back to the ESY account credentials:
 
 ```bash
+export ESY_ACCESS_TOKEN="..."
+export ESY_REFRESH_TOKEN="..."
+# Or:
 export ESY_USERNAME="you@example.com"
 export ESY_PASSWORD="your-password"
 python fetch_today.py
 ```
+
+The GitHub Actions workflow runs daily at 00:00 UTC and can also be started
+manually. Add `ESY_ACCESS_TOKEN` and/or `ESY_REFRESH_TOKEN` as repository
+Actions secrets. If neither is set, configure both `ESY_USERNAME` and
+`ESY_PASSWORD` secrets instead. The workflow writes the latest result to
+`data/today.json` and commits it to `main` only when its contents change.
 
 The JSON output contains daily PV generation, electricity bought from the
 grid, electricity sold to the grid, total consumption, and battery SOC. An
