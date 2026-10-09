@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7f4">
+    <meta name="description" content="Explore the last 90 days of ESY Sunhome energy generation and consumption.">
+    <title>ESY Sunhome · Energy</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+    <script src="app.js?v=3" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="ESY Sunhome dashboard">
+          <span class="brand-mark" aria-hidden="true">e</span>
+          <span>ESY <span class="brand-light">SUNHOME</span></span>
+        </a>
+        <div class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="last-updated">Loading data…</span>
+        </div>
+      </header>
+
+      <section class="intro">
+        <p class="eyebrow">SYSTEM OVERVIEW</p>
+        <h1>Today's status</h1>
+        <p class="subtitle">Live energy and battery status from your inverter</p>
+      </section>
+
+      <section class="metrics" aria-label="Today's status">
+        <article class="metric-card metric-solar">
+          <div class="metric-heading"><span class="metric-icon" aria-hidden="true">☀</span><span>Solar generation</span></div>
+          <p class="metric-value" id="metric-pv">—</p>
+          <span class="metric-unit">kWh generated</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading"><span class="metric-icon icon-blue" aria-hidden="true">⌂</span><span>Consumption</span></div>
+          <p class="metric-value" id="metric-consumption">—</p>
+          <span class="metric-unit">kWh used</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading"><span class="metric-icon icon-blue" aria-hidden="true">↙</span><span>Grid import</span></div>
+          <p class="metric-value" id="metric-bought">—</p>
+          <span class="metric-unit">kWh imported</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading"><span class="metric-icon icon-green" aria-hidden="true">↗</span><span>Grid export</span></div>
+          <p class="metric-value" id="metric-sold">—</p>
+          <span class="metric-unit">kWh exported</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading"><span class="metric-icon icon-purple" aria-hidden="true">▰</span><span>Battery state of charge</span></div>
+          <p class="metric-value" id="metric-soc">—</p>
+          <span class="metric-unit">current charge level</span>
+        </article>
+      </section>
+
+      <section class="section-heading">
+        <div>
+          <p class="eyebrow">HISTORY</p>
+          <h2>Energy trends</h2>
+        </div>
+      </section>
+
+      <section class="history-group" aria-labelledby="energy-history-title">
+        <header class="history-group-heading">
+          <div>
+            <p class="eyebrow">ENERGY & GRID</p>
+            <h3 id="energy-history-title">Generation, consumption & grid exchange</h3>
+            <p class="group-description">Date range applies to both charts</p>
+          </div>
+          <div class="range-controls" aria-label="Energy and grid chart date range">
+            <label>
+              <span>From</span>
+              <input id="energy-from" type="date" aria-label="Energy and grid charts start date">
+            </label>
+            <label>
+              <span>To</span>
+              <input id="energy-to" type="date" aria-label="Energy and grid charts end date">
+            </label>
+          </div>
+        </header>
+        <div class="charts" aria-label="Energy and grid history charts">
+          <article class="chart-card">
+            <div class="chart-title">
+              <div><h4>Generation & consumption</h4><p>Latest daily snapshot, kWh/day</p></div>
+            </div>
+            <div class="chart-wrap"><canvas id="energy-chart" role="img" aria-label="Daily solar generation and consumption chart"></canvas></div>
+          </article>
+          <article class="chart-card">
+            <div class="chart-title">
+              <div><h4>Grid energy exchange</h4><p>Latest daily snapshot, kWh/day</p></div>
+            </div>
+            <div class="chart-wrap"><canvas id="grid-chart" role="img" aria-label="Daily grid import and export chart"></canvas></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="history-group" aria-labelledby="soc-history-title">
+        <header class="history-group-heading">
+          <div>
+            <p class="eyebrow">BATTERY</p>
+            <h3 id="soc-history-title">State of charge</h3>
+            <p class="group-description">Independent date range · each point is one snapshot</p>
+          </div>
+          <div class="range-controls soc-range" aria-label="Battery chart date range">
+            <label>
+              <span>From</span>
+              <input id="soc-from" type="date" aria-label="Battery chart start date">
+            </label>
+            <label>
+              <span>To</span>
+              <input id="soc-to" type="date" aria-label="Battery chart end date">
+            </label>
+          </div>
+        </header>
+        <article class="chart-card">
+          <div class="chart-title">
+            <div><h4>Battery state of charge</h4><p>Charge level over time</p></div>
+          </div>
+          <div class="chart-wrap"><canvas id="soc-chart" role="img" aria-label="Battery charge level over time"></canvas></div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <span>ESY Sunhome energy dashboard</span>
+        <span id="snapshot-count"></span>
+      </footer>
+      <p class="notice" id="notice" role="status" hidden></p>
+    </main>
+  </body>
+</html>
