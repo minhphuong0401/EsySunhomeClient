@@ -61,8 +61,9 @@ system preference by default, and remembers a manually selected theme.
 To publish it, enable **Settings → Pages → Build and deployment → GitHub
 Actions**. The `Deploy energy dashboard` workflow deploys on pushes to `main`
 that update dashboard files or `data/data.json`, and can also be started
-manually from the Actions tab. Its checkout uses the full Git history so the
-dashboard can build the 90-day view.
+manually from the Actions tab. It also runs after the `Fetch today's energy
+data` workflow completes successfully on `main`. Its checkout uses the full
+Git history so the dashboard can build the 90-day view.
 
 To generate the history file locally for preview:
 
