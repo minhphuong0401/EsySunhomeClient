@@ -10,12 +10,14 @@ const FIELDS = {
 };
 
 const COLORS = {
-  green: "#17865c",
-  greenFill: "rgba(23, 134, 92, 0.10)",
-  blue: "#7196df",
-  blueFill: "rgba(113, 150, 223, 0.10)",
-  orange: "#e1a546",
-  orangeFill: "rgba(225, 165, 70, 0.10)",
+  solar: "#17865c",
+  solarFill: "rgba(23, 134, 92, 0.10)",
+  consumption: "#3977c3",
+  consumptionFill: "rgba(57, 119, 195, 0.10)",
+  export: "#d18a26",
+  exportFill: "rgba(209, 138, 38, 0.10)",
+  import: "#ad5aa0",
+  importFill: "rgba(173, 90, 160, 0.10)",
   purple: "#8b76c9",
   grid: "#edf1ee",
   text: "#89958e",
@@ -199,19 +201,13 @@ function renderDashboard(records, generatedAt) {
     options: makeChartOptions("kWh"),
   });
 
-  const gridChart = new Chart(document.getElementById("grid-chart"), {
-    type: "line",
-    data: { labels: [], datasets: [] },
-    options: makeChartOptions("kWh"),
-  });
-
   const socChart = new Chart(document.getElementById("soc-chart"), {
     type: "line",
     data: { labels: [], datasets: [] },
     options: makeChartOptions("%", { percent: true }),
   });
 
-  const updateEnergyCharts = () => {
+  const updateEnergyChart = () => {
     const inRange = (record, start, end) => {
       const day = localDay(record.timestamp ?? record.mqttCurrentTime);
       return day >= start && day <= end;
@@ -222,17 +218,12 @@ function renderDashboard(records, generatedAt) {
 
     energyChart.data.labels = labels;
     energyChart.data.datasets = [
-      makeDataset("Solar generation", selectedDays.map((record) => numberOrNull(record[FIELDS.pv])), COLORS.green, COLORS.greenFill),
-      makeDataset("Consumption", selectedDays.map((record) => numberOrNull(record[FIELDS.consumption])), COLORS.blue, COLORS.blueFill),
+      makeDataset("Solar generation", selectedDays.map((record) => numberOrNull(record[FIELDS.pv])), COLORS.solar, COLORS.solarFill),
+      makeDataset("Consumption", selectedDays.map((record) => numberOrNull(record[FIELDS.consumption])), COLORS.consumption, COLORS.consumptionFill),
+      makeDataset("Grid export", selectedDays.map((record) => numberOrNull(record[FIELDS.sold])), COLORS.export, COLORS.exportFill),
+      makeDataset("Grid import", selectedDays.map((record) => numberOrNull(record[FIELDS.bought])), COLORS.import, COLORS.importFill),
     ];
     energyChart.update();
-
-    gridChart.data.labels = labels;
-    gridChart.data.datasets = [
-      makeDataset("Grid export", selectedDays.map((record) => numberOrNull(record[FIELDS.sold])), COLORS.green, COLORS.greenFill),
-      makeDataset("Grid import", selectedDays.map((record) => numberOrNull(record[FIELDS.bought])), COLORS.orange, COLORS.orangeFill),
-    ];
-    gridChart.update();
   };
 
   const updateSocChart = () => {
@@ -264,9 +255,9 @@ function renderDashboard(records, generatedAt) {
     endInput.addEventListener("change", update);
   };
 
-  bindDateRange(dateInputs.energyFrom, dateInputs.energyTo, updateEnergyCharts);
+  bindDateRange(dateInputs.energyFrom, dateInputs.energyTo, updateEnergyChart);
   bindDateRange(dateInputs.socFrom, dateInputs.socTo, updateSocChart);
-  updateEnergyCharts();
+  updateEnergyChart();
   updateSocChart();
 }
 

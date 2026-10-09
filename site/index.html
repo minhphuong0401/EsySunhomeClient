@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=3" defer></script>
+    <script src="app.js?v=4" defer></script>
   </head>
   <body>
     <main class="page">
@@ -70,33 +70,22 @@
           <div>
             <p class="eyebrow">ENERGY & GRID</p>
             <h3 id="energy-history-title">Generation, consumption & grid exchange</h3>
-            <p class="group-description">Date range applies to both charts</p>
+            <p class="group-description">Latest daily snapshot, kWh/day</p>
           </div>
-          <div class="range-controls" aria-label="Energy and grid chart date range">
+          <div class="range-controls" aria-label="Energy chart date range">
             <label>
               <span>From</span>
-              <input id="energy-from" type="date" aria-label="Energy and grid charts start date">
+              <input id="energy-from" type="date" aria-label="Energy chart start date">
             </label>
             <label>
               <span>To</span>
-              <input id="energy-to" type="date" aria-label="Energy and grid charts end date">
+              <input id="energy-to" type="date" aria-label="Energy chart end date">
             </label>
           </div>
         </header>
-        <div class="charts" aria-label="Energy and grid history charts">
-          <article class="chart-card">
-            <div class="chart-title">
-              <div><h4>Generation & consumption</h4><p>Latest daily snapshot, kWh/day</p></div>
-            </div>
-            <div class="chart-wrap"><canvas id="energy-chart" role="img" aria-label="Daily solar generation and consumption chart"></canvas></div>
-          </article>
-          <article class="chart-card">
-            <div class="chart-title">
-              <div><h4>Grid energy exchange</h4><p>Latest daily snapshot, kWh/day</p></div>
-            </div>
-            <div class="chart-wrap"><canvas id="grid-chart" role="img" aria-label="Daily grid import and export chart"></canvas></div>
-          </article>
-        </div>
+        <article class="chart-card">
+          <div class="chart-wrap chart-wrap-tall"><canvas id="energy-chart" role="img" aria-label="Daily solar generation, consumption, grid import, and grid export chart"></canvas></div>
+        </article>
       </section>
 
       <section class="history-group" aria-labelledby="soc-history-title">
@@ -104,7 +93,7 @@
           <div>
             <p class="eyebrow">BATTERY</p>
             <h3 id="soc-history-title">State of charge</h3>
-            <p class="group-description">Independent date range · each point is one snapshot</p>
+            <p class="group-description">Each point is one snapshot</p>
           </div>
           <div class="range-controls soc-range" aria-label="Battery chart date range">
             <label>

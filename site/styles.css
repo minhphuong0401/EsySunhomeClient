@@ -135,6 +135,7 @@ h3, h4 { font-family: Manrope, sans-serif; }
 h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .chart-title p { margin: 0; color: #9aa49e; font-size: 11px; }
 .chart-wrap { position: relative; height: 245px; }
+.chart-wrap-tall { height: 320px; }
 .soc-range { flex-shrink: 0; }
 
 .footer { margin-top: 24px; color: #99a39d; font-size: 10px; }
@@ -157,6 +158,7 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
   .charts { grid-template-columns: 1fr; }
   .chart-card { padding: 17px 15px 12px; }
   .chart-wrap { height: 230px; }
+  .chart-wrap-tall { height: 270px; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 15px; margin-top: 35px; }
   .range-controls { width: 100%; gap: 8px; }
   .range-controls label { flex: 1; min-width: 0; }

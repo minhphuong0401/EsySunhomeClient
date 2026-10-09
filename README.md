@@ -49,12 +49,13 @@ certificates, or `.env` files.
 The static dashboard in `site/` visualizes the most recent 90 days of
 `data/data.json` snapshots. The GitHub Pages workflow reads the file's Git
 history and generates `site/data/history.json` during deployment; generated
-history is not committed to the repository. The generation and grid charts are
-grouped together and share a date range; the battery state-of-charge chart is
-in a separate section with its own independent date range. Both ranges default
-to the latest seven days and can be selected within the dashboard's 90-day
-history window. Daily energy charts use the latest snapshot for each local
-calendar day, while the battery chart shows the individual snapshots.
+history is not committed to the repository. The generation, consumption, grid
+import, and grid export metrics share one chart and date range; the battery
+state-of-charge chart is in a separate section with its own date range. Both
+ranges default to the latest seven days and can be selected within the
+dashboard's 90-day history window. The energy chart uses the latest snapshot
+for each local calendar day, while the battery chart shows individual
+snapshots.
 
 To publish it, enable **Settings → Pages → Build and deployment → GitHub
 Actions**. The `Deploy energy dashboard` workflow deploys on pushes to `main`
