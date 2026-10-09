@@ -55,7 +55,8 @@ state-of-charge chart is in a separate section with its own date range. Both
 ranges default to the latest seven days and can be selected within the
 dashboard's 90-day history window. The energy chart uses the latest snapshot
 for each local calendar day, while the battery chart shows individual
-snapshots.
+snapshots. The dashboard supports light and dark appearance, follows the
+system preference by default, and remembers a manually selected theme.
 
 To publish it, enable **Settings → Pages → Build and deployment → GitHub
 Actions**. The `Deploy energy dashboard` workflow deploys on pushes to `main`

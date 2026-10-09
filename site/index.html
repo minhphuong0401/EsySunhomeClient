@@ -3,13 +3,23 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f5f7f4">
+    <meta name="theme-color" content="#edf4f2">
     <meta name="description" content="Explore the last 90 days of ESY Sunhome energy generation and consumption.">
     <title>ESY Sunhome · Energy</title>
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("esy-theme");
+        document.documentElement.dataset.theme = savedTheme === "light" || savedTheme === "dark"
+          ? savedTheme
+          : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      } catch {
+        document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+    </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=4" defer></script>
+    <script src="app.js?v=5" defer></script>
   </head>
   <body>
     <main class="page">
@@ -22,6 +32,10 @@
           <span class="status-dot" aria-hidden="true"></span>
           <span id="last-updated">Loading data…</span>
         </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode">
+          <span class="theme-icon" id="theme-icon" aria-hidden="true">☾</span>
+          <span id="theme-label">Dark mode</span>
+        </button>
       </header>
 
       <section class="intro">

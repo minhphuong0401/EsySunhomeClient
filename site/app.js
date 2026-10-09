@@ -10,18 +10,19 @@ const FIELDS = {
 };
 
 const COLORS = {
-  solar: "#17865c",
-  solarFill: "rgba(23, 134, 92, 0.10)",
-  consumption: "#3977c3",
-  consumptionFill: "rgba(57, 119, 195, 0.10)",
-  export: "#d18a26",
-  exportFill: "rgba(209, 138, 38, 0.10)",
-  import: "#ad5aa0",
-  importFill: "rgba(173, 90, 160, 0.10)",
-  purple: "#8b76c9",
-  grid: "#edf1ee",
-  text: "#89958e",
+  solar: "--series-solar",
+  solarFill: "--series-solar-fill",
+  consumption: "--series-consumption",
+  consumptionFill: "--series-consumption-fill",
+  export: "--series-export",
+  exportFill: "--series-export-fill",
+  import: "--series-import",
+  importFill: "--series-import-fill",
+  soc: "--series-soc",
+  socFill: "--series-soc-fill",
 };
+
+let refreshChartsForTheme = () => {};
 
 const numberOrNull = (value) => {
   const number = Number(value);
@@ -46,6 +47,36 @@ const offsetDate = (dateValue, days) => {
 const formatDate = (timestamp, options) =>
   new Intl.DateTimeFormat("en-AU", options).format(new Date(timestamp));
 
+const themeColor = (property) =>
+  getComputedStyle(document.documentElement).getPropertyValue(property).trim();
+
+function updateThemeControls() {
+  const dark = document.documentElement.dataset.theme === "dark";
+  document.getElementById("theme-icon").textContent = dark ? "☀" : "☾";
+  document.getElementById("theme-label").textContent = dark ? "Light mode" : "Dark mode";
+  document.getElementById("theme-toggle").setAttribute(
+    "aria-label",
+    `Switch to ${dark ? "light" : "dark"} mode`,
+  );
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#10191d" : "#edf4f2";
+}
+
+function initializeThemeToggle() {
+  const button = document.getElementById("theme-toggle");
+  updateThemeControls();
+  button.addEventListener("click", () => {
+    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    updateThemeControls();
+    try {
+      localStorage.setItem("esy-theme", nextTheme);
+    } catch (error) {
+      console.warn("Could not save the theme preference.", error);
+    }
+    refreshChartsForTheme();
+  });
+}
+
 function setMetric(id, value, suffix = "") {
   const element = document.getElementById(id);
   element.textContent = value === null ? "—" : `${value.toLocaleString("en-AU", {
@@ -55,6 +86,7 @@ function setMetric(id, value, suffix = "") {
 }
 
 function makeChartOptions(unit, { percent = false } = {}) {
+  const textColor = themeColor("--chart-text");
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -63,10 +95,12 @@ function makeChartOptions(unit, { percent = false } = {}) {
       legend: {
         position: "top",
         align: "end",
-        labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 7, boxHeight: 7, padding: 16, color: COLORS.text, font: { family: "DM Sans", size: 10 } },
+        labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 7, boxHeight: 7, padding: 16, color: textColor, font: { family: "DM Sans", size: 10 } },
       },
       tooltip: {
-        backgroundColor: "#18241f",
+        backgroundColor: themeColor("--chart-tooltip"),
+        titleColor: themeColor("--chart-tooltip-text"),
+        bodyColor: themeColor("--chart-tooltip-text"),
         padding: 11,
         titleFont: { family: "DM Sans", size: 11, weight: "600" },
         bodyFont: { family: "DM Sans", size: 11 },
@@ -90,7 +124,7 @@ function makeChartOptions(unit, { percent = false } = {}) {
         grid: { display: false },
         border: { display: false },
         ticks: {
-          color: COLORS.text,
+          color: textColor,
           maxTicksLimit: percent ? 5 : 10,
           maxRotation: 0,
           font: { family: "DM Sans", size: 9 },
@@ -112,9 +146,9 @@ function makeChartOptions(unit, { percent = false } = {}) {
         beginAtZero: !percent,
         min: percent ? 0 : undefined,
         max: percent ? 100 : undefined,
-        grid: { color: COLORS.grid },
+        grid: { color: themeColor("--chart-grid") },
         border: { display: false, dash: [3, 4] },
-        ticks: { color: COLORS.text, maxTicksLimit: 5, font: { family: "DM Sans", size: 9 }, callback: (value) => `${value}${percent ? "%" : ""}` },
+        ticks: { color: textColor, maxTicksLimit: 5, font: { family: "DM Sans", size: 9 }, callback: (value) => `${value}${percent ? "%" : ""}` },
       },
     },
   };
@@ -218,10 +252,10 @@ function renderDashboard(records, generatedAt) {
 
     energyChart.data.labels = labels;
     energyChart.data.datasets = [
-      makeDataset("Solar generation", selectedDays.map((record) => numberOrNull(record[FIELDS.pv])), COLORS.solar, COLORS.solarFill),
-      makeDataset("Consumption", selectedDays.map((record) => numberOrNull(record[FIELDS.consumption])), COLORS.consumption, COLORS.consumptionFill),
-      makeDataset("Grid export", selectedDays.map((record) => numberOrNull(record[FIELDS.sold])), COLORS.export, COLORS.exportFill),
-      makeDataset("Grid import", selectedDays.map((record) => numberOrNull(record[FIELDS.bought])), COLORS.import, COLORS.importFill),
+      makeDataset("Solar generation", selectedDays.map((record) => numberOrNull(record[FIELDS.pv])), themeColor(COLORS.solar), themeColor(COLORS.solarFill)),
+      makeDataset("Consumption", selectedDays.map((record) => numberOrNull(record[FIELDS.consumption])), themeColor(COLORS.consumption), themeColor(COLORS.consumptionFill)),
+      makeDataset("Grid export", selectedDays.map((record) => numberOrNull(record[FIELDS.sold])), themeColor(COLORS.export), themeColor(COLORS.exportFill)),
+      makeDataset("Grid import", selectedDays.map((record) => numberOrNull(record[FIELDS.bought])), themeColor(COLORS.import), themeColor(COLORS.importFill)),
     ];
     energyChart.update();
   };
@@ -234,7 +268,7 @@ function renderDashboard(records, generatedAt) {
     socChart.data.labels = selectedSnapshots.map((record) => record.timestamp ?? record.mqttCurrentTime);
     socChart.data.datasets = [
       {
-        ...makeDataset("Battery charge", selectedSnapshots.map((record) => numberOrNull(record[FIELDS.soc])), COLORS.purple, COLORS.purpleFill),
+        ...makeDataset("Battery charge", selectedSnapshots.map((record) => numberOrNull(record[FIELDS.soc])), themeColor(COLORS.soc), themeColor(COLORS.socFill)),
         fill: true,
       },
     ];
@@ -259,6 +293,12 @@ function renderDashboard(records, generatedAt) {
   bindDateRange(dateInputs.socFrom, dateInputs.socTo, updateSocChart);
   updateEnergyChart();
   updateSocChart();
+  refreshChartsForTheme = () => {
+    energyChart.options = makeChartOptions("kWh");
+    socChart.options = makeChartOptions("%", { percent: true });
+    updateEnergyChart();
+    updateSocChart();
+  };
 }
 
 async function main() {
@@ -283,4 +323,5 @@ async function main() {
   }
 }
 
+initializeThemeToggle();
 main();
