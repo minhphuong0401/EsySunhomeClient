@@ -205,13 +205,13 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04
 }
 
 .metric-card { min-height: 151px; padding: 19px 20px; }
-.metric-heading { gap: 9px; color: var(--muted); font-size: 12px; font-weight: 500; }
-.metric-icon { color: #d9a12b; font-size: 19px; line-height: 1; }
+.metric-heading { gap: 12px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.metric-icon { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; color: #d9a12b; }
+.metric-icon svg { display: block; width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .icon-blue { color: #6589d6; }
 .icon-green { color: #2c9a6a; }
 .icon-purple { color: #8a72cb; }
 .metric-value { position: relative; margin: 18px 0 2px; font-family: Manrope, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.04em; }
-.metric-unit { color: var(--muted); font-size: 11px; }
 .metric-solar { background: linear-gradient(140deg, var(--surface-strong), var(--surface) 72%, rgb(121 200 181 / 13%)); }
 
 .section-heading { margin: 43px 0 16px; }
@@ -273,6 +273,8 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metric-card { min-height: 135px; padding: 15px 14px; }
   .metric-heading { align-items: flex-start; font-size: 11px; }
+  .metric-icon { width: 32px; height: 32px; flex-basis: 32px; }
+  .metric-icon svg { width: 28px; height: 28px; }
   .metric-value { font-size: 26px; }
   .charts { grid-template-columns: 1fr; }
   .chart-card { padding: 17px 15px 12px; }

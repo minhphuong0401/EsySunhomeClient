@@ -16,10 +16,11 @@
         document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
     </script>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=5" defer></script>
+    <script src="app.js?v=8" defer></script>
   </head>
   <body>
     <main class="page">
@@ -46,29 +47,49 @@
 
       <section class="metrics" aria-label="Today's status">
         <article class="metric-card metric-solar">
-          <div class="metric-heading"><span class="metric-icon" aria-hidden="true">☀</span><span>Solar generation</span></div>
+          <div class="metric-heading">
+            <span class="metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="5"></circle><path d="M16 2.5v4M16 25.5v4M2.5 16h4M25.5 16h4M6.45 6.45l2.83 2.83m13.44 13.44 2.83 2.83m0-19.1-2.83 2.83M9.28 22.72l-2.83 2.83"></path></svg>
+            </span>
+            <span>Solar generation</span>
+          </div>
           <p class="metric-value" id="metric-pv">—</p>
-          <span class="metric-unit">kWh generated</span>
         </article>
         <article class="metric-card">
-          <div class="metric-heading"><span class="metric-icon icon-blue" aria-hidden="true">⌂</span><span>Consumption</span></div>
+          <div class="metric-heading">
+            <span class="metric-icon icon-blue" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="m3.5 14 12.5-10L28.5 14M6.5 12v16h19V12M13 28v-9h6v9"></path></svg>
+            </span>
+            <span>Consumption</span>
+          </div>
           <p class="metric-value" id="metric-consumption">—</p>
-          <span class="metric-unit">kWh used</span>
         </article>
         <article class="metric-card">
-          <div class="metric-heading"><span class="metric-icon icon-blue" aria-hidden="true">↙</span><span>Grid import</span></div>
+          <div class="metric-heading">
+            <span class="metric-icon icon-blue" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="m18.5 2.5-13 16h9l-1 11 13-17h-9z"></path></svg>
+            </span>
+            <span>Grid import</span>
+          </div>
           <p class="metric-value" id="metric-bought">—</p>
-          <span class="metric-unit">kWh imported</span>
         </article>
         <article class="metric-card">
-          <div class="metric-heading"><span class="metric-icon icon-green" aria-hidden="true">↗</span><span>Grid export</span></div>
+          <div class="metric-heading">
+            <span class="metric-icon icon-green" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="M7 10h18l2 17H5zM11 10a5 5 0 0 1 10 0M20 16h-5.5a2.5 2.5 0 0 0 0 5H17a2.5 2.5 0 0 1 0 5h-6M14.5 14v2m0 10v2"></path></svg>
+            </span>
+            <span>Grid export</span>
+          </div>
           <p class="metric-value" id="metric-sold">—</p>
-          <span class="metric-unit">kWh exported</span>
         </article>
         <article class="metric-card">
-          <div class="metric-heading"><span class="metric-icon icon-purple" aria-hidden="true">▰</span><span>Battery state of charge</span></div>
+          <div class="metric-heading">
+            <span class="metric-icon icon-purple" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="4" y="8" width="23" height="17" rx="3"></rect><path d="M27 13h2.5v7H27M10 12.5v8M16 12.5v8M22 12.5v8"></path></svg>
+            </span>
+            <span>Battery state of charge</span>
+          </div>
           <p class="metric-value" id="metric-soc">—</p>
-          <span class="metric-unit">current charge level</span>
         </article>
       </section>
 

@@ -85,8 +85,16 @@ function setMetric(id, value, suffix = "") {
   })}${suffix}`;
 }
 
-function makeChartOptions(unit, { percent = false } = {}) {
+function localDayStartTimestamp(dateValue) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
+function makeChartOptions(unit, { percent = false, startDate, endDate } = {}) {
   const textColor = themeColor("--chart-text");
+  const selectedRangeMs = percent && startDate && endDate
+    ? localDayStartTimestamp(offsetDate(endDate, 1)) - localDayStartTimestamp(startDate)
+    : 0;
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -106,11 +114,11 @@ function makeChartOptions(unit, { percent = false } = {}) {
         bodyFont: { family: "DM Sans", size: 11 },
         callbacks: {
           title(items) {
-            const label = items[0]?.label;
-            if (!label) return "";
-            const date = new Date(label);
+            const x = percent ? items[0]?.parsed.x : items[0]?.label;
+            if (x === undefined || x === null || x === "") return "";
+            const date = new Date(x);
             return Number.isNaN(date.getTime())
-              ? label
+              ? String(x)
               : formatDate(date, { dateStyle: "medium", timeStyle: percent ? "short" : undefined });
           },
           label(context) {
@@ -121,17 +129,23 @@ function makeChartOptions(unit, { percent = false } = {}) {
     },
     scales: {
       x: {
+        ...(percent ? {
+          type: "linear",
+          min: startDate ? localDayStartTimestamp(startDate) : undefined,
+          max: endDate ? localDayStartTimestamp(offsetDate(endDate, 1)) : undefined,
+        } : {}),
         grid: { display: false },
         border: { display: false },
         ticks: {
           color: textColor,
           maxTicksLimit: percent ? 5 : 10,
+          stepSize: percent && selectedRangeMs <= 3 * DAY_MS ? DAY_MS / 2 : undefined,
+          autoSkip: !(percent && selectedRangeMs <= 3 * DAY_MS),
           maxRotation: 0,
           font: { family: "DM Sans", size: 9 },
           callback(value) {
-            const label = this.getLabelForValue(value);
-            const date = new Date(label);
-            if (Number.isNaN(date.getTime())) return label;
+            const date = new Date(percent ? Number(value) : this.getLabelForValue(value));
+            if (Number.isNaN(date.getTime())) return String(value);
             if (percent) {
               return [
                 formatDate(date, { day: "2-digit", month: "2-digit" }),
@@ -265,13 +279,25 @@ function renderDashboard(records, generatedAt) {
       const day = localDay(record.timestamp ?? record.mqttCurrentTime);
       return day >= dateInputs.socFrom.value && day <= dateInputs.socTo.value;
     });
-    socChart.data.labels = selectedSnapshots.map((record) => record.timestamp ?? record.mqttCurrentTime);
     socChart.data.datasets = [
       {
-        ...makeDataset("Battery charge", selectedSnapshots.map((record) => numberOrNull(record[FIELDS.soc])), themeColor(COLORS.soc), themeColor(COLORS.socFill)),
+        ...makeDataset(
+          "Battery charge",
+          selectedSnapshots.map((record) => ({
+            x: Date.parse(record.timestamp ?? record.mqttCurrentTime),
+            y: numberOrNull(record[FIELDS.soc]),
+          })),
+          themeColor(COLORS.soc),
+          themeColor(COLORS.socFill),
+        ),
         fill: true,
       },
     ];
+    socChart.options = makeChartOptions("%", {
+      percent: true,
+      startDate: dateInputs.socFrom.value,
+      endDate: dateInputs.socTo.value,
+    });
     socChart.update();
   };
 
@@ -295,7 +321,6 @@ function renderDashboard(records, generatedAt) {
   updateSocChart();
   refreshChartsForTheme = () => {
     energyChart.options = makeChartOptions("kWh");
-    socChart.options = makeChartOptions("%", { percent: true });
     updateEnergyChart();
     updateSocChart();
   };
