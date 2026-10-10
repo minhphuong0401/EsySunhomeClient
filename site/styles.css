@@ -25,6 +25,10 @@
   --series-export-fill: rgb(209 138 38 / 12%);
   --series-import: #ad5aa0;
   --series-import-fill: rgb(173 90 160 / 12%);
+  --series-battery-charge: #168c9c;
+  --series-battery-charge-fill: rgb(22 140 156 / 12%);
+  --series-battery-discharge: #d45f52;
+  --series-battery-discharge-fill: rgb(212 95 82 / 12%);
   --series-soc: #8065c5;
   --series-soc-fill: rgb(128 101 197 / 17%);
   font-family: "DM Sans", sans-serif;
@@ -58,6 +62,10 @@
   --series-export-fill: rgb(255 194 96 / 14%);
   --series-import: #ef91d8;
   --series-import-fill: rgb(239 145 216 / 14%);
+  --series-battery-charge: #62d8e5;
+  --series-battery-charge-fill: rgb(98 216 229 / 14%);
+  --series-battery-discharge: #ff8d80;
+  --series-battery-discharge-fill: rgb(255 141 128 / 14%);
   --series-soc: #b69aff;
   --series-soc-fill: rgb(182 154 255 / 19%);
 }
@@ -210,6 +218,8 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04
 .metric-icon svg { display: block; width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .icon-blue { color: #6589d6; }
 .icon-green { color: #2c9a6a; }
+.icon-teal { color: #168c9c; }
+.icon-red { color: #d45f52; }
 .icon-purple { color: #8a72cb; }
 .metric-value { position: relative; margin: 18px 0 2px; font-family: Manrope, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.04em; }
 .metric-solar { background: linear-gradient(140deg, var(--surface-strong), var(--surface) 72%, rgb(121 200 181 / 13%)); }

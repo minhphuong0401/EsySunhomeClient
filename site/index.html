@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=9" defer></script>
+    <script src="app.js?v=11" defer></script>
   </head>
   <body>
     <main class="page">
@@ -84,6 +84,24 @@
         </article>
         <article class="metric-card">
           <div class="metric-heading">
+            <span class="metric-icon icon-teal" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="4" y="8" width="23" height="17" rx="3"></rect><path d="M27 13h2.5v7H27M16 11l-4 7h4l-1 5 6-8h-4l1-4z"></path></svg>
+            </span>
+            <span>Battery charged</span>
+          </div>
+          <p class="metric-value" id="metric-battery-charge">—</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading">
+            <span class="metric-icon icon-red" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="4" y="8" width="23" height="17" rx="3"></rect><path d="M27 13h2.5v7H27M16 11v10m-4-4 4 4 4-4"></path></svg>
+            </span>
+            <span>Battery discharged</span>
+          </div>
+          <p class="metric-value" id="metric-battery-discharge">—</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-heading">
             <span class="metric-icon icon-purple" aria-hidden="true">
               <svg viewBox="0 0 32 32"><rect x="4" y="8" width="23" height="17" rx="3"></rect><path d="M27 13h2.5v7H27M10 12.5v8M16 12.5v8M22 12.5v8"></path></svg>
             </span>
@@ -119,7 +137,7 @@
           </div>
         </header>
         <article class="chart-card">
-          <div class="chart-wrap chart-wrap-tall"><canvas id="energy-chart" role="img" aria-label="Daily solar generation, consumption, grid import, and grid export chart"></canvas></div>
+          <div class="chart-wrap chart-wrap-tall"><canvas id="energy-chart" role="img" aria-label="Daily solar generation, consumption, grid import, grid export, battery charge, and battery discharge chart"></canvas></div>
         </article>
       </section>
 

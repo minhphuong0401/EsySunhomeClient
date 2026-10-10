@@ -6,6 +6,8 @@ const FIELDS = {
   consumption: "totalConsumptionToday_kWh",
   bought: "buyElectricityToday_kWh",
   sold: "sellingElectricityToday_kWh",
+  batteryCharge: "dailyBattCharge_kWh",
+  batteryDischarge: "dailyBattDischarge_kWh",
   soc: "batterySoc_percent",
 };
 
@@ -18,6 +20,10 @@ const COLORS = {
   exportFill: "--series-export-fill",
   import: "--series-import",
   importFill: "--series-import-fill",
+  batteryCharge: "--series-battery-charge",
+  batteryChargeFill: "--series-battery-charge-fill",
+  batteryDischarge: "--series-battery-discharge",
+  batteryDischargeFill: "--series-battery-discharge-fill",
   soc: "--series-soc",
   socFill: "--series-soc-fill",
 };
@@ -212,6 +218,8 @@ function renderDashboard(records, generatedAt) {
   setMetric("metric-consumption", numberOrNull(latest[FIELDS.consumption]), " kWh");
   setMetric("metric-bought", numberOrNull(latest[FIELDS.bought]), " kWh");
   setMetric("metric-sold", numberOrNull(latest[FIELDS.sold]), " kWh");
+  setMetric("metric-battery-charge", numberOrNull(latest[FIELDS.batteryCharge]), " kWh");
+  setMetric("metric-battery-discharge", numberOrNull(latest[FIELDS.batteryDischarge]), " kWh");
   setMetric("metric-soc", numberOrNull(latest[FIELDS.soc]), "%");
   document.getElementById("last-updated").textContent =
     `Updated ${formatDate(latestTimestamp, { dateStyle: "medium", timeStyle: "short" })}`;
@@ -270,6 +278,8 @@ function renderDashboard(records, generatedAt) {
       makeDataset("Consumption", selectedDays.map((record) => numberOrNull(record[FIELDS.consumption])), themeColor(COLORS.consumption), themeColor(COLORS.consumptionFill)),
       makeDataset("Grid export", selectedDays.map((record) => numberOrNull(record[FIELDS.sold])), themeColor(COLORS.export), themeColor(COLORS.exportFill)),
       makeDataset("Grid import", selectedDays.map((record) => numberOrNull(record[FIELDS.bought])), themeColor(COLORS.import), themeColor(COLORS.importFill)),
+      makeDataset("Battery charge", selectedDays.map((record) => numberOrNull(record[FIELDS.batteryCharge])), themeColor(COLORS.batteryCharge), themeColor(COLORS.batteryChargeFill)),
+      makeDataset("Battery discharge", selectedDays.map((record) => numberOrNull(record[FIELDS.batteryDischarge])), themeColor(COLORS.batteryDischarge), themeColor(COLORS.batteryDischargeFill)),
     ];
     energyChart.update();
   };

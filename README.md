@@ -36,9 +36,9 @@ uses that PAT to replace `ESY_ACCESS_TOKEN` and, when returned, the rotated
 temporary file on the Actions runner and is never committed.
 
 The JSON output contains daily PV generation, electricity bought from the
-grid, electricity sold to the grid, total consumption, and battery SOC. An
-MQTT-derived timestamp is included when the response header contains a valid
-epoch timestamp.
+grid, electricity sold to the grid, total consumption, battery charge and
+discharge energy, and battery SOC. An MQTT-derived timestamp is included when
+the response header contains a valid epoch timestamp.
 
 MQTT credentials are read from device information. If unavailable, set
 `ESY_MQTT_USERNAME` and `ESY_MQTT_PASSWORD`. Do not commit credentials,
@@ -50,11 +50,11 @@ The static dashboard in `site/` visualizes the most recent 90 days of
 `data/data.json` snapshots. The GitHub Pages workflow reads the file's Git
 history and generates `site/data/history.json` during deployment; generated
 history is not committed to the repository. The generation, consumption, grid
-import, and grid export metrics share one chart and date range; the battery
-state-of-charge chart is in a separate section with its own date range. Both
-ranges default to the latest seven days and can be selected within the
-dashboard's 90-day history window. The energy chart uses the latest snapshot
-for each local calendar day, while the battery chart shows individual
+import/export, and battery charge/discharge metrics share one chart and date
+range; the battery state-of-charge chart is in a separate section with its own
+date range. Both ranges default to the latest seven days and can be selected
+within the dashboard's 90-day history window. The energy chart uses the latest
+snapshot for each local calendar day, while the battery chart shows individual
 snapshots. The dashboard supports light and dark appearance, follows the
 system preference by default, and remembers a manually selected theme.
 
