@@ -188,7 +188,7 @@ async def fetch_once() -> dict:
                 if not result:
                     print("[debug] parse_message returned nothing", file=sys.stderr)
                     continue
-
+                print(f"[debug] parsed telemetry: {result}", file=sys.stderr)
                 summary = {
                     "photovoltaicPowerGenerationToday_kWh": result.get("dailyPowerGeneration"),
                     "buyElectricityToday_kWh": result.get("dailyGridImport"),
