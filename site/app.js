@@ -177,7 +177,7 @@ function makeDataset(label, values, color, fillColor) {
     borderWidth: 2,
     pointRadius: 0,
     pointHoverRadius: 4,
-    tension: 0.28,
+    tension: 0,
     fill: false,
     spanGaps: true,
   };
@@ -290,6 +290,7 @@ function renderDashboard(records, generatedAt) {
           themeColor(COLORS.soc),
           themeColor(COLORS.socFill),
         ),
+        tension: 0.28,
         fill: true,
       },
     ];
