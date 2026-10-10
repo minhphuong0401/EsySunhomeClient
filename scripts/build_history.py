@@ -303,10 +303,7 @@ def _add_daily_cost_estimates(
             record["dailyNetCost_AUD"] = None
             continue
 
-        day_start, day_end = _local_day_bounds(local_date, tariff)
-        elapsed = Decimal(str((timestamp - day_start).total_seconds()))
-        day_duration = Decimal(str((day_end - day_start).total_seconds()))
-        supply_charge = tariff.supply_charge * elapsed / day_duration
+        supply_charge = tariff.supply_charge
         net_cost = import_cost + supply_charge - export_credit
         record["dailyImportCost_AUD"] = _money_value(import_cost)
         record["dailyExportCredit_AUD"] = _money_value(export_credit)
