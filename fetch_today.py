@@ -195,6 +195,8 @@ async def fetch_once() -> dict:
                     "sellingElectricityToday_kWh": result.get("dailyGridExport"),
                     "totalConsumptionToday_kWh": result.get("dailyConsumption"),
                     "batterySoc_percent": result.get("batterySoc"),
+                    "dailyBattCharge_kWh": result.get("dailyBattCharge"),
+                    "dailyBattDischarge_kWh": result.get("dailyBattDischarge"),
                 }
                 mqtt_current_time = result.get("_mqttCurrentTime")
                 if mqtt_current_time is not None:
