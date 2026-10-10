@@ -354,6 +354,13 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
       const day = localDay(record.timestamp ?? record.mqttCurrentTime);
       return day >= dateInputs.socFrom.value && day <= dateInputs.socTo.value;
     });
+    const firstSnapshotDay = selectedSnapshots.length
+      ? localDay(selectedSnapshots[0].timestamp ?? selectedSnapshots[0].mqttCurrentTime)
+      : undefined;
+    const lastSnapshotDay = selectedSnapshots.length
+      ? localDay(selectedSnapshots[selectedSnapshots.length - 1].timestamp
+        ?? selectedSnapshots[selectedSnapshots.length - 1].mqttCurrentTime)
+      : undefined;
     socChart.data.datasets = [
       {
         ...makeDataset(
@@ -371,8 +378,8 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
     ];
     socChart.options = makeChartOptions("%", {
       percent: true,
-      startDate: dateInputs.socFrom.value,
-      endDate: dateInputs.socTo.value,
+      startDate: firstSnapshotDay,
+      endDate: lastSnapshotDay,
     });
     socChart.update();
   };
