@@ -42,7 +42,7 @@ class ElectricityTariffTests(unittest.TestCase):
 
         self.assertEqual(charge, Decimal("0.3622"))
 
-    def test_daily_cost_includes_full_supply_charge_and_export_credit(self) -> None:
+    def test_daily_cost_subtracts_full_supply_charge_and_export_credit(self) -> None:
         records = [
             (
                 datetime(2026, 6, 1, 14, 0, tzinfo=self.tariff.timezone).astimezone(timezone.utc),
@@ -65,19 +65,23 @@ class ElectricityTariffTests(unittest.TestCase):
         self.assertEqual(final["dailyImportCost_AUD"], 0.7737)
         self.assertEqual(final["dailyExportCredit_AUD"], 0.04)
         self.assertEqual(final["dailySupplyCharge_AUD"], 0.8716)
-        self.assertEqual(final["dailyNetCost_AUD"], 1.6053)
+        self.assertEqual(final["dailyNetCost_AUD"], -0.1379)
 
-    def test_full_daily_supply_charge_is_added_at_first_morning_reading(self) -> None:
-        first_snapshot = (
-            datetime(2026, 6, 1, 1, 0, tzinfo=self.tariff.timezone).astimezone(timezone.utc),
-            {"buyElectricityToday_kWh": 0, "sellingElectricityToday_kWh": 0},
-        )
+    def test_zero_import_and_export_gives_negative_supply_at_any_time(self) -> None:
+        snapshots = [
+            (
+                datetime(2026, 6, 1, hour, 0, tzinfo=self.tariff.timezone).astimezone(timezone.utc),
+                {"buyElectricityToday_kWh": 0, "sellingElectricityToday_kWh": 0},
+            )
+            for hour in (1, 9)
+        ]
 
-        warnings = _add_daily_cost_estimates([first_snapshot], self.tariff)
+        warnings = _add_daily_cost_estimates(snapshots, self.tariff)
 
         self.assertEqual(warnings, {})
-        self.assertEqual(first_snapshot[1]["dailySupplyCharge_AUD"], 0.8716)
-        self.assertEqual(first_snapshot[1]["dailyNetCost_AUD"], 0.8716)
+        for _, record in snapshots:
+            self.assertEqual(record["dailySupplyCharge_AUD"], 0.8716)
+            self.assertEqual(record["dailyNetCost_AUD"], -0.8716)
 
     def test_counter_reset_marks_that_day_unavailable(self) -> None:
         records = [

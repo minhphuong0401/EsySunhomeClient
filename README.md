@@ -65,8 +65,9 @@ Night Saver EV $0.08/kWh, supply $0.8716/day, and feed-in $0.04/kWh. The
 history builder estimates daily import charges by apportioning cumulative
 meter-reading differences across the elapsed snapshot interval and the
 configured Australia/Sydney tariff periods. It adds the full daily supply
-charge to each day's running estimate, regardless of time of day, and
-subtracts the flat feed-in credit. Daily cost figures are estimates rather
+charge as a fixed daily subtraction regardless of time of day, and subtracts
+the flat feed-in credit from import charges. A zero-import, zero-export day
+therefore has a net estimate of -$0.8716. Daily figures are estimates rather
 than billing-grade readings because usage within each snapshot interval is not
 measured by tariff period. Counter resets make the affected day's estimate
 unavailable; missing or invalid individual readings are reported and can make
