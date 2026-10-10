@@ -54,9 +54,22 @@ import/export, and battery charge/discharge metrics share one chart and date
 range; the battery state-of-charge chart is in a separate section with its own
 date range. Both ranges default to the latest seven days and can be selected
 within the dashboard's 90-day history window. The energy chart uses the latest
-snapshot for each local calendar day, while the battery chart shows individual
-snapshots. The dashboard supports light and dark appearance, follows the
-system preference by default, and remembers a manually selected theme.
+snapshot for each Australia/Sydney calendar day, while the battery chart shows
+individual snapshots. The dashboard supports light and dark appearance,
+follows the system preference by default, and remembers a manually selected
+theme.
+
+Electricity prices are kept in `config/electricity_tariff.json` in AUD with
+GST included: peak $0.4362/kWh, off-peak $0.2882/kWh, shoulder $0.2052/kWh,
+Night Saver EV $0.08/kWh, supply $0.8716/day, and feed-in $0.04/kWh. The
+history builder estimates daily import charges by apportioning cumulative
+meter-reading differences across the elapsed snapshot interval and the
+configured Australia/Sydney tariff periods. It adds the prorated daily supply
+charge and subtracts the flat feed-in credit. Daily cost figures are estimates
+rather than billing-grade readings because usage within each snapshot interval
+is not measured by tariff period. Counter resets make the affected day's
+estimate unavailable; missing or invalid individual readings are reported and
+can make that snapshot's estimate unavailable.
 
 To publish it, enable **Settings → Pages → Build and deployment → GitHub
 Actions**. The `Deploy energy dashboard` workflow deploys on pushes to `main`

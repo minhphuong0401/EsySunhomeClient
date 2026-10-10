@@ -31,6 +31,8 @@
   --series-battery-discharge-fill: rgb(212 95 82 / 12%);
   --series-soc: #8065c5;
   --series-soc-fill: rgb(128 101 197 / 17%);
+  --series-cost: #168c74;
+  --series-cost-fill: rgb(22 140 116 / 15%);
   font-family: "DM Sans", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -68,6 +70,8 @@
   --series-battery-discharge-fill: rgb(255 141 128 / 14%);
   --series-soc: #b69aff;
   --series-soc-fill: rgb(182 154 255 / 19%);
+  --series-cost: #63dfbf;
+  --series-cost-fill: rgb(99 223 191 / 17%);
 }
 
 * { box-sizing: border-box; }
@@ -181,7 +185,7 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 15px;
 }
 
@@ -220,6 +224,7 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04
 .icon-green { color: #2c9a6a; }
 .icon-teal { color: #168c9c; }
 .icon-red { color: #d45f52; }
+.icon-cost { color: var(--series-cost); }
 .icon-purple { color: #8a72cb; }
 .metric-value { position: relative; margin: 18px 0 2px; font-family: Manrope, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.04em; }
 .metric-solar { background: linear-gradient(140deg, var(--surface-strong), var(--surface) 72%, rgb(121 200 181 / 13%)); }

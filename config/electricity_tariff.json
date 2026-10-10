@@ -1,0 +1,20 @@
+{
+  "currency": "AUD",
+  "timezone": "Australia/Sydney",
+  "rates": {
+    "peak": "0.4362",
+    "off_peak": "0.2882",
+    "shoulder": "0.2052",
+    "night_saver_ev": "0.08"
+  },
+  "periods": [
+    { "start": "00:00", "end": "06:00", "rate": "night_saver_ev" },
+    { "start": "06:00", "end": "10:00", "rate": "off_peak" },
+    { "start": "10:00", "end": "14:00", "rate": "shoulder" },
+    { "start": "14:00", "end": "15:00", "rate": "off_peak" },
+    { "start": "15:00", "end": "21:00", "rate": "peak" },
+    { "start": "21:00", "end": "24:00", "rate": "off_peak" }
+  ],
+  "feed_in_rate": "0.04",
+  "supply_charge": "0.8716"
+}

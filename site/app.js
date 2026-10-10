@@ -1,5 +1,6 @@
 const HISTORY_URL = "data/history.json";
 const DAY_MS = 24 * 60 * 60 * 1000;
+let dashboardTimezone = "Australia/Sydney";
 
 const FIELDS = {
   pv: "photovoltaicPowerGenerationToday_kWh",
@@ -9,6 +10,7 @@ const FIELDS = {
   batteryCharge: "dailyBattCharge_kWh",
   batteryDischarge: "dailyBattDischarge_kWh",
   soc: "batterySoc_percent",
+  netCost: "dailyNetCost_AUD",
 };
 
 const COLORS = {
@@ -26,6 +28,8 @@ const COLORS = {
   batteryDischargeFill: "--series-battery-discharge-fill",
   soc: "--series-soc",
   socFill: "--series-soc-fill",
+  cost: "--series-cost",
+  costFill: "--series-cost-fill",
 };
 
 let refreshChartsForTheme = () => {};
@@ -35,23 +39,30 @@ const numberOrNull = (value) => {
   return value !== null && value !== "" && Number.isFinite(number) ? number : null;
 };
 
-const localDay = (timestamp) => {
-  const date = new Date(timestamp);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
+const localDay = (timestamp) => dateInputValue(new Date(timestamp));
 
-const dateInputValue = (date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const dateInputValue = (date) => {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: dashboardTimezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+};
 
 const offsetDate = (dateValue, days) => {
   const [year, month, day] = dateValue.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  date.setDate(date.getDate() + days);
-  return dateInputValue(date);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 };
 
 const formatDate = (timestamp, options) =>
-  new Intl.DateTimeFormat("en-AU", options).format(new Date(timestamp));
+  new Intl.DateTimeFormat("en-AU", { ...options, timeZone: dashboardTimezone }).format(new Date(timestamp));
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
 
 const themeColor = (property) =>
   getComputedStyle(document.documentElement).getPropertyValue(property).trim();
@@ -91,12 +102,43 @@ function setMetric(id, value, suffix = "") {
   })}${suffix}`;
 }
 
-function localDayStartTimestamp(dateValue) {
-  const [year, month, day] = dateValue.split("-").map(Number);
-  return new Date(year, month - 1, day).getTime();
+function setCurrencyMetric(id, value) {
+  const element = document.getElementById(id);
+  element.textContent = value === null ? "—" : formatCurrency(value);
 }
 
-function makeChartOptions(unit, { percent = false, startDate, endDate } = {}) {
+function localDayStartTimestamp(dateValue) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const desired = Date.UTC(year, month - 1, day);
+  let timestamp = desired;
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: dashboardTimezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(timestamp)).map(({ type, value }) => [type, value]),
+    );
+    const represented = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second),
+    );
+    timestamp += desired - represented;
+  }
+  return timestamp;
+}
+
+function makeChartOptions(unit, { percent = false, currency = false, startDate, endDate } = {}) {
   const textColor = themeColor("--chart-text");
   const selectedRangeMs = percent && startDate && endDate
     ? localDayStartTimestamp(offsetDate(endDate, 1)) - localDayStartTimestamp(startDate)
@@ -128,7 +170,8 @@ function makeChartOptions(unit, { percent = false, startDate, endDate } = {}) {
               : formatDate(date, { dateStyle: "medium", timeStyle: percent ? "short" : undefined });
           },
           label(context) {
-            return `${context.dataset.label}: ${context.parsed.y ?? "—"} ${unit}`;
+            const value = context.parsed.y;
+            return `${context.dataset.label}: ${value === null ? "—" : currency ? formatCurrency(value) : `${value} ${unit}`}`;
           },
         },
       },
@@ -168,7 +211,12 @@ function makeChartOptions(unit, { percent = false, startDate, endDate } = {}) {
         max: percent ? 100 : undefined,
         grid: { color: themeColor("--chart-grid") },
         border: { display: false, dash: [3, 4] },
-        ticks: { color: textColor, maxTicksLimit: 5, font: { family: "DM Sans", size: 9 }, callback: (value) => `${value}${percent ? "%" : ""}` },
+        ticks: {
+          color: textColor,
+          maxTicksLimit: 5,
+          font: { family: "DM Sans", size: 9 },
+          callback: (value) => currency ? formatCurrency(value) : `${value}${percent ? "%" : ""}`,
+        },
       },
     },
   };
@@ -195,7 +243,9 @@ function showNotice(message) {
   notice.hidden = false;
 }
 
-function renderDashboard(records, generatedAt) {
+function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
+  dashboardTimezone = timeZone;
+  new Intl.DateTimeFormat("en-AU", { timeZone: dashboardTimezone });
   const now = Date.now();
   const cutoff = now - 90 * DAY_MS;
   const recent = records
@@ -221,6 +271,7 @@ function renderDashboard(records, generatedAt) {
   setMetric("metric-battery-charge", numberOrNull(latest[FIELDS.batteryCharge]), " kWh");
   setMetric("metric-battery-discharge", numberOrNull(latest[FIELDS.batteryDischarge]), " kWh");
   setMetric("metric-soc", numberOrNull(latest[FIELDS.soc]), "%");
+  setCurrencyMetric("metric-daily-cost", numberOrNull(latest[FIELDS.netCost]));
   document.getElementById("last-updated").textContent =
     `Updated ${formatDate(latestTimestamp, { dateStyle: "medium", timeStyle: "short" })}`;
   document.getElementById("snapshot-count").textContent =
@@ -231,14 +282,20 @@ function renderDashboard(records, generatedAt) {
     latestByDay.set(localDay(record.timestamp ?? record.mqttCurrentTime), record);
   }
   const dailyRecords = [...latestByDay.values()];
+  if (costWarnings.length > 0) {
+    const warningDates = costWarnings.map((warning) => warning.date).join(", ");
+    showNotice(`Some daily cost estimates may be incomplete due to missing or reset meter readings (${warningDates}).`);
+  }
   const today = dateInputValue(new Date(now));
-  const earliest = dateInputValue(new Date(now - 90 * DAY_MS));
+  const earliest = offsetDate(today, -90);
   const defaultStart = offsetDate(today, -6);
   const dateInputs = {
     energyFrom: document.getElementById("energy-from"),
     energyTo: document.getElementById("energy-to"),
     socFrom: document.getElementById("soc-from"),
     socTo: document.getElementById("soc-to"),
+    costFrom: document.getElementById("cost-from"),
+    costTo: document.getElementById("cost-to"),
   };
 
   for (const input of Object.values(dateInputs)) {
@@ -250,6 +307,8 @@ function renderDashboard(records, generatedAt) {
   dateInputs.energyTo.value = today;
   dateInputs.socFrom.value = defaultStart;
   dateInputs.socTo.value = today;
+  dateInputs.costFrom.value = defaultStart;
+  dateInputs.costTo.value = today;
 
   const energyChart = new Chart(document.getElementById("energy-chart"), {
     type: "line",
@@ -261,6 +320,12 @@ function renderDashboard(records, generatedAt) {
     type: "line",
     data: { labels: [], datasets: [] },
     options: makeChartOptions("%", { percent: true }),
+  });
+
+  const costChart = new Chart(document.getElementById("cost-chart"), {
+    type: "line",
+    data: { labels: [], datasets: [] },
+    options: makeChartOptions("AUD", { currency: true }),
   });
 
   const updateEnergyChart = () => {
@@ -312,6 +377,27 @@ function renderDashboard(records, generatedAt) {
     socChart.update();
   };
 
+  const updateCostChart = () => {
+    const selectedDays = dailyRecords.filter((record) => {
+      const day = record.tariffLocalDate ?? localDay(record.timestamp ?? record.mqttCurrentTime);
+      return day >= dateInputs.costFrom.value && day <= dateInputs.costTo.value;
+    });
+    costChart.data.labels = selectedDays.map((record) => record.timestamp ?? record.mqttCurrentTime);
+    costChart.data.datasets = [
+      {
+        ...makeDataset(
+          "Estimated net cost",
+          selectedDays.map((record) => numberOrNull(record[FIELDS.netCost])),
+          themeColor(COLORS.cost),
+          themeColor(COLORS.costFill),
+        ),
+        fill: true,
+        spanGaps: false,
+      },
+    ];
+    costChart.update();
+  };
+
   const bindDateRange = (startInput, endInput, updateCharts) => {
     const update = () => {
       const invalidRange = startInput.value > endInput.value;
@@ -328,12 +414,16 @@ function renderDashboard(records, generatedAt) {
 
   bindDateRange(dateInputs.energyFrom, dateInputs.energyTo, updateEnergyChart);
   bindDateRange(dateInputs.socFrom, dateInputs.socTo, updateSocChart);
+  bindDateRange(dateInputs.costFrom, dateInputs.costTo, updateCostChart);
   updateEnergyChart();
   updateSocChart();
+  updateCostChart();
   refreshChartsForTheme = () => {
     energyChart.options = makeChartOptions("kWh");
     updateEnergyChart();
     updateSocChart();
+    costChart.options = makeChartOptions("AUD", { currency: true });
+    updateCostChart();
   };
 }
 
@@ -352,7 +442,12 @@ async function main() {
     if (!Array.isArray(history.records)) {
       throw new Error("The energy history file has an invalid format.");
     }
-    renderDashboard(history.records, history.generatedAt ?? new Date().toISOString());
+    renderDashboard(
+      history.records,
+      history.generatedAt ?? new Date().toISOString(),
+      history.tariff?.timezone ?? "Australia/Sydney",
+      history.costWarnings ?? [],
+    );
   } catch (error) {
     showNotice(`${error.message} Run the “Deploy energy dashboard” workflow on GitHub.`);
     document.getElementById("last-updated").textContent = "Unable to load data";
