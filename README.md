@@ -66,7 +66,8 @@ history builder estimates daily import charges by apportioning cumulative
 meter-reading differences across the elapsed snapshot interval and the
 configured Australia/Sydney tariff periods. It adds the full daily supply
 charge as a fixed daily subtraction regardless of time of day, and subtracts
-the flat feed-in credit from import charges. A zero-import, zero-export day
+import charges from the flat feed-in credit: estimated net cost is export
+credit minus import charges minus supply charge. A zero-import, zero-export day
 therefore has a net estimate of -$0.8716. Daily figures are estimates rather
 than billing-grade readings because usage within each snapshot interval is not
 measured by tariff period. Counter resets make the affected day's estimate

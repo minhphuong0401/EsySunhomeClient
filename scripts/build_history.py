@@ -304,7 +304,7 @@ def _add_daily_cost_estimates(
             continue
 
         supply_charge = tariff.supply_charge
-        net_cost = import_cost - export_credit - supply_charge
+        net_cost = export_credit - import_cost - supply_charge
         record["dailyImportCost_AUD"] = _money_value(import_cost)
         record["dailyExportCredit_AUD"] = _money_value(export_credit)
         record["dailySupplyCharge_AUD"] = _money_value(supply_charge)

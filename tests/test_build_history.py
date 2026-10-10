@@ -65,7 +65,7 @@ class ElectricityTariffTests(unittest.TestCase):
         self.assertEqual(final["dailyImportCost_AUD"], 0.7737)
         self.assertEqual(final["dailyExportCredit_AUD"], 0.04)
         self.assertEqual(final["dailySupplyCharge_AUD"], 0.8716)
-        self.assertEqual(final["dailyNetCost_AUD"], -0.1379)
+        self.assertEqual(final["dailyNetCost_AUD"], -1.6053)
 
     def test_zero_import_and_export_gives_negative_supply_at_any_time(self) -> None:
         snapshots = [
