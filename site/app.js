@@ -69,24 +69,41 @@ const themeColor = (property) =>
 
 function updateThemeControls() {
   const dark = document.documentElement.dataset.theme === "dark";
+  const mode = document.documentElement.dataset.themeMode ?? "auto";
   document.getElementById("theme-icon").textContent = dark ? "☀" : "☾";
-  document.getElementById("theme-label").textContent = dark ? "Light mode" : "Dark mode";
+  document.getElementById("theme-label").textContent =
+    mode === "auto" ? "Auto" : mode === "light" ? "Light" : "Dark";
   document.getElementById("theme-toggle").setAttribute(
     "aria-label",
-    `Switch to ${dark ? "light" : "dark"} mode`,
+    `Theme mode: ${mode === "auto" ? "Auto" : mode === "light" ? "Light" : "Dark"}`,
   );
   document.querySelector('meta[name="theme-color"]').content = dark ? "#10191d" : "#edf4f2";
 }
 
 function initializeThemeToggle() {
   const button = document.getElementById("theme-toggle");
+  const themeMedia = window.matchMedia("(prefers-color-scheme: dark)");
   updateThemeControls();
+  themeMedia.addEventListener("change", (event) => {
+    if (document.documentElement.dataset.themeMode !== "auto") return;
+    document.documentElement.dataset.theme = event.matches ? "dark" : "light";
+    updateThemeControls();
+    refreshChartsForTheme();
+  });
   button.addEventListener("click", () => {
-    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = nextTheme;
+    const currentMode = document.documentElement.dataset.themeMode ?? "auto";
+    const nextMode = currentMode === "auto" ? "light" : currentMode === "light" ? "dark" : "auto";
+    document.documentElement.dataset.themeMode = nextMode;
+    document.documentElement.dataset.theme = nextMode === "auto"
+      ? (themeMedia.matches ? "dark" : "light")
+      : nextMode;
     updateThemeControls();
     try {
-      localStorage.setItem("esy-theme", nextTheme);
+      if (nextMode === "auto") {
+        localStorage.removeItem("esy-theme");
+      } else {
+        localStorage.setItem("esy-theme", nextMode);
+      }
     } catch (error) {
       console.warn("Could not save the theme preference.", error);
     }

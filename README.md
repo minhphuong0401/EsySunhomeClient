@@ -55,9 +55,9 @@ range; the battery state-of-charge chart is in a separate section with its own
 date range. Both ranges default to the latest seven days and can be selected
 within the dashboard's 90-day history window. The energy chart uses the latest
 snapshot for each Australia/Sydney calendar day, while the battery chart shows
-individual snapshots. The dashboard supports light and dark appearance,
-follows the system preference by default, and remembers a manually selected
-theme.
+individual snapshots. The dashboard has Auto, Light, and Dark theme modes.
+Auto follows the browser's color-scheme preference, including changes while
+the page is open; manually selected modes are remembered.
 
 Electricity prices are kept in `config/electricity_tariff.json` in AUD with
 GST included: peak $0.4362/kWh, off-peak $0.2882/kWh, shoulder $0.2052/kWh,
