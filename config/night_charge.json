@@ -1,0 +1,13 @@
+{
+  "battery_capacity_kwh": 25,
+  "expected_min_soc": 30,
+  "worst_case_min_soc": 25,
+  "worst_case_load_quantile": 0.9,
+  "daily_total_min_full_days": 7,
+  "worst_case_fallback_load_factor": 1.2,
+  "charge_efficiency": 0.95,
+  "discharge_efficiency": 0.95,
+  "min_grid_charge_kwh": 1.0,
+  "history_days": 28,
+  "planning_lead_hours": 2
+}

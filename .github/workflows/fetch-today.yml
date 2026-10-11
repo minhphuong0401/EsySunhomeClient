@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+          # The night-charge planner builds its load profile from data/data.json history.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,6 +39,13 @@ jobs:
         run: |
           mkdir -p data
           python fetch_today.py > data/data.json
+
+      - name: Plan night charge (dry run)
+        continue-on-error: true
+        env:
+          SOLCAST_API_KEY: ${{ secrets.SOLCAST_API_KEY }}
+          SOLCAST_RESOURCE_ID: ${{ secrets.SOLCAST_RESOURCE_ID }}
+        run: python -m scripts.plan_night_charge
 
       - name: Update ESY token secrets
         if: always()
@@ -65,7 +74,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/data.json
+          git add data
           if git diff --cached --quiet; then
             echo "Data has not changed; nothing to commit."
             exit 0

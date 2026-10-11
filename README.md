@@ -44,6 +44,28 @@ MQTT credentials are read from device information. If unavailable, set
 `ESY_MQTT_USERNAME` and `ESY_MQTT_PASSWORD`. Do not commit credentials,
 certificates, or `.env` files.
 
+## Night-charge planner (dry run)
+
+After each fetch, `python -m scripts.plan_night_charge` decides whether the
+battery should be charged from the grid during the cheapest tariff window
+(Night Saver, 00:00–06:00) and to what SOC. It only runs from two hours before
+the window until the window ends, and it never changes the inverter mode yet.
+
+The plan simulates SOC in half-hour steps from the end of the window until the
+next window starts, using the Solcast rooftop forecast and a load profile built
+from up to 28 days of `data/data.json` history. The load profile keeps the
+median half-hourly shape and scales it to real daily totals: the median daily
+total for the expected case and the 90th-percentile daily total for the worst
+case (until 7 full days exist, the shape is used as-is and the worst case adds
+20%). Two scenarios must hold: the expected case (Solcast p50) keeps SOC at or
+above 30%, and the worst case (Solcast p10) keeps it at or above 25%.
+Settings live in `config/night_charge.json`.
+
+Add `SOLCAST_API_KEY` and `SOLCAST_RESOURCE_ID` as repository Actions secrets.
+The forecast is fetched at most once per night (unless a fetch fails) and
+cached in `data/solcast_forecast.json`; the decision is written to
+`data/night_charge_plan.json`.
+
 ## Energy dashboard
 
 The static dashboard in `site/` visualizes the most recent 90 days of
