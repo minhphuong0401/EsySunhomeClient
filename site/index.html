@@ -28,7 +28,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=14" defer></script>
+    <script src="app.js?v=15" defer></script>
   </head>
   <body>
     <main class="page">
@@ -204,6 +204,36 @@
             <div><h4>Battery state of charge</h4><p>Charge level over time</p></div>
           </div>
           <div class="chart-wrap"><canvas id="soc-chart" role="img" aria-label="Battery charge level over time"></canvas></div>
+        </article>
+      </section>
+
+      <section class="history-group" aria-labelledby="night-charge-title">
+        <header class="history-group-heading">
+          <div>
+            <p class="eyebrow">NIGHT CHARGE PLANNER · DRY RUN</p>
+            <h3 id="night-charge-title">Grid charging decisions</h3>
+            <p class="group-description">Last 5 nights · plan for 06:00–24:00 compared with what happened (no charging is performed yet)</p>
+          </div>
+        </header>
+        <article class="chart-card">
+          <div class="table-wrap">
+            <table class="plan-table">
+              <thead>
+                <tr>
+                  <th scope="col">Night</th>
+                  <th scope="col">Decision</th>
+                  <th scope="col">Grid charge</th>
+                  <th scope="col">Solar · forecast → actual</th>
+                  <th scope="col">Load · forecast → actual</th>
+                  <th scope="col">Lowest SOC · forecast (worst) → actual</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody id="night-charge-rows">
+                <tr><td colspan="7" class="plan-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </article>
       </section>
 

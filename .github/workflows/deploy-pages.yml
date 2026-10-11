@@ -47,6 +47,9 @@ jobs:
       - name: Build recent energy history
         run: python scripts/build_history.py --days 90 --output site/data/history.json
 
+      - name: Build night-charge report
+        run: python -m scripts.build_night_charge_report --nights 5 --output site/data/night_charge.json
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 

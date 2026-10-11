@@ -1,4 +1,5 @@
 const HISTORY_URL = "data/history.json";
+const NIGHT_CHARGE_URL = "data/night_charge.json";
 const DAY_MS = 24 * 60 * 60 * 1000;
 let dashboardTimezone = "Australia/Sydney";
 
@@ -451,6 +452,91 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
   };
 }
 
+function makeCell(text, className) {
+  const cell = document.createElement("td");
+  cell.textContent = text;
+  if (className) cell.className = className;
+  return cell;
+}
+
+const formatAmount = (value, suffix = "") => {
+  const number = numberOrNull(value);
+  return number === null ? "—" : `${number.toLocaleString("en-AU", { maximumFractionDigits: 1 })}${suffix}`;
+};
+
+function nightChargeVerdict(verdict, target) {
+  switch (verdict) {
+    case "ok": return ["No charge needed", "badge-good"];
+    case "missed": return [`Missed: fell below ${target}%`, "badge-bad"];
+    case "charge_needed": return ["Charge was needed", "badge-good"];
+    case "charge_not_needed": return ["Charge not needed", "badge-warn"];
+    default: return ["Pending", "badge-neutral"];
+  }
+}
+
+function renderNightChargeRows(nights, emptyMessage) {
+  const body = document.getElementById("night-charge-rows");
+  body.replaceChildren();
+  if (nights.length === 0) {
+    const row = document.createElement("tr");
+    const cell = makeCell(emptyMessage, "plan-empty");
+    cell.colSpan = 7;
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+
+  const nightFormat = new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  for (const { night, plan, actual, verdict } of nights) {
+    const [year, month, day] = night.split("-").map(Number);
+    const expected = plan.scenarios?.expected ?? {};
+    const worst = plan.scenarios?.worstCase ?? {};
+    const charging = plan.decision === "charge";
+    const [label, badgeClass] = nightChargeVerdict(verdict, expected.minSocTarget);
+
+    const decision = makeCell(charging ? `Charge to ${plan.targetSoc}%` : "No charge");
+    if (plan.warnings?.length) {
+      const warning = document.createElement("span");
+      warning.className = "plan-warning";
+      warning.textContent = "⚠";
+      warning.title = plan.warnings.join("\n");
+      decision.append(warning);
+    }
+    const result = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `badge ${badgeClass}`;
+    badge.textContent = label;
+    result.append(badge);
+
+    const row = document.createElement("tr");
+    row.append(
+      makeCell(nightFormat.format(Date.UTC(year, month - 1, day))),
+      decision,
+      makeCell(charging ? `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}` : "—"),
+      makeCell(`${formatAmount(expected.pvAfterWindow_kWh)} → ${formatAmount(actual.pv_kWh, " kWh")}`),
+      makeCell(`${formatAmount(expected.loadAfterWindow_kWh)} → ${formatAmount(actual.load_kWh, " kWh")}`),
+      makeCell(`${formatAmount(expected.minSocWithoutCharge, "%")} (${formatAmount(worst.minSocWithoutCharge, "%")}) → ${formatAmount(actual.minSoc, "%")}`),
+      result,
+    );
+    body.append(row);
+  }
+}
+
+async function loadNightChargeReport() {
+  try {
+    const response = await fetch(NIGHT_CHARGE_URL, { cache: "no-cache" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const report = await response.json();
+    renderNightChargeRows(
+      Array.isArray(report.nights) ? report.nights : [],
+      "No night-charge plans yet. Plans are made between 22:00 and 06:00.",
+    );
+  } catch (error) {
+    console.warn("Could not load the night-charge report.", error);
+    renderNightChargeRows([], "The night-charge report is unavailable.");
+  }
+}
+
 async function main() {
   if (typeof Chart === "undefined") {
     showNotice("The chart library could not be loaded. Check your network connection and reload the page.");
@@ -480,3 +566,4 @@ async function main() {
 
 initializeThemeToggle();
 main();
+loadNightChargeReport();

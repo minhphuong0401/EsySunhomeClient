@@ -262,6 +262,19 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .chart-wrap-tall { height: 320px; }
 .soc-range { flex-shrink: 0; }
 
+.table-wrap { position: relative; overflow-x: auto; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.plan-table th, .plan-table td { padding: 10px 12px; border-bottom: 1px solid var(--chart-grid); text-align: left; white-space: nowrap; }
+.plan-table th { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; }
+.plan-table tbody tr:last-child td { border-bottom: 0; }
+.plan-table .plan-empty { color: var(--muted); text-align: center; }
+.plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
+.badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge-good { background: var(--series-solar-fill); color: var(--series-solar); }
+.badge-bad { background: var(--series-battery-discharge-fill); color: var(--series-battery-discharge); }
+.badge-warn { background: var(--series-export-fill); color: var(--series-export); }
+.badge-neutral { background: var(--input-surface); color: var(--muted); }
+
 .footer { margin-top: 24px; color: var(--muted); font-size: 10px; }
 .notice { margin: 16px 0 0; padding: 14px 16px; border: 1px solid rgb(209 138 38 / 35%); border-radius: 14px; background: var(--surface-strong); color: var(--ink); font-size: 13px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 

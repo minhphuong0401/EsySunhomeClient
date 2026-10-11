@@ -66,6 +66,14 @@ The forecast is fetched at most once per night (unless a fetch fails) and
 cached in `data/solcast_forecast.json`; the decision is written to
 `data/night_charge_plan.json`.
 
+The dashboard's "Grid charging decisions" table shows the last plan made for
+each of the last 5 nights next to what actually happened between 06:00 and
+midnight: solar, load, and the lowest SOC. The result compares the actual
+lowest SOC with the 30% target, so a "no charge" night that dipped below it is
+marked as missed, and a "charge" night that stayed above it as not needed. The
+Pages workflow generates this from the Git history with
+`python -m scripts.build_night_charge_report`.
+
 ## Energy dashboard
 
 The static dashboard in `site/` visualizes the most recent 90 days of

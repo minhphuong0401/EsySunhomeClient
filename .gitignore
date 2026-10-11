@@ -9,3 +9,4 @@ __pycache__/
 *.key
 *.crt
 site/data/history.json
+site/data/night_charge.json

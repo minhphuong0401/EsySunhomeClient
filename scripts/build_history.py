@@ -126,7 +126,7 @@ def load_tariff(path: Path = TARIFF_PATH) -> Tariff:
     )
 
 
-def _git_snapshot_contents(since: datetime) -> list[tuple[str, bytes]]:
+def _git_snapshot_contents(since: datetime, path: str = DATA_PATH) -> list[tuple[str, bytes]]:
     revisions = subprocess.run(
         [
             "git",
@@ -134,7 +134,7 @@ def _git_snapshot_contents(since: datetime) -> list[tuple[str, bytes]]:
             f"--since={since.isoformat()}",
             "--format=%H",
             "--",
-            DATA_PATH,
+            path,
         ],
         cwd=REPOSITORY_ROOT,
         check=True,
@@ -145,7 +145,7 @@ def _git_snapshot_contents(since: datetime) -> list[tuple[str, bytes]]:
     if not revisions:
         return []
 
-    requests = "".join(f"{revision}:{DATA_PATH}\n" for revision in revisions)
+    requests = "".join(f"{revision}:{path}\n" for revision in revisions)
     output = subprocess.run(
         ["git", "cat-file", "--batch"],
         cwd=REPOSITORY_ROOT,
@@ -159,7 +159,7 @@ def _git_snapshot_contents(since: datetime) -> list[tuple[str, bytes]]:
     for revision in revisions:
         header = stream.readline().decode("ascii").strip().split()
         if len(header) != 3 or header[1] != "blob":
-            raise RuntimeError(f"Could not read {DATA_PATH} from commit {revision}.")
+            raise RuntimeError(f"Could not read {path} from commit {revision}.")
 
         content = stream.read(int(header[2]))
         if stream.read(1) != b"\n":
