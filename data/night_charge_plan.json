@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-12T18:15:28Z",
+  "generatedAt": "2026-10-12T18:30:39Z",
   "dryRun": true,
   "decision": "charge",
   "targetSoc": 100,
-  "gridCharge_kWh": 9.37,
+  "gridCharge_kWh": 9.32,
   "estimatedChargeCost_AUD": 0.75,
   "batterySoc": 65.0,
   "window": {
@@ -16,15 +16,15 @@
       "minSocTarget": 30,
       "pvAfterWindow_kWh": 22.68,
       "loadAfterWindow_kWh": 19.32,
-      "projectedSocAtWindowEnd": 64.5,
+      "projectedSocAtWindowEnd": 64.7,
       "requiredSocAtWindowEnd": 41,
-      "minSocWithoutCharge": 54.0
+      "minSocWithoutCharge": 54.2
     },
     "worstCase": {
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 1.98,
       "loadAfterWindow_kWh": 23.19,
-      "projectedSocAtWindowEnd": 64.4,
+      "projectedSocAtWindowEnd": 64.6,
       "requiredSocAtWindowEnd": 100,
       "minSocWithoutCharge": 0.0
     }
