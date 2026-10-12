@@ -297,7 +297,7 @@ def build_plan(
 
     scenarios = {
         "expected": ("pv_estimate", profile.expected, config.expected_min_soc),
-        "worstCase": ("pv_estimate10", profile.worst, config.worst_case_min_soc),
+        "worstCase": ("pv_estimate", profile.worst, config.worst_case_min_soc),
     }
     results: dict[str, dict[str, Any]] = {}
     for name, (pv_key, load, floor) in scenarios.items():

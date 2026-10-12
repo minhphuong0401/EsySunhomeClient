@@ -122,6 +122,20 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertGreaterEqual(plan["scenarios"]["worstCase"]["minSocWithoutCharge"], 25)
         self.assertEqual(plan["warnings"], [])
 
+    def test_worst_case_uses_p50_pv_with_high_load(self) -> None:
+        now = self._local(2026, 10, 11, 23, 30)
+        window = planning_window(now, self.tariff, 2)
+        forecast = _forecast(now, 30, {hour: (6.0, 0.0) for hour in range(8, 16)}, self.tz)
+        profile = LoadProfile([0.5] * 48, [0.6] * 48, 7, 7)
+
+        plan = build_plan(now, 70, window, self.config, self.tariff, profile, forecast, [])
+
+        worst = plan["scenarios"]["worstCase"]
+        self.assertEqual(worst["pvAfterWindow_kWh"], plan["scenarios"]["expected"]["pvAfterWindow_kWh"])
+        self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
+        self.assertEqual(plan["decision"], "no_charge")
+
+
     def test_cloudy_day_charges_to_cover_evening(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
         window = planning_window(now, self.tariff, 2)
