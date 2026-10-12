@@ -1,40 +1,44 @@
 {
-  "generatedAt": "2026-10-11T18:45:33Z",
+  "generatedAt": "2026-10-12T11:02:12Z",
   "dryRun": true,
-  "decision": "no_charge",
-  "targetSoc": null,
-  "gridCharge_kWh": 0.0,
-  "estimatedChargeCost_AUD": 0.0,
+  "decision": "charge",
+  "targetSoc": 100,
+  "gridCharge_kWh": 9.13,
+  "estimatedChargeCost_AUD": 0.73,
   "batterySoc": 73.0,
   "window": {
-    "start": "2026-10-11T13:00:00Z",
-    "end": "2026-10-11T19:00:00Z",
-    "horizonEnd": "2026-10-12T13:00:00Z"
+    "start": "2026-10-12T13:00:00Z",
+    "end": "2026-10-12T19:00:00Z",
+    "horizonEnd": "2026-10-13T13:00:00Z"
   },
   "scenarios": {
     "expected": {
       "minSocTarget": 30,
-      "pvAfterWindow_kWh": 43.91,
-      "loadAfterWindow_kWh": 19.87,
-      "projectedSocAtWindowEnd": 72.8,
-      "requiredSocAtWindowEnd": 46,
-      "minSocWithoutCharge": 57.2
+      "pvAfterWindow_kWh": 22.68,
+      "loadAfterWindow_kWh": 19.31,
+      "projectedSocAtWindowEnd": 66.6,
+      "requiredSocAtWindowEnd": 41,
+      "minSocWithoutCharge": 56.1
     },
     "worstCase": {
       "minSocTarget": 25,
-      "pvAfterWindow_kWh": 29.5,
-      "loadAfterWindow_kWh": 23.85,
-      "projectedSocAtWindowEnd": 72.8,
-      "requiredSocAtWindowEnd": 46,
-      "minSocWithoutCharge": 52.8
+      "pvAfterWindow_kWh": 1.98,
+      "loadAfterWindow_kWh": 23.18,
+      "projectedSocAtWindowEnd": 65.3,
+      "requiredSocAtWindowEnd": 100,
+      "minSocWithoutCharge": 0.0
     }
   },
   "forecastFetchedAt": "2026-10-11T11:10:43Z",
   "loadHistoryDays": 6,
   "fullLoadHistoryDays": 5,
   "dailyLoad_kWh": {
-    "expected": 20.93,
-    "worstCase": 25.11
+    "expected": 20.36,
+    "worstCase": 24.43
   },
-  "warnings": []
+  "warnings": [
+    "Solcast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-10-11T11:10:43Z.",
+    "Even a full battery may drop below 25% in the worstCase scenario.",
+    "No Solcast forecast for 3 half-hour slots; assumed zero PV."
+  ]
 }
