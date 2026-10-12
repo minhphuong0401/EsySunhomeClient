@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-12T17:15:30Z",
+  "generatedAt": "2026-10-12T17:30:40Z",
   "dryRun": true,
   "decision": "charge",
   "targetSoc": 100,
-  "gridCharge_kWh": 9.34,
-  "estimatedChargeCost_AUD": 0.75,
-  "batterySoc": 66.0,
+  "gridCharge_kWh": 9.53,
+  "estimatedChargeCost_AUD": 0.76,
+  "batterySoc": 65.0,
   "window": {
     "start": "2026-10-12T13:00:00Z",
     "end": "2026-10-12T19:00:00Z",
@@ -16,15 +16,15 @@
       "minSocTarget": 30,
       "pvAfterWindow_kWh": 22.68,
       "loadAfterWindow_kWh": 19.32,
-      "projectedSocAtWindowEnd": 64.8,
+      "projectedSocAtWindowEnd": 64.0,
       "requiredSocAtWindowEnd": 41,
-      "minSocWithoutCharge": 54.3
+      "minSocWithoutCharge": 53.5
     },
     "worstCase": {
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 1.98,
       "loadAfterWindow_kWh": 23.19,
-      "projectedSocAtWindowEnd": 64.5,
+      "projectedSocAtWindowEnd": 63.8,
       "requiredSocAtWindowEnd": 100,
       "minSocWithoutCharge": 0.0
     }
@@ -34,7 +34,7 @@
   "fullLoadHistoryDays": 6,
   "dailyLoad_kWh": {
     "expected": 20.37,
-    "worstCase": 24.45
+    "worstCase": 24.44
   },
   "warnings": [
     "Solcast refresh failed (HTTP Error 429: TooManyRequests); using forecast fetched at 2026-10-11T11:10:43Z.",
