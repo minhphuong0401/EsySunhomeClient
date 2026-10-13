@@ -50,6 +50,9 @@ After each fetch, `python -m scripts.plan_night_charge` decides whether the
 battery should be charged from the grid during the cheapest tariff window
 (Night Saver, 00:00–06:00) and to what SOC. It only runs from two hours before
 the window until the window ends, and it never changes the inverter mode yet.
+When manually dispatching the Fetch today's energy data workflow, set
+"Run the planner outside its normal time window?" to "Yes" to plan for the next
+Night Saver window instead. The default is "No".
 
 The plan simulates SOC in half-hour steps from the end of the window until the
 next window starts, using the Solcast rooftop forecast and a load profile built

@@ -72,6 +72,12 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertIsNone(planning_window(self._local(2026, 10, 11, 21, 59), self.tariff, 2))
         self.assertIsNone(planning_window(self._local(2026, 10, 12, 6, 0), self.tariff, 2))
 
+    def test_forced_planning_window_targets_the_next_night_saver_period(self) -> None:
+        now = self._local(2026, 10, 12, 12, 0)
+        start, end = self._local(2026, 10, 13, 0, 0), self._local(2026, 10, 13, 6, 0)
+
+        self.assertEqual(planning_window(now, self.tariff, 2, force=True), (start, end))
+
     def test_load_profile_resets_at_midnight_and_skips_long_gaps(self) -> None:
         snapshots = []
         for day in (10, 11):

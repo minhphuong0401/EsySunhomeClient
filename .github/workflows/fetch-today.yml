@@ -2,6 +2,15 @@ name: Fetch today's energy data
 
 on:
   workflow_dispatch:
+    inputs:
+      force_night_charge:
+        description: Run the planner outside its normal time window?
+        required: true
+        type: choice
+        options:
+          - "No"
+          - "Yes"
+        default: "No"
 
 permissions:
   contents: write
@@ -45,6 +54,7 @@ jobs:
         env:
           SOLCAST_API_KEY: ${{ secrets.SOLCAST_API_KEY }}
           SOLCAST_RESOURCE_ID: ${{ secrets.SOLCAST_RESOURCE_ID }}
+          FORCE_NIGHT_CHARGE: ${{ inputs.force_night_charge }}
         run: python -m scripts.plan_night_charge
 
       - name: Update ESY token secrets

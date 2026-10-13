@@ -102,8 +102,13 @@ def cheap_window(tariff: Tariff) -> tuple[int, int, float]:
     return period.start_minute, period.end_minute, float(period.rate)
 
 
-def planning_window(now: datetime, tariff: Tariff, lead_hours: float) -> tuple[datetime, datetime] | None:
-    """Return the UTC (start, end) of the cheap window to plan for, or None outside planning time."""
+def planning_window(
+    now: datetime,
+    tariff: Tariff,
+    lead_hours: float,
+    force: bool = False,
+) -> tuple[datetime, datetime] | None:
+    """Return the UTC cheap window to plan for, or None outside planning time unless forced."""
     start_minute, end_minute, _ = cheap_window(tariff)
     local_today = now.astimezone(tariff.timezone).date()
     for day in (local_today, local_today + timedelta(days=1)):
@@ -112,6 +117,13 @@ def planning_window(now: datetime, tariff: Tariff, lead_hours: float) -> tuple[d
         end = (midnight + timedelta(minutes=end_minute)).astimezone(timezone.utc)
         if start - timedelta(hours=lead_hours) <= now < end:
             return start, end
+    if force:
+        for day in (local_today, local_today + timedelta(days=1)):
+            midnight = datetime.combine(day, time.min, tzinfo=tariff.timezone)
+            start = (midnight + timedelta(minutes=start_minute)).astimezone(timezone.utc)
+            end = (midnight + timedelta(minutes=end_minute)).astimezone(timezone.utc)
+            if start > now:
+                return start, end
     return None
 
 
@@ -370,7 +382,8 @@ def main() -> int:
         config = load_config()
         current = json.loads(DATA_FILE.read_text(encoding="utf-8"))
         now = _parse_timestamp(current.get("mqttCurrentTime"), "working tree")
-        window = planning_window(now, tariff, config.planning_lead_hours)
+        force = os.environ.get("FORCE_NIGHT_CHARGE", "No").strip().lower() == "yes"
+        window = planning_window(now, tariff, config.planning_lead_hours, force=force)
         if window is None:
             print("Outside the night-charge planning window; nothing to do.")
             return 0
