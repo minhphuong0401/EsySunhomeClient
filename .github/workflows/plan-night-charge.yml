@@ -1,0 +1,79 @@
+name: Plan night charge (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Plan the next Night Saver window now, or recompute the plan for an earlier night.
+        required: true
+        type: choice
+        options:
+          - next-night
+          - replay
+        default: next-night
+      night_date:
+        description: Local Night Saver date to recompute (YYYY-MM-DD). Only used with "replay".
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shared with the 15-minute data workflow so their pushes to main never race.
+  group: fetch-today-main
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # The planner reads data/data.json and plan history from Git.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Plan night charge (dry run)
+        env:
+          PV_LATITUDE: ${{ vars.PV_LATITUDE }}
+          PV_LONGITUDE: ${{ vars.PV_LONGITUDE }}
+          PV_TILT: ${{ vars.PV_TILT }}
+          PV_AZIMUTH: ${{ vars.PV_AZIMUTH }}
+          PV_KWP: ${{ vars.PV_KWP }}
+          PV_INVERTER_KW: ${{ vars.PV_INVERTER_KW }}
+          PV_SYSTEM_LOSS: ${{ vars.PV_SYSTEM_LOSS }}
+          MODE: ${{ inputs.mode }}
+          NIGHT_DATE: ${{ inputs.night_date }}
+        run: |
+          if [[ "$MODE" == "replay" ]]; then
+            if [[ -z "$NIGHT_DATE" ]]; then
+              echo "::error::Enter the night date (YYYY-MM-DD) to recompute."
+              exit 1
+            fi
+            python -m scripts.plan_night_charge --replay-night-date "$NIGHT_DATE"
+          else
+            FORCE_NIGHT_CHARGE=Yes python -m scripts.plan_night_charge
+          fi
+
+      - name: Commit updated plan
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "Plan has not changed; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update night-charge plan"
+          git push origin HEAD:main

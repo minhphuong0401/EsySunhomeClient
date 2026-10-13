@@ -2,20 +2,6 @@ name: Fetch today's energy data
 
 on:
   workflow_dispatch:
-    inputs:
-      force_night_charge:
-        description: Run the planner outside its normal time window?
-        required: true
-        type: choice
-        options:
-          - "No"
-          - "Yes"
-        default: "No"
-      replay_night_date:
-        description: Recompute an existing plan for this local Night Saver date (YYYY-MM-DD).
-        required: false
-        type: string
-        default: ""
 
 permissions:
   contents: write
@@ -64,14 +50,7 @@ jobs:
           PV_KWP: ${{ vars.PV_KWP }}
           PV_INVERTER_KW: ${{ vars.PV_INVERTER_KW }}
           PV_SYSTEM_LOSS: ${{ vars.PV_SYSTEM_LOSS }}
-          FORCE_NIGHT_CHARGE: ${{ inputs.force_night_charge }}
-          REPLAY_NIGHT_DATE: ${{ inputs.replay_night_date }}
-        run: |
-          if [[ -n "$REPLAY_NIGHT_DATE" ]]; then
-            python -m scripts.plan_night_charge --replay-night-date "$REPLAY_NIGHT_DATE"
-          else
-            python -m scripts.plan_night_charge
-          fi
+        run: python -m scripts.plan_night_charge
 
       - name: Update ESY token secrets
         if: always()

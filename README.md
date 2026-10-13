@@ -50,14 +50,14 @@ After each fetch, `python -m scripts.plan_night_charge` decides whether the
 battery should be charged from the grid during the cheapest tariff window
 (Night Saver, 00:00–06:00) and to what SOC. It only runs from two hours before
 the window until the window ends, and it never changes the inverter mode yet.
-When manually dispatching the Fetch today's energy data workflow, set
-"Run the planner outside its normal time window?" to "Yes" to plan for the next
-Night Saver window instead. The default is "No".
-To recompute a previous night with the archived energy snapshot, enter its local
-date in "Recompute an existing plan..." (for example, `2026-10-13`). The PV
-forecast is rebuilt from Open-Meteo's archived model runs (Historical Forecast
-API). This updates the stored plan for that night; it does not change the
-measured actual minimum SOC.
+To plan or recompute outside that schedule, run the "Plan night charge
+(manual)" workflow. It does not fetch ESY data or rotate tokens; it uses the
+latest `data/data.json` on `main`. Choose `next-night` to plan the next Night
+Saver window now, or `replay` with a local date (for example, `2026-10-13`) to
+recompute that night's plan from the archived energy snapshot. For a replay the
+PV forecast is rebuilt from Open-Meteo's archived model runs (Historical
+Forecast API). This updates the stored plan for that night; it does not change
+the measured actual minimum SOC.
 
 The plan simulates SOC in half-hour steps from the end of the window until the
 next window starts, using the PV forecast from `forecast.py` and a load profile
