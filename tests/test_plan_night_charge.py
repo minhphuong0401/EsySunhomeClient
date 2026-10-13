@@ -43,6 +43,7 @@ class NightChargePlannerTests(unittest.TestCase):
         cls.tz = cls.tariff.timezone
         cls.config = PlannerConfig(
             battery_capacity_kwh=25,
+            battery_min_soc=15,
             expected_min_soc=30,
             worst_case_min_soc=25,
             worst_case_pv_factor=0.75,
@@ -189,6 +190,8 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertEqual(plan["decision"], "charge")
         self.assertEqual(plan["targetSoc"], 100)
         self.assertTrue(any("full battery" in warning for warning in plan["warnings"]))
+        # The inverter stops discharging at battery_min_soc instead of draining to 0%.
+        self.assertEqual(plan["scenarios"]["expected"]["minSocWithoutCharge"], 15)
 
 
 if __name__ == "__main__":

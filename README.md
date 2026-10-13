@@ -67,7 +67,9 @@ total for the expected case and the 90th-percentile daily total for the worst
 case (until 7 full days exist, the shape is used as-is and the worst case adds
 20%). Two scenarios must hold: the expected case (forecast PV) keeps SOC at or
 above 30%, and the worst case (high load, forecast PV scaled by
-`worst_case_pv_factor`, 75% by default) keeps it at or above 25%.
+`worst_case_pv_factor`, 75% by default) keeps it at or above 20%.
+The simulation stops discharging at `battery_min_soc` (the inverter's lowest
+SOC limit, 15%); below that the grid supplies the house.
 Settings live in `config/night_charge.json`.
 
 `forecast.py` models the system with pvlib from Open-Meteo weather. It reads

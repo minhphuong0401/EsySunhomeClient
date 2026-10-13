@@ -273,6 +273,10 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-comparison-label { color: var(--muted); }
 .plan-comparison-value { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
+.plan-trend { margin-right: 5px; font-size: 10px; cursor: help; }
+.plan-trend-great { color: var(--series-solar); font-size: 12px; font-weight: 700; }
+.plan-trend-good { color: var(--series-solar); }
+.plan-trend-bad { color: var(--series-battery-discharge); }
 .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
 .badge-good { background: var(--series-solar-fill); color: var(--series-solar); }
 .badge-bad { background: var(--series-battery-discharge-fill); color: var(--series-battery-discharge); }

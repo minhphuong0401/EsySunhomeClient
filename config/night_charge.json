@@ -1,5 +1,6 @@
 {
   "battery_capacity_kwh": 25,
+  "battery_min_soc": 15,
   "expected_min_soc": 30,
   "worst_case_min_soc": 20,
   "worst_case_pv_factor": 0.75,

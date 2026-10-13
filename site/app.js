@@ -462,7 +462,7 @@ function makeCell(text, className) {
 function makeComparisonCell(rows) {
   const cell = document.createElement("td");
   cell.className = "plan-comparison";
-  for (const [label, value] of rows) {
+  for (const [label, value, trend] of rows) {
     const row = document.createElement("div");
     row.className = "plan-comparison-row";
     const rowLabel = document.createElement("span");
@@ -470,11 +470,42 @@ function makeComparisonCell(rows) {
     rowLabel.textContent = label;
     const rowValue = document.createElement("span");
     rowValue.className = "plan-comparison-value";
-    rowValue.textContent = value;
+    if (trend) {
+      const icon = document.createElement("span");
+      icon.className = `plan-trend plan-trend-${trend.tone}`;
+      icon.textContent = trend.symbol;
+      icon.title = trend.title;
+      icon.setAttribute("aria-label", trend.title);
+      rowValue.append(icon);
+    }
+    rowValue.append(value);
     row.append(rowLabel, rowValue);
     cell.append(row);
   }
   return cell;
+}
+
+// The arrow shows actual vs forecast; the colour shows whether that is good for the battery.
+function actualTrend(actual, forecast, higherIsGood) {
+  const actualValue = numberOrNull(actual);
+  const forecastValue = numberOrNull(forecast);
+  if (actualValue === null || forecastValue === null) return null;
+  const higher = actualValue >= forecastValue;
+  return {
+    symbol: higher ? "▲" : "▼",
+    tone: higher === higherIsGood ? "good" : "bad",
+    title: higher ? "At or above forecast" : "Below forecast",
+  };
+}
+
+function lowestSocTrend(actual, expected, worst) {
+  const actualValue = numberOrNull(actual);
+  const expectedValue = numberOrNull(expected);
+  const worstValue = numberOrNull(worst);
+  if (actualValue === null || expectedValue === null || worstValue === null) return null;
+  if (actualValue >= expectedValue) return { symbol: "★", tone: "great", title: "At or above the expected forecast" };
+  if (actualValue > worstValue) return { symbol: "✓", tone: "good", title: "Between the worst case and expected forecasts" };
+  return { symbol: "✗", tone: "bad", title: "At or below the worst-case forecast" };
 }
 
 const formatAmount = (value, suffix = "") => {
@@ -533,18 +564,18 @@ function renderNightChargeRows(nights, emptyMessage) {
       makeCell(charging ? `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}` : "—"),
       makeComparisonCell([
         ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
-        ["Actual", formatAmount(actual.pv_kWh, " kWh")],
+        ["Actual", formatAmount(actual.pv_kWh, " kWh"), actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true)],
       ]),
       makeComparisonCell([
         ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
-        ["06–24 actual", formatAmount(actual.load_kWh, " kWh")],
+        ["06–24 actual", formatAmount(actual.load_kWh, " kWh"), actualTrend(actual.load_kWh, expected.loadAfterWindow_kWh, false)],
         ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
-        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh")],
+        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh"), actualTrend(actual.loadDay_kWh, plan.dailyLoad_kWh?.expected, false)],
       ]),
       makeComparisonCell([
         ["Forecast · expected", formatAmount(expected.minSocWithoutCharge, "%")],
         ["Forecast · worst case", formatAmount(worst.minSocWithoutCharge, "%")],
-        ["Actual", formatAmount(actual.minSoc, "%")],
+        ["Actual", formatAmount(actual.minSoc, "%"), lowestSocTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge)],
       ]),
       result,
     );

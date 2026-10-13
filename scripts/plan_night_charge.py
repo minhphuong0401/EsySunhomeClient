@@ -53,6 +53,7 @@ class LoadProfile:
 @dataclass(frozen=True)
 class PlannerConfig:
     battery_capacity_kwh: float
+    battery_min_soc: float
     expected_min_soc: float
     worst_case_min_soc: float
     worst_case_pv_factor: float
@@ -262,6 +263,8 @@ def _scenario_slots(
 def _simulate(start_soc: float, slots: list[tuple[float, float]], config: PlannerConfig) -> tuple[float, float]:
     """Return (end SOC %, minimum SOC %) after applying the slots."""
     capacity = config.battery_capacity_kwh
+    # The inverter stops discharging at its SOC limit; the grid covers the rest.
+    cutoff = config.battery_min_soc / 100 * capacity
     energy = start_soc / 100 * capacity
     lowest = energy
     for pv, load in slots:
@@ -269,7 +272,7 @@ def _simulate(start_soc: float, slots: list[tuple[float, float]], config: Planne
         if net >= 0:
             energy = min(capacity, energy + net * config.charge_efficiency)
         else:
-            energy = max(0.0, energy + net / config.discharge_efficiency)
+            energy = max(min(energy, cutoff), energy + net / config.discharge_efficiency)
         lowest = min(lowest, energy)
     return energy / capacity * 100, lowest / capacity * 100
 
