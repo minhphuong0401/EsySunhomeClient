@@ -6,6 +6,7 @@ Run from the repository root with ``python -m scripts.plan_night_charge``.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
@@ -31,6 +32,8 @@ CONFIG_PATH = REPOSITORY_ROOT / "config" / "night_charge.json"
 DATA_FILE = REPOSITORY_ROOT / "data" / "data.json"
 FORECAST_FILE = REPOSITORY_ROOT / "data" / "solcast_forecast.json"
 PLAN_FILE = REPOSITORY_ROOT / "data" / "night_charge_plan.json"
+PLAN_HISTORY_PATH = "data/night_charge_plan.json"
+FORECAST_HISTORY_PATH = "data/solcast_forecast.json"
 SOLCAST_URL = "https://api.solcast.com.au/rooftop_sites/{resource_id}/forecasts?format=json&hours=48"
 SLOT = timedelta(minutes=30)
 SLOTS_PER_DAY = 48
@@ -360,14 +363,17 @@ def build_plan(
     }
 
 
-def _load_history(since: datetime) -> list[tuple[datetime, float]]:
+def _load_history(since: datetime, before: datetime) -> list[tuple[datetime, float]]:
     snapshots: list[tuple[datetime, float]] = []
     for revision, content in _git_snapshot_contents(since):
         try:
             record = json.loads(content)
+            timestamp = _parse_timestamp(record.get("mqttCurrentTime"), revision)
+            if timestamp >= before:
+                continue
             snapshots.append(
                 (
-                    _parse_timestamp(record.get("mqttCurrentTime"), revision),
+                    timestamp,
                     float(record["totalConsumptionToday_kWh"]),
                 )
             )
@@ -376,27 +382,130 @@ def _load_history(since: datetime) -> list[tuple[datetime, float]]:
     return snapshots
 
 
+def _replay_inputs(
+    night: date,
+    tariff: Tariff,
+    config: PlannerConfig,
+) -> tuple[
+    datetime,
+    dict[str, Any],
+    list[tuple[datetime, float]],
+    dict[str, Any],
+    tuple[datetime, datetime],
+]:
+    start_minute, end_minute, _ = cheap_window(tariff)
+    midnight = datetime.combine(night, time.min, tzinfo=tariff.timezone)
+    window_start = (midnight + timedelta(minutes=start_minute)).astimezone(timezone.utc)
+    window_end = (midnight + timedelta(minutes=end_minute)).astimezone(timezone.utc)
+    start_text = _iso(window_start)
+    since = window_start - timedelta(days=config.history_days + 2)
+
+    stored_plans: list[dict[str, Any]] = []
+    for revision, content in _git_snapshot_contents(since, PLAN_HISTORY_PATH):
+        try:
+            plan = json.loads(content)
+            if plan["window"]["start"] == start_text:
+                stored_plans.append(plan)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            continue
+    if not stored_plans:
+        raise ValueError(f"No stored night-charge plan found for {night.isoformat()}.")
+
+    original = max(stored_plans, key=lambda item: _parse_utc(item["generatedAt"]))
+    generated_at = _parse_utc(original["generatedAt"])
+
+    current: dict[str, Any] | None = None
+    history: list[tuple[datetime, float]] = []
+    for revision, content in _git_snapshot_contents(generated_at - timedelta(days=config.history_days), "data/data.json"):
+        try:
+            record = json.loads(content)
+            timestamp = _parse_timestamp(record.get("mqttCurrentTime"), revision)
+            if timestamp == generated_at:
+                current = record
+            elif timestamp < generated_at:
+                history.append((timestamp, float(record["totalConsumptionToday_kWh"])))
+        except (AttributeError, KeyError, TypeError, ValueError):
+            continue
+    if current is None:
+        raise ValueError(f"No archived energy snapshot matches the original plan time {generated_at.isoformat()}.")
+
+    forecast_time = original.get("forecastFetchedAt")
+    forecast: dict[str, Any] | None = None
+    for revision, content in _git_snapshot_contents(
+        generated_at - timedelta(days=config.history_days + 2),
+        FORECAST_HISTORY_PATH,
+    ):
+        try:
+            candidate = json.loads(content)
+            if candidate.get("fetchedAt") == forecast_time:
+                forecast = candidate
+                break
+        except (AttributeError, TypeError, ValueError):
+            continue
+    if forecast is None:
+        raise ValueError(f"No archived Solcast forecast matches {forecast_time!r}.")
+
+    original_window = (_parse_utc(original["window"]["start"]), _parse_utc(original["window"]["end"]))
+    if original_window != (window_start, window_end):
+        raise ValueError(f"The stored plan for {night.isoformat()} does not match the configured tariff window.")
+    history.append((generated_at, float(current["totalConsumptionToday_kWh"])))
+    return generated_at, current, history, forecast, original_window
+
+
+def _replay_plan(night: date, tariff: Tariff, config: PlannerConfig) -> dict[str, Any]:
+    now, current, history, forecast, window = _replay_inputs(night, tariff, config)
+    profile = build_load_profile(history, tariff.timezone, config)
+    warnings: list[str] = []
+    plan = build_plan(
+        now,
+        float(current["batterySoc_percent"]),
+        window,
+        config,
+        tariff,
+        profile,
+        forecast,
+        warnings,
+    )
+    return plan
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--replay-night-date",
+        type=date.fromisoformat,
+        help="Recompute an existing plan for this local Night Saver date using archived inputs (YYYY-MM-DD).",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=PLAN_FILE,
+        help="Plan output path (default: data/night_charge_plan.json).",
+    )
+    args = parser.parse_args()
     try:
         tariff = load_tariff()
         config = load_config()
-        current = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-        now = _parse_timestamp(current.get("mqttCurrentTime"), "working tree")
-        force = os.environ.get("FORCE_NIGHT_CHARGE", "No").strip().lower() == "yes"
-        window = planning_window(now, tariff, config.planning_lead_hours, force=force)
-        if window is None:
-            print("Outside the night-charge planning window; nothing to do.")
-            return 0
+        if args.replay_night_date is not None:
+            plan = _replay_plan(args.replay_night_date, tariff, config)
+        else:
+            current = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+            now = _parse_timestamp(current.get("mqttCurrentTime"), "working tree")
+            force = os.environ.get("FORCE_NIGHT_CHARGE", "No").strip().lower() == "yes"
+            window = planning_window(now, tariff, config.planning_lead_hours, force=force)
+            if window is None:
+                print("Outside the night-charge planning window; nothing to do.")
+                return 0
 
-        history = _load_history(now - timedelta(days=config.history_days))
-        history.append((now, float(current["totalConsumptionToday_kWh"])))
-        profile = build_load_profile(history, tariff.timezone, config)
-        warnings: list[str] = []
-        forecast = load_forecast(now, window[0] - timedelta(hours=config.planning_lead_hours), warnings)
-        plan = build_plan(
-            now, float(current["batterySoc_percent"]), window, config, tariff, profile, forecast, warnings
-        )
-        PLAN_FILE.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
+            history = _load_history(now - timedelta(days=config.history_days), now)
+            history.append((now, float(current["totalConsumptionToday_kWh"])))
+            profile = build_load_profile(history, tariff.timezone, config)
+            warnings = []
+            forecast = load_forecast(now, window[0] - timedelta(hours=config.planning_lead_hours), warnings)
+            plan = build_plan(
+                now, float(current["batterySoc_percent"]), window, config, tariff, profile, forecast, warnings
+            )
+        args.output.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
     except (OSError, subprocess.CalledProcessError, ValueError, RuntimeError, KeyError, TypeError) as error:
         print(f"Could not plan night charge: {error}", file=sys.stderr)
         return 1

@@ -11,6 +11,11 @@ on:
           - "No"
           - "Yes"
         default: "No"
+      replay_night_date:
+        description: Recompute an existing plan for this local Night Saver date (YYYY-MM-DD).
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -55,7 +60,13 @@ jobs:
           SOLCAST_API_KEY: ${{ secrets.SOLCAST_API_KEY }}
           SOLCAST_RESOURCE_ID: ${{ secrets.SOLCAST_RESOURCE_ID }}
           FORCE_NIGHT_CHARGE: ${{ inputs.force_night_charge }}
-        run: python -m scripts.plan_night_charge
+          REPLAY_NIGHT_DATE: ${{ inputs.replay_night_date }}
+        run: |
+          if [[ -n "$REPLAY_NIGHT_DATE" ]]; then
+            python -m scripts.plan_night_charge --replay-night-date "$REPLAY_NIGHT_DATE"
+          else
+            python -m scripts.plan_night_charge
+          fi
 
       - name: Update ESY token secrets
         if: always()

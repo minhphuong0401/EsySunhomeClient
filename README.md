@@ -53,6 +53,10 @@ the window until the window ends, and it never changes the inverter mode yet.
 When manually dispatching the Fetch today's energy data workflow, set
 "Run the planner outside its normal time window?" to "Yes" to plan for the next
 Night Saver window instead. The default is "No".
+To recompute a previous night with the archived energy snapshot and Solcast
+forecast, enter its local date in "Recompute an existing plan..." (for example,
+`2026-10-13`). This updates the stored plan for that night; it does not change
+the measured actual minimum SOC.
 
 The plan simulates SOC in half-hour steps from the end of the window until the
 next window starts, using the Solcast rooftop forecast and a load profile built
