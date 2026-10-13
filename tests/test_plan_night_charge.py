@@ -1,4 +1,4 @@
-from __future__ import annotations
+from _future_ import annotations
 
 import unittest
 from dataclasses import replace
@@ -72,12 +72,6 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertIsNone(planning_window(self._local(2026, 10, 11, 21, 59), self.tariff, 2))
         self.assertIsNone(planning_window(self._local(2026, 10, 12, 6, 0), self.tariff, 2))
 
-    def test_forced_planning_window_targets_the_next_night_saver_period(self) -> None:
-        now = self._local(2026, 10, 12, 12, 0)
-        start, end = self._local(2026, 10, 13, 0, 0), self._local(2026, 10, 13, 6, 0)
-
-        self.assertEqual(planning_window(now, self.tariff, 2, force=True), (start, end))
-
     def test_load_profile_resets_at_midnight_and_skips_long_gaps(self) -> None:
         snapshots = []
         for day in (10, 11):
@@ -128,7 +122,7 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertGreaterEqual(plan["scenarios"]["worstCase"]["minSocWithoutCharge"], 25)
         self.assertEqual(plan["warnings"], [])
 
-    def test_worst_case_uses_p50_pv_with_high_load(self) -> None:
+    def test_worst_case_blends_pv_between_p50_and_p10(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
         window = planning_window(now, self.tariff, 2)
         forecast = _forecast(now, 30, {hour: (6.0, 0.0) for hour in range(8, 16)}, self.tz)
@@ -137,10 +131,9 @@ class NightChargePlannerTests(unittest.TestCase):
         plan = build_plan(now, 70, window, self.config, self.tariff, profile, forecast, [])
 
         worst = plan["scenarios"]["worstCase"]
-        self.assertEqual(worst["pvAfterWindow_kWh"], plan["scenarios"]["expected"]["pvAfterWindow_kWh"])
+        self.assertAlmostEqual(worst["pvAfterWindow_kWh"], plan["scenarios"]["expected"]["pvAfterWindow_kWh"] / 2)
         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertEqual(plan["decision"], "no_charge")
-
 
     def test_cloudy_day_charges_to_cover_evening(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
@@ -165,5 +158,5 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertTrue(any("full battery" in warning for warning in plan["warnings"]))
 
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     unittest.main()
