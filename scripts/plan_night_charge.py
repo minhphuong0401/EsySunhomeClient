@@ -4,7 +4,8 @@
 Run from the repository root with ``python -m scripts.plan_night_charge``.
 """
 
-from _future_ import annotations
+from __future__ import annotations
+
 
 import json
 import os
