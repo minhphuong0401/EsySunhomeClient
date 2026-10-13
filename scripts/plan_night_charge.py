@@ -31,18 +31,12 @@ DATA_FILE = REPOSITORY_ROOT / "data" / "data.json"
 FORECAST_FILE = REPOSITORY_ROOT / "data" / "pv_forecast.json"
 PLAN_FILE = REPOSITORY_ROOT / "data" / "night_charge_plan.json"
 PLAN_HISTORY_PATH = "data/night_charge_plan.json"
-# Plans made before the switch to forecast.py reference the old Solcast cache.
-FORECAST_HISTORY_PATHS = ("data/pv_forecast.json", "data/solcast_forecast.json")
 SLOT = timedelta(minutes=30)
 SLOTS_PER_DAY = 48
 MAX_SNAPSHOT_GAP = timedelta(hours=2)
 MAX_PLAUSIBLE_LOAD_KW = 20.0
 MIN_SLOT_COVERAGE = 0.5
 FULL_DAY_LAST_SNAPSHOT = time(23, 30)
-# Worst-case PV sits this far from p50 towards p10 (~p25); full p10 plus high load is far too pessimistic.
-WORST_CASE_PV_BLEND = 0.5
-# forecast.py has no p10, so assume p10 is this fraction of its estimate.
-PV_P10_RATIO = 0.5
 PV_FORECAST_DAYS = 3
 # Weather models update every few hours, so fetching more often than this rarely changes the forecast.
 FORECAST_MAX_AGE = timedelta(hours=1)
@@ -61,6 +55,7 @@ class PlannerConfig:
     battery_capacity_kwh: float
     expected_min_soc: float
     worst_case_min_soc: float
+    worst_case_pv_factor: float
     worst_case_load_quantile: float
     daily_total_min_full_days: int
     worst_case_fallback_load_factor: float
@@ -207,14 +202,15 @@ def build_load_profile(
     )
 
 
-def fetch_pv_forecast() -> list[dict[str, Any]]:
+def fetch_pv_forecast(start: date | None = None, end: date | None = None) -> list[dict[str, Any]]:
+    """Fetch the live forecast, or archived Open-Meteo forecasts for the UTC dates start..end."""
     # Imported lazily so the rest of the planner (and its tests) do not need pandas/pvlib.
     import forecast as pv_forecast
 
-    return [
-        {**item, "pv_estimate10": round(item["pv_estimate"] * PV_P10_RATIO, 4)}
-        for item in pv_forecast.half_hour_forecasts(pv_forecast.load_system(), PV_FORECAST_DAYS)
-    ]
+    system = pv_forecast.load_system()
+    if start is None or end is None:
+        return pv_forecast.half_hour_forecasts(system, PV_FORECAST_DAYS)
+    return pv_forecast.half_hour_forecasts(system, start=start, end=end)
 
 
 def load_forecast(now: datetime, refresh_after: datetime, warnings: list[str]) -> dict[str, Any]:
@@ -242,7 +238,7 @@ def _scenario_slots(
     start: datetime,
     end: datetime,
     pv_by_slot: dict[datetime, dict[str, Any]],
-    pv_key: str,
+    pv_factor: float,
     load: list[float],
     tz: ZoneInfo,
     missing: set[datetime],
@@ -257,7 +253,7 @@ def _scenario_slots(
         forecast = pv_by_slot.get(slot_start)
         if forecast is None:
             missing.add(slot_start)
-        pv_kwh = forecast[pv_key] * 0.5 if forecast else 0.0
+        pv_kwh = forecast["pv_estimate"] * 0.5 * pv_factor if forecast else 0.0
         slots.append((pv_kwh * fraction, load[_slot_index(slot_start, tz)] * fraction))
         cursor = slot_end
     return slots
@@ -297,24 +293,17 @@ def build_plan(
 ) -> dict[str, Any]:
     window_start, window_end = window
     horizon_end = (window_start.astimezone(tariff.timezone) + timedelta(days=1)).astimezone(timezone.utc)
-    pv_by_slot = {
-        _parse_utc(item["period_end"]) - SLOT: {
-            **item,
-            "pv_worst": item["pv_estimate"]
-            - WORST_CASE_PV_BLEND * (item["pv_estimate"] - item["pv_estimate10"]),
-        }
-        for item in forecast["forecasts"]
-    }
+    pv_by_slot = {_parse_utc(item["period_end"]) - SLOT: item for item in forecast["forecasts"]}
     missing: set[datetime] = set()
 
     scenarios = {
-        "expected": ("pv_estimate", profile.expected, config.expected_min_soc),
-        "worstCase": ("pv_worst", profile.worst, config.worst_case_min_soc),
+        "expected": (1.0, profile.expected, config.expected_min_soc),
+        "worstCase": (config.worst_case_pv_factor, profile.worst, config.worst_case_min_soc),
     }
     results: dict[str, dict[str, Any]] = {}
-    for name, (pv_key, load, floor) in scenarios.items():
-        before = _scenario_slots(now, window_end, pv_by_slot, pv_key, load, tariff.timezone, missing)
-        after = _scenario_slots(window_end, horizon_end, pv_by_slot, pv_key, load, tariff.timezone, missing)
+    for name, (pv_factor, load, floor) in scenarios.items():
+        before = _scenario_slots(now, window_end, pv_by_slot, pv_factor, load, tariff.timezone, missing)
+        after = _scenario_slots(window_end, horizon_end, pv_by_slot, pv_factor, load, tariff.timezone, missing)
         projected = _simulate(soc, before, config)[0]
         required = _required_soc(after, floor, config)
         if required is None:
@@ -426,24 +415,12 @@ def _replay_inputs(
     if current is None:
         raise ValueError(f"No archived energy snapshot matches the original plan time {generated_at.isoformat()}.")
 
-    forecast_time = original.get("forecastFetchedAt")
-    forecast: dict[str, Any] | None = None
-    for path in FORECAST_HISTORY_PATHS:
-        for revision, content in _git_snapshot_contents(
-            generated_at - timedelta(days=config.history_days + 2),
-            path,
-        ):
-            try:
-                candidate = json.loads(content)
-                if candidate.get("fetchedAt") == forecast_time:
-                    forecast = candidate
-                    break
-            except (AttributeError, TypeError, ValueError):
-                continue
-        if forecast is not None:
-            break
-    if forecast is None:
-        raise ValueError(f"No archived PV forecast matches {forecast_time!r}.")
+    # Rebuild the PV forecast from Open-Meteo's archived model runs, whatever the original plan used.
+    forecast = {
+        "fetchedAt": _iso(datetime.now(timezone.utc).replace(microsecond=0)),
+        "source": "open-meteo-historical",
+        "forecasts": fetch_pv_forecast(generated_at.date(), (window_end + timedelta(days=1)).date()),
+    }
 
     original_window = (_parse_utc(original["window"]["start"]), _parse_utc(original["window"]["end"]))
     if original_window != (window_start, window_end):
@@ -474,7 +451,8 @@ def main() -> int:
     parser.add_argument(
         "--replay-night-date",
         type=date.fromisoformat,
-        help="Recompute an existing plan for this local Night Saver date using archived inputs (YYYY-MM-DD).",
+        help="Recompute an existing plan for this local Night Saver date using archived inputs and "
+        "Open-Meteo's archived forecasts (YYYY-MM-DD).",
     )
     parser.add_argument(
         "--output",
@@ -506,7 +484,7 @@ def main() -> int:
                 now, float(current["batterySoc_percent"]), window, config, tariff, profile, forecast, warnings
             )
         args.output.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
-    except (OSError, subprocess.CalledProcessError, ValueError, RuntimeError, KeyError, TypeError) as error:
+    except (OSError, subprocess.CalledProcessError, ValueError, RuntimeError, KeyError, TypeError, ImportError) as error:
         print(f"Could not plan night charge: {error}", file=sys.stderr)
         return 1
 

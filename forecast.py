@@ -13,12 +13,15 @@ import sys
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, fields
+from datetime import date
 from typing import Any
 
 import pandas as pd
 import pvlib
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+# Archived model runs (also covering the next few days), used to rebuild past plans.
+HISTORICAL_FORECAST_URL = "https://historical-forecast-api.open-meteo.com/v1/forecast"
 MAX_FORECAST_DAYS = 16
 GAMMA_PDC = -0.004
 
@@ -43,21 +46,30 @@ def load_system() -> PvSystem:
     return PvSystem(**{field: float(os.environ[name]) for field, name in names.items()})
 
 
-def forecast_power(system: PvSystem, days: int) -> pd.Series:
-    """Return forecast AC power (kW) per hour, indexed by the hour's UTC midpoint."""
-    if not 1 <= days <= MAX_FORECAST_DAYS:
+def forecast_power(
+    system: PvSystem, days: int = 3, start: date | None = None, end: date | None = None
+) -> pd.Series:
+    """Return AC power (kW) per hour, indexed by the hour's UTC midpoint.
+
+    Uses the live forecast for the next `days`, or archived forecasts for the UTC dates start..end.
+    """
+    if start is not None and end is not None:
+        url, period = HISTORICAL_FORECAST_URL, {"start_date": start.isoformat(), "end_date": end.isoformat()}
+    elif 1 <= days <= MAX_FORECAST_DAYS:
+        url, period = OPEN_METEO_URL, {"forecast_days": days}
+    else:
         raise ValueError(f"days must be between 1 and {MAX_FORECAST_DAYS}")
     query = urllib.parse.urlencode(
         {
             "latitude": system.latitude,
             "longitude": system.longitude,
             "hourly": "temperature_2m,wind_speed_10m,shortwave_radiation,direct_normal_irradiance,diffuse_radiation",
-            "forecast_days": days,
+            **period,
             "timezone": "UTC",
             "wind_speed_unit": "ms",
         }
     )
-    with urllib.request.urlopen(f"{OPEN_METEO_URL}?{query}", timeout=30) as response:
+    with urllib.request.urlopen(f"{url}?{query}", timeout=30) as response:
         raw = json.load(response)
 
     df = pd.DataFrame(raw["hourly"])
@@ -98,10 +110,12 @@ def forecast_power(system: PvSystem, days: int) -> pd.Series:
     return (power_w / 1000).fillna(0)
 
 
-def half_hour_forecasts(system: PvSystem, days: int) -> list[dict[str, Any]]:
+def half_hour_forecasts(
+    system: PvSystem, days: int = 3, start: date | None = None, end: date | None = None
+) -> list[dict[str, Any]]:
     """Return the forecast as 30-minute slots (UTC period_end, average kW)."""
     forecasts = []
-    for midpoint, kw in forecast_power(system, days).items():
+    for midpoint, kw in forecast_power(system, days, start, end).items():
         for period_end in (midpoint, midpoint + pd.Timedelta(minutes=30)):
             forecasts.append(
                 {

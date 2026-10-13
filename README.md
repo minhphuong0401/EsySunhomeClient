@@ -53,10 +53,11 @@ the window until the window ends, and it never changes the inverter mode yet.
 When manually dispatching the Fetch today's energy data workflow, set
 "Run the planner outside its normal time window?" to "Yes" to plan for the next
 Night Saver window instead. The default is "No".
-To recompute a previous night with the archived energy snapshot and PV
-forecast, enter its local date in "Recompute an existing plan..." (for example,
-`2026-10-13`). This updates the stored plan for that night; it does not change
-the measured actual minimum SOC.
+To recompute a previous night with the archived energy snapshot, enter its local
+date in "Recompute an existing plan..." (for example, `2026-10-13`). The PV
+forecast is rebuilt from Open-Meteo's archived model runs (Historical Forecast
+API). This updates the stored plan for that night; it does not change the
+measured actual minimum SOC.
 
 The plan simulates SOC in half-hour steps from the end of the window until the
 next window starts, using the PV forecast from `forecast.py` and a load profile
@@ -65,8 +66,8 @@ median half-hourly shape and scales it to real daily totals: the median daily
 total for the expected case and the 90th-percentile daily total for the worst
 case (until 7 full days exist, the shape is used as-is and the worst case adds
 20%). Two scenarios must hold: the expected case (forecast PV) keeps SOC at or
-above 30%, and the worst case (high load, 75% of forecast PV) keeps it at or
-above 25%.
+above 30%, and the worst case (high load, forecast PV scaled by
+`worst_case_pv_factor`, 75% by default) keeps it at or above 25%.
 Settings live in `config/night_charge.json`.
 
 `forecast.py` models the system with pvlib from Open-Meteo weather. It reads

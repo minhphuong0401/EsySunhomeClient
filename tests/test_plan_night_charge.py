@@ -22,17 +22,15 @@ from scripts.plan_night_charge import (
 )
 
 
-def _forecast(start: datetime, hours: int, pv_kw_by_local_hour: dict[int, tuple[float, float]], tz) -> dict:
+def _forecast(start: datetime, hours: int, pv_kw_by_local_hour: dict[int, float], tz) -> dict:
     forecasts = []
     for index in range(hours * 2):
         period_end = start + timedelta(minutes=30 * (index + 1))
         local_hour = (period_end - timedelta(minutes=30)).astimezone(tz).hour
-        p50, p10 = pv_kw_by_local_hour.get(local_hour, (0.0, 0.0))
         forecasts.append(
             {
                 "period_end": period_end.isoformat().replace("+00:00", "Z"),
-                "pv_estimate": p50,
-                "pv_estimate10": p10,
+                "pv_estimate": pv_kw_by_local_hour.get(local_hour, 0.0),
             }
         )
     return {"fetchedAt": start.isoformat().replace("+00:00", "Z"), "forecasts": forecasts}
@@ -47,6 +45,7 @@ class NightChargePlannerTests(unittest.TestCase):
             battery_capacity_kwh=25,
             expected_min_soc=30,
             worst_case_min_soc=25,
+            worst_case_pv_factor=0.75,
             worst_case_load_quantile=0.9,
             daily_total_min_full_days=7,
             worst_case_fallback_load_factor=1.2,
@@ -126,7 +125,7 @@ class NightChargePlannerTests(unittest.TestCase):
     def test_sunny_day_needs_no_grid_charge(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
         window = planning_window(now, self.tariff, 2)
-        forecast = _forecast(now, 30, {hour: (6.0, 6.0) for hour in range(8, 16)}, self.tz)
+        forecast = _forecast(now, 30, {hour: 6.0 for hour in range(8, 16)}, self.tz)
 
         plan = build_plan(now, 70, window, self.config, self.tariff, self.flat_profile, forecast, [])
 
@@ -135,19 +134,18 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertGreaterEqual(plan["scenarios"]["worstCase"]["minSocWithoutCharge"], 25)
         self.assertEqual(plan["warnings"], [])
 
-    def test_worst_case_blends_pv_between_p50_and_p10(self) -> None:
+    def test_worst_case_scales_forecast_pv_by_configured_factor(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
         window = planning_window(now, self.tariff, 2)
-        forecast = _forecast(now, 30, {hour: (6.0, 0.0) for hour in range(8, 16)}, self.tz)
+        forecast = _forecast(now, 30, {hour: 6.0 for hour in range(8, 16)}, self.tz)
         profile = LoadProfile([0.5] * 48, [0.6] * 48, 7, 7)
 
         plan = build_plan(now, 70, window, self.config, self.tariff, profile, forecast, [])
 
         worst = plan["scenarios"]["worstCase"]
-        self.assertAlmostEqual(worst["pvAfterWindow_kWh"], plan["scenarios"]["expected"]["pvAfterWindow_kWh"] / 2)
+        self.assertAlmostEqual(worst["pvAfterWindow_kWh"], plan["scenarios"]["expected"]["pvAfterWindow_kWh"] * 0.75)
         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertEqual(plan["decision"], "no_charge")
-
 
     def test_forecast_comes_from_forecast_py_and_is_cached(self) -> None:
         fake = types.ModuleType("forecast")
@@ -165,7 +163,7 @@ class NightChargePlannerTests(unittest.TestCase):
             refreshed = load_forecast(now + timedelta(hours=1), now - timedelta(hours=1), warnings)
 
         self.assertEqual(forecast["source"], "open-meteo")
-        self.assertEqual(forecast["forecasts"], [{"period_end": "2026-10-14T01:00:00Z", "pv_estimate": 4.0, "pv_estimate10": 2.0}])
+        self.assertEqual(forecast["forecasts"], [{"period_end": "2026-10-14T01:00:00Z", "pv_estimate": 4.0}])
         self.assertEqual(reused, forecast)
         self.assertEqual(refreshed["forecasts"][0]["pv_estimate"], 3.0)
         self.assertEqual(warnings, [])
@@ -173,7 +171,7 @@ class NightChargePlannerTests(unittest.TestCase):
     def test_cloudy_day_charges_to_cover_evening(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)
         window = planning_window(now, self.tariff, 2)
-        forecast = _forecast(now, 30, {hour: (1.5, 1.0) for hour in range(8, 16)}, self.tz)
+        forecast = _forecast(now, 30, {hour: 1.5 for hour in range(8, 16)}, self.tz)
 
         plan = build_plan(now, 50, window, self.config, self.tariff, self.flat_profile, forecast, [])
 
