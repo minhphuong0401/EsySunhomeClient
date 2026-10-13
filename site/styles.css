@@ -268,6 +268,10 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-table th { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; }
 .plan-table tbody tr:last-child td { border-bottom: 0; }
 .plan-table .plan-empty { color: var(--muted); text-align: center; }
+.plan-table .plan-comparison { min-width: 150px; white-space: normal; }
+.plan-comparison-row { display: flex; justify-content: space-between; gap: 12px; line-height: 1.6; }
+.plan-comparison-label { color: var(--muted); }
+.plan-comparison-value { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
 .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
 .badge-good { background: var(--series-solar-fill); color: var(--series-solar); }

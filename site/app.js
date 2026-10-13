@@ -459,6 +459,24 @@ function makeCell(text, className) {
   return cell;
 }
 
+function makeComparisonCell(rows) {
+  const cell = document.createElement("td");
+  cell.className = "plan-comparison";
+  for (const [label, value] of rows) {
+    const row = document.createElement("div");
+    row.className = "plan-comparison-row";
+    const rowLabel = document.createElement("span");
+    rowLabel.className = "plan-comparison-label";
+    rowLabel.textContent = label;
+    const rowValue = document.createElement("span");
+    rowValue.className = "plan-comparison-value";
+    rowValue.textContent = value;
+    row.append(rowLabel, rowValue);
+    cell.append(row);
+  }
+  return cell;
+}
+
 const formatAmount = (value, suffix = "") => {
   const number = numberOrNull(value);
   return number === null ? "—" : `${number.toLocaleString("en-AU", { maximumFractionDigits: 1 })}${suffix}`;
@@ -513,9 +531,19 @@ function renderNightChargeRows(nights, emptyMessage) {
       makeCell(nightFormat.format(Date.UTC(year, month - 1, day))),
       decision,
       makeCell(charging ? `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}` : "—"),
-      makeCell(`${formatAmount(expected.pvAfterWindow_kWh)} → ${formatAmount(actual.pv_kWh, " kWh")}`),
-      makeCell(`${formatAmount(expected.loadAfterWindow_kWh)} → ${formatAmount(actual.load_kWh, " kWh")}`),
-      makeCell(`${formatAmount(expected.minSocWithoutCharge, "%")} (${formatAmount(worst.minSocWithoutCharge, "%")}) → ${formatAmount(actual.minSoc, "%")}`),
+      makeComparisonCell([
+        ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
+        ["Actual", formatAmount(actual.pv_kWh, " kWh")],
+      ]),
+      makeComparisonCell([
+        ["Forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
+        ["Actual", formatAmount(actual.load_kWh, " kWh")],
+      ]),
+      makeComparisonCell([
+        ["Forecast · expected", formatAmount(expected.minSocWithoutCharge, "%")],
+        ["Forecast · worst case", formatAmount(worst.minSocWithoutCharge, "%")],
+        ["Actual", formatAmount(actual.minSoc, "%")],
+      ]),
       result,
     );
     body.append(row);
