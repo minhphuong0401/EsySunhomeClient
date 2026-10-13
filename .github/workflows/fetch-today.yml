@@ -57,8 +57,13 @@ jobs:
       - name: Plan night charge (dry run)
         continue-on-error: true
         env:
-          SOLCAST_API_KEY: ${{ secrets.SOLCAST_API_KEY }}
-          SOLCAST_RESOURCE_ID: ${{ secrets.SOLCAST_RESOURCE_ID }}
+          PV_LATITUDE: ${{ vars.PV_LATITUDE }}
+          PV_LONGITUDE: ${{ vars.PV_LONGITUDE }}
+          PV_TILT: ${{ vars.PV_TILT }}
+          PV_AZIMUTH: ${{ vars.PV_AZIMUTH }}
+          PV_KWP: ${{ vars.PV_KWP }}
+          PV_INVERTER_KW: ${{ vars.PV_INVERTER_KW }}
+          PV_SYSTEM_LOSS: ${{ vars.PV_SYSTEM_LOSS }}
           FORCE_NIGHT_CHARGE: ${{ inputs.force_night_charge }}
           REPLAY_NIGHT_DATE: ${{ inputs.replay_night_date }}
         run: |

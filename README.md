@@ -53,24 +53,30 @@ the window until the window ends, and it never changes the inverter mode yet.
 When manually dispatching the Fetch today's energy data workflow, set
 "Run the planner outside its normal time window?" to "Yes" to plan for the next
 Night Saver window instead. The default is "No".
-To recompute a previous night with the archived energy snapshot and Solcast
+To recompute a previous night with the archived energy snapshot and PV
 forecast, enter its local date in "Recompute an existing plan..." (for example,
 `2026-10-13`). This updates the stored plan for that night; it does not change
 the measured actual minimum SOC.
 
 The plan simulates SOC in half-hour steps from the end of the window until the
-next window starts, using the Solcast rooftop forecast and a load profile built
-from up to 28 days of `data/data.json` history. The load profile keeps the
+next window starts, using the PV forecast from `forecast.py` and a load profile
+built from up to 28 days of `data/data.json` history. The load profile keeps the
 median half-hourly shape and scales it to real daily totals: the median daily
 total for the expected case and the 90th-percentile daily total for the worst
 case (until 7 full days exist, the shape is used as-is and the worst case adds
-20%). Two scenarios must hold: the expected case (Solcast p50) keeps SOC at or
-above 30%, and the worst case (Solcast p10) keeps it at or above 25%.
+20%). Two scenarios must hold: the expected case (forecast PV) keeps SOC at or
+above 30%, and the worst case (high load, 75% of forecast PV) keeps it at or
+above 25%.
 Settings live in `config/night_charge.json`.
 
-Add `SOLCAST_API_KEY` and `SOLCAST_RESOURCE_ID` as repository Actions secrets.
-The forecast is fetched at most once per night (unless a fetch fails) and
-cached in `data/solcast_forecast.json`; the decision is written to
+`forecast.py` models the system with pvlib from Open-Meteo weather. It reads
+these repository Actions variables: `PV_LATITUDE`, `PV_LONGITUDE`, `PV_TILT`,
+`PV_AZIMUTH` (pvlib convention: 0 = north, 90 = east, 180 = south, 270 = west),
+`PV_KWP` (panel DC rating), `PV_INVERTER_KW` (inverter AC limit) and
+`PV_SYSTEM_LOSS` (fraction, e.g. `0.15`). Export the same variables and run
+`python forecast.py 7` to print a forecast for up to 16 days. The planner
+refreshes the forecast at most once an hour and caches it in
+`data/pv_forecast.json`; the decision is written to
 `data/night_charge_plan.json`.
 
 The dashboard's "Grid charging decisions" table shows the last plan made for

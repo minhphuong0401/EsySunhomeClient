@@ -11,8 +11,6 @@ import json
 import os
 import subprocess
 import sys
-import urllib.parse
-import urllib.request
 from dataclasses import dataclass, fields
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -30,11 +28,11 @@ from scripts.build_history import (
 
 CONFIG_PATH = REPOSITORY_ROOT / "config" / "night_charge.json"
 DATA_FILE = REPOSITORY_ROOT / "data" / "data.json"
-FORECAST_FILE = REPOSITORY_ROOT / "data" / "solcast_forecast.json"
+FORECAST_FILE = REPOSITORY_ROOT / "data" / "pv_forecast.json"
 PLAN_FILE = REPOSITORY_ROOT / "data" / "night_charge_plan.json"
 PLAN_HISTORY_PATH = "data/night_charge_plan.json"
-FORECAST_HISTORY_PATH = "data/solcast_forecast.json"
-SOLCAST_URL = "https://api.solcast.com.au/rooftop_sites/{resource_id}/forecasts?format=json&hours=48"
+# Plans made before the switch to forecast.py reference the old Solcast cache.
+FORECAST_HISTORY_PATHS = ("data/pv_forecast.json", "data/solcast_forecast.json")
 SLOT = timedelta(minutes=30)
 SLOTS_PER_DAY = 48
 MAX_SNAPSHOT_GAP = timedelta(hours=2)
@@ -43,6 +41,11 @@ MIN_SLOT_COVERAGE = 0.5
 FULL_DAY_LAST_SNAPSHOT = time(23, 30)
 # Worst-case PV sits this far from p50 towards p10 (~p25); full p10 plus high load is far too pessimistic.
 WORST_CASE_PV_BLEND = 0.5
+# forecast.py has no p10, so assume p10 is this fraction of its estimate.
+PV_P10_RATIO = 0.5
+PV_FORECAST_DAYS = 3
+# Weather models update every few hours, so fetching more often than this rarely changes the forecast.
+FORECAST_MAX_AGE = timedelta(hours=1)
 
 
 @dataclass(frozen=True)
@@ -204,46 +207,31 @@ def build_load_profile(
     )
 
 
-def _parse_period_end(value: str) -> datetime:
-    # Solcast returns 7 fractional digits, e.g. 2026-10-11T04:00:00.0000000Z.
-    return datetime.fromisoformat(value[:19]).replace(tzinfo=timezone.utc)
+def fetch_pv_forecast() -> list[dict[str, Any]]:
+    # Imported lazily so the rest of the planner (and its tests) do not need pandas/pvlib.
+    import forecast as pv_forecast
 
-
-def fetch_solcast(api_key: str, resource_id: str) -> list[dict[str, Any]]:
-    request = urllib.request.Request(
-        SOLCAST_URL.format(resource_id=urllib.parse.quote(resource_id, safe="")),
-        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
-    )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = json.load(response)
     return [
-        {
-            "period_end": _iso(_parse_period_end(item["period_end"])),
-            "pv_estimate": float(item["pv_estimate"]),
-            "pv_estimate10": float(item["pv_estimate10"]),
-        }
-        for item in payload["forecasts"]
+        {**item, "pv_estimate10": round(item["pv_estimate"] * PV_P10_RATIO, 4)}
+        for item in pv_forecast.half_hour_forecasts(pv_forecast.load_system(), PV_FORECAST_DAYS)
     ]
 
 
 def load_forecast(now: datetime, refresh_after: datetime, warnings: list[str]) -> dict[str, Any]:
-    """Reuse the cached forecast if fetched after refresh_after; Solcast hobbyist plans allow ~10 calls/day."""
+    """Reuse the cached forecast if it was fetched after refresh_after and is under FORECAST_MAX_AGE old."""
     cached: dict[str, Any] | None = None
     if FORECAST_FILE.exists():
         cached = json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
-        if _parse_utc(cached["fetchedAt"]) >= refresh_after:
+        fetched = _parse_utc(cached["fetchedAt"])
+        if fetched >= refresh_after and now - fetched < FORECAST_MAX_AGE:
             return cached
 
-    api_key = os.environ.get("SOLCAST_API_KEY")
-    resource_id = os.environ.get("SOLCAST_RESOURCE_ID")
     try:
-        if not api_key or not resource_id:
-            raise ValueError("SOLCAST_API_KEY and SOLCAST_RESOURCE_ID must be set")
-        forecast = {"fetchedAt": _iso(now), "forecasts": fetch_solcast(api_key, resource_id)}
-    except (OSError, ValueError, KeyError, TypeError) as error:
+        forecast = {"fetchedAt": _iso(now), "source": "open-meteo", "forecasts": fetch_pv_forecast()}
+    except (OSError, ValueError, KeyError, TypeError, ImportError) as error:
         if cached is None:
-            raise RuntimeError(f"Solcast forecast unavailable: {error}") from error
-        warnings.append(f"Solcast refresh failed ({error}); using forecast fetched at {cached['fetchedAt']}.")
+            raise RuntimeError(f"PV forecast unavailable: {error}") from error
+        warnings.append(f"PV forecast refresh failed ({error}); using forecast fetched at {cached['fetchedAt']}.")
         return cached
 
     FORECAST_FILE.write_text(json.dumps(forecast, indent=2) + "\n", encoding="utf-8")
@@ -342,7 +330,7 @@ def build_plan(
         }
 
     if missing:
-        warnings.append(f"No Solcast forecast for {len(missing)} half-hour slots; assumed zero PV.")
+        warnings.append(f"No PV forecast for {len(missing)} half-hour slots; assumed zero PV.")
 
     shortfall = max(
         max(0.0, result["requiredSocAtWindowEnd"] - result["projectedSocAtWindowEnd"])
@@ -440,19 +428,22 @@ def _replay_inputs(
 
     forecast_time = original.get("forecastFetchedAt")
     forecast: dict[str, Any] | None = None
-    for revision, content in _git_snapshot_contents(
-        generated_at - timedelta(days=config.history_days + 2),
-        FORECAST_HISTORY_PATH,
-    ):
-        try:
-            candidate = json.loads(content)
-            if candidate.get("fetchedAt") == forecast_time:
-                forecast = candidate
-                break
-        except (AttributeError, TypeError, ValueError):
-            continue
+    for path in FORECAST_HISTORY_PATHS:
+        for revision, content in _git_snapshot_contents(
+            generated_at - timedelta(days=config.history_days + 2),
+            path,
+        ):
+            try:
+                candidate = json.loads(content)
+                if candidate.get("fetchedAt") == forecast_time:
+                    forecast = candidate
+                    break
+            except (AttributeError, TypeError, ValueError):
+                continue
+        if forecast is not None:
+            break
     if forecast is None:
-        raise ValueError(f"No archived Solcast forecast matches {forecast_time!r}.")
+        raise ValueError(f"No archived PV forecast matches {forecast_time!r}.")
 
     original_window = (_parse_utc(original["window"]["start"]), _parse_utc(original["window"]["end"]))
     if original_window != (window_start, window_end):

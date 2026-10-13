@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import sys
+import tempfile
+import types
 import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from unittest import mock
 
+from scripts import plan_night_charge
 from scripts.build_history import TARIFF_PATH, load_tariff
 from scripts.plan_night_charge import (
     LoadProfile,
@@ -11,6 +17,7 @@ from scripts.plan_night_charge import (
     build_load_profile,
     build_plan,
     load_config,
+    load_forecast,
     planning_window,
 )
 
@@ -141,6 +148,27 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertEqual(plan["decision"], "no_charge")
 
+
+    def test_forecast_comes_from_forecast_py_and_is_cached(self) -> None:
+        fake = types.ModuleType("forecast")
+        fake.load_system = lambda: object()
+        fake.half_hour_forecasts = lambda system, days: [{"period_end": "2026-10-14T01:00:00Z", "pv_estimate": 4.0}]
+        now = self._local(2026, 10, 13, 22, 0)
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(sys.modules, {"forecast": fake}), \
+                mock.patch.object(plan_night_charge, "FORECAST_FILE", Path(directory) / "forecast.json"):
+            warnings: list[str] = []
+            forecast = load_forecast(now, now - timedelta(hours=1), warnings)
+            fake.half_hour_forecasts = None
+            reused = load_forecast(now + timedelta(minutes=45), now - timedelta(hours=1), warnings)
+            fake.half_hour_forecasts = lambda system, days: [{"period_end": "2026-10-14T01:00:00Z", "pv_estimate": 3.0}]
+            refreshed = load_forecast(now + timedelta(hours=1), now - timedelta(hours=1), warnings)
+
+        self.assertEqual(forecast["source"], "open-meteo")
+        self.assertEqual(forecast["forecasts"], [{"period_end": "2026-10-14T01:00:00Z", "pv_estimate": 4.0, "pv_estimate10": 2.0}])
+        self.assertEqual(reused, forecast)
+        self.assertEqual(refreshed["forecasts"][0]["pv_estimate"], 3.0)
+        self.assertEqual(warnings, [])
 
     def test_cloudy_day_charges_to_cover_evening(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)

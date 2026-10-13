@@ -1,84 +1,135 @@
+#!/usr/bin/env python3
+"""Solar PV forecast from Open-Meteo weather and a pvlib PVWatts model.
+
+System settings come from PV_* environment variables (GitHub repository variables).
+Run from the repository root with ``python forecast.py [days]`` to print the forecast.
+"""
+
+from __future__ import annotations
+
 import json
+import os
+import sys
+import urllib.parse
 import urllib.request
+from dataclasses import dataclass, fields
+from typing import Any
+
 import pandas as pd
 import pvlib
 
-# --- 1. Cấu hình thông số hệ thống của bạn ---
-LAT = -33.94003
-LON = 151.110707
-PEAK_POWER_KW = 10.0  # Công suất đỉnh 10 kWp
-SYSTEM_LOSS = 0.15  # Tổn thất hệ thống (15%)
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+MAX_FORECAST_DAYS = 16
+GAMMA_PDC = -0.004
 
-TILT = 22
-AZIMUTH = 248
-TZ = "Australia/Sydney"
-url = (
-    "https://api.open-meteo.com/v1/forecast"
-    f"?latitude={LAT}&longitude={LON}"
-    "&hourly=temperature_2m,wind_speed_10m,shortwave_radiation,"
-    "direct_normal_irradiance,diffuse_radiation"
-    "&forecast_days=3&timezone=UTC&wind_speed_unit=ms"
-)
-with urllib.request.urlopen(url, timeout=30) as resp:
-    raw = json.load(resp)
 
-df = pd.DataFrame(raw["hourly"])
-df["time"] = pd.to_datetime(df["time"])
-df = df.set_index("time").tz_localize("UTC")
-df = df.rename(columns={
-    "temperature_2m": "temp_air",
-    "wind_speed_10m": "wind_speed",
-    "shortwave_radiation": "ghi",
-    "direct_normal_irradiance": "dni",
-    "diffuse_radiation": "dhi",
-})
+@dataclass(frozen=True)
+class PvSystem:
+    latitude: float
+    longitude: float
+    tilt: float
+    # pvlib convention: 0 = north, 90 = east, 180 = south, 270 = west.
+    azimuth: float
+    kwp: float
+    inverter_kw: float
+    system_loss: float
 
-# Open-Meteo trả giá trị trung bình của GIỜ TRƯỚC đó -> dịch lùi 30 phút
-# để tính vị trí mặt trời ở giữa khoảng thời gian cho chuẩn
-df.index = df.index - pd.Timedelta(minutes=30)
 
-# --- 3. Vị trí mặt trời + bức xạ trên mặt phẳng tấm pin (POA) ---
-solpos = pvlib.solarposition.get_solarposition(df.index, LAT, LON)
-dni_extra = pvlib.irradiance.get_extra_radiation(df.index)
+def load_system() -> PvSystem:
+    names = {field.name: f"PV_{field.name.upper()}" for field in fields(PvSystem)}
+    missing = [name for name in names.values() if not os.environ.get(name)]
+    if missing:
+        raise ValueError(f"Missing PV settings: {', '.join(missing)}")
+    return PvSystem(**{field: float(os.environ[name]) for field, name in names.items()})
 
-poa = pvlib.irradiance.get_total_irradiance(
-    surface_tilt=TILT,
-    surface_azimuth=AZIMUTH,  # pvlib: 0=Bắc, 90=Đông, 180=Nam
-    solar_zenith=solpos["apparent_zenith"],
-    solar_azimuth=solpos["azimuth"],
-    dni=df["dni"],
-    ghi=df["ghi"],
-    dhi=df["dhi"],
-    dni_extra=dni_extra,
-    model="haydavies",
-)
 
-# --- 4. Nhiệt độ cell + công suất DC/AC ---
-temp_params = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS["sapm"]["open_rack_glass_glass"]
-temp_cell = pvlib.temperature.sapm_cell(
-    poa["poa_global"], df["temp_air"], df["wind_speed"], **temp_params
-)
+def forecast_power(system: PvSystem, days: int) -> pd.Series:
+    """Return forecast AC power (kW) per hour, indexed by the hour's UTC midpoint."""
+    if not 1 <= days <= MAX_FORECAST_DAYS:
+        raise ValueError(f"days must be between 1 and {MAX_FORECAST_DAYS}")
+    query = urllib.parse.urlencode(
+        {
+            "latitude": system.latitude,
+            "longitude": system.longitude,
+            "hourly": "temperature_2m,wind_speed_10m,shortwave_radiation,direct_normal_irradiance,diffuse_radiation",
+            "forecast_days": days,
+            "timezone": "UTC",
+            "wind_speed_unit": "ms",
+        }
+    )
+    with urllib.request.urlopen(f"{OPEN_METEO_URL}?{query}", timeout=30) as response:
+        raw = json.load(response)
 
-pdc = pvlib.pvsystem.pvwatts_dc(
-    poa["poa_global"],   # bức xạ hiệu dụng trên mặt tấm
-    temp_cell,
-    PEAK_POWER_KW * 1000,  # pdc0
-    -0.004,                # gamma_pdc
-)
-power_w = (pdc * (1 - SYSTEM_LOSS)).clip(lower=0, upper=PEAK_POWER_KW * 1000)
+    df = pd.DataFrame(raw["hourly"])
+    df = df.set_index(pd.to_datetime(df.pop("time"))).tz_localize("UTC")
+    df = df.rename(
+        columns={
+            "temperature_2m": "temp_air",
+            "wind_speed_10m": "wind_speed",
+            "shortwave_radiation": "ghi",
+            "direct_normal_irradiance": "dni",
+            "diffuse_radiation": "dhi",
+        }
+    )
+    # Radiation is the mean of the preceding hour, so model the sun at that hour's midpoint.
+    df.index = df.index - pd.Timedelta(minutes=30)
 
-# --- 5. Kết quả ---
-forecast = pd.DataFrame({
-    "poa_W_m2": poa["poa_global"].round(0),
-    "temp_air_C": df["temp_air"],
-    "power_kW": (power_w / 1000).round(2),
-}).tz_convert(TZ)
+    solpos = pvlib.solarposition.get_solarposition(df.index, system.latitude, system.longitude)
+    poa = pvlib.irradiance.get_total_irradiance(
+        surface_tilt=system.tilt,
+        surface_azimuth=system.azimuth,
+        solar_zenith=solpos["apparent_zenith"],
+        solar_azimuth=solpos["azimuth"],
+        dni=df["dni"],
+        ghi=df["ghi"],
+        dhi=df["dhi"],
+        dni_extra=pvlib.irradiance.get_extra_radiation(df.index),
+        model="haydavies",
+    )["poa_global"].fillna(0)
+    temp_cell = pvlib.temperature.sapm_cell(
+        poa,
+        df["temp_air"],
+        df["wind_speed"],
+        **pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS["sapm"]["open_rack_glass_glass"],
+    )
+    pdc = pvlib.pvsystem.pvwatts_dc(poa, temp_cell, system.kwp * 1000, GAMMA_PDC)
+    # Panels (kWp, DC) can exceed the inverter rating, which caps AC output.
+    power_w = (pdc * (1 - system.system_loss)).clip(lower=0, upper=system.inverter_kw * 1000)
+    return (power_w / 1000).fillna(0)
 
-# Mỗi dòng = 1 giờ => kW x 1h = kWh
-daily_kwh = forecast["power_kW"].resample("D").sum().round(1)
 
-print("=== Công suất theo giờ (ban ngày) ===")
-print(forecast[forecast["power_kW"] > 0])
-print("\n=== Sản lượng dự báo theo ngày (kWh) ===")
-print(daily_kwh)
-print(f"\nTổng 3 ngày: {daily_kwh.sum():.1f} kWh")
+def half_hour_forecasts(system: PvSystem, days: int) -> list[dict[str, Any]]:
+    """Return the forecast as 30-minute slots (UTC period_end, average kW)."""
+    forecasts = []
+    for midpoint, kw in forecast_power(system, days).items():
+        for period_end in (midpoint, midpoint + pd.Timedelta(minutes=30)):
+            forecasts.append(
+                {
+                    "period_end": period_end.isoformat().replace("+00:00", "Z"),
+                    "pv_estimate": round(float(kw), 4),
+                }
+            )
+    return forecasts
+
+
+def main() -> int:
+    from scripts.build_history import load_tariff
+
+    days = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+    try:
+        power = forecast_power(load_system(), days).tz_convert(load_tariff().timezone)
+    except (OSError, ValueError, KeyError) as error:
+        print(f"Could not build PV forecast: {error}", file=sys.stderr)
+        return 1
+
+    daily_kwh = power.resample("D").sum().round(1)
+    print("=== Hourly AC power (kW, daytime) ===")
+    print(power[power > 0].round(2).to_string())
+    print("\n=== Daily forecast (kWh) ===")
+    print(daily_kwh.to_string())
+    print(f"\nTotal {days} days: {daily_kwh.sum():.1f} kWh")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
