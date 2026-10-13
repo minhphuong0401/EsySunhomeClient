@@ -407,5 +407,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     raise SystemExit(main())
