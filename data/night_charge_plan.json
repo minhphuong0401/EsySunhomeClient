@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-13T11:07:10Z",
+  "generatedAt": "2026-10-13T11:15:28Z",
   "dryRun": true,
   "decision": "charge",
   "targetSoc": 37,
-  "gridCharge_kWh": 1.42,
+  "gridCharge_kWh": 1.37,
   "estimatedChargeCost_AUD": 0.11,
   "batterySoc": 38.0,
   "window": {
@@ -15,26 +15,26 @@
     "expected": {
       "minSocTarget": 30,
       "pvAfterWindow_kWh": 48.71,
-      "loadAfterWindow_kWh": 17.62,
-      "projectedSocAtWindowEnd": 31.6,
+      "loadAfterWindow_kWh": 17.61,
+      "projectedSocAtWindowEnd": 31.8,
       "requiredSocAtWindowEnd": 37,
-      "minSocWithoutCharge": 25.4
+      "minSocWithoutCharge": 25.6
     },
     "worstCase": {
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 33.92,
-      "loadAfterWindow_kWh": 21.15,
-      "projectedSocAtWindowEnd": 30.3,
+      "loadAfterWindow_kWh": 21.13,
+      "projectedSocAtWindowEnd": 30.5,
       "requiredSocAtWindowEnd": 35,
-      "minSocWithoutCharge": 21.1
+      "minSocWithoutCharge": 21.3
     }
   },
   "forecastFetchedAt": "2026-10-13T01:24:42Z",
   "loadHistoryDays": 7,
   "fullLoadHistoryDays": 6,
   "dailyLoad_kWh": {
-    "expected": 18.69,
-    "worstCase": 22.43
+    "expected": 18.68,
+    "worstCase": 22.41
   },
   "warnings": [
     "Solcast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-10-13T01:24:42Z."
