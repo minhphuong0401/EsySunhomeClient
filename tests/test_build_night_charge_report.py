@@ -64,6 +64,7 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertEqual(outcome["minSoc"], 45)
         self.assertEqual(outcome["pv_kWh"], 35.0)
         self.assertEqual(outcome["load_kWh"], 20.0)
+        self.assertEqual(outcome["loadDay_kWh"], 22.0)
         self.assertEqual(outcome["gridImport_kWh"], 0.5)
 
     def test_outcome_is_pending_until_the_day_ends(self) -> None:
@@ -73,6 +74,7 @@ class NightChargeReportTests(unittest.TestCase):
 
         self.assertFalse(outcome["complete"])
         self.assertIsNone(outcome["load_kWh"])
+        self.assertIsNone(outcome["loadDay_kWh"])
         self.assertEqual(verdict(self._plan(12), outcome), "pending")
 
     def test_verdicts_compare_decision_with_actual_lowest_soc(self) -> None:

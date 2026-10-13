@@ -484,10 +484,10 @@ const formatAmount = (value, suffix = "") => {
 
 function nightChargeVerdict(verdict, target) {
   switch (verdict) {
-    case "ok": return ["No charge needed", "badge-good"];
-    case "missed": return [`Missed: fell below ${target}%`, "badge-bad"];
-    case "charge_needed": return ["Charge was needed", "badge-good"];
-    case "charge_not_needed": return ["Charge not needed", "badge-warn"];
+    case "ok": return ["No charge – correct", "badge-good"];
+    case "missed": return [`No charge – fell below ${target}%`, "badge-bad"];
+    case "charge_needed": return ["Charge – correct", "badge-info"];
+    case "charge_not_needed": return ["Planned charge – not needed", "badge-warn"];
     default: return ["Pending", "badge-neutral"];
   }
 }
@@ -536,8 +536,10 @@ function renderNightChargeRows(nights, emptyMessage) {
         ["Actual", formatAmount(actual.pv_kWh, " kWh")],
       ]),
       makeComparisonCell([
-        ["Forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
-        ["Actual", formatAmount(actual.load_kWh, " kWh")],
+        ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
+        ["06–24 actual", formatAmount(actual.load_kWh, " kWh")],
+        ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
+        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh")],
       ]),
       makeComparisonCell([
         ["Forecast · expected", formatAmount(expected.minSocWithoutCharge, "%")],

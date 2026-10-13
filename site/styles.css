@@ -277,6 +277,7 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .badge-good { background: var(--series-solar-fill); color: var(--series-solar); }
 .badge-bad { background: var(--series-battery-discharge-fill); color: var(--series-battery-discharge); }
 .badge-warn { background: var(--series-export-fill); color: var(--series-export); }
+.badge-info { background: var(--series-consumption-fill); color: var(--series-consumption); }
 .badge-neutral { background: var(--input-surface); color: var(--muted); }
 
 .footer { margin-top: 24px; color: var(--muted); font-size: 10px; }

@@ -82,9 +82,11 @@ refreshes the forecast at most once an hour and caches it in
 
 The dashboard's "Grid charging decisions" table shows the last plan made for
 each of the last 5 nights next to what actually happened between 06:00 and
-midnight: solar, load, and the lowest SOC. The result compares the actual
-lowest SOC with the 30% target, so a "no charge" night that dipped below it is
-marked as missed, and a "charge" night that stayed above it as not needed. The
+midnight: solar, load, and the lowest SOC. Load also shows the full day
+(00:00–24:00), forecast and actual. The result shows the decision and
+whether it was right, by comparing the actual lowest SOC with the 30% target:
+"No charge – correct" (green), "No charge – fell below 30%" (red),
+"Charge – correct" (blue) and "Planned charge – not needed" (yellow). The
 Pages workflow generates this from the Git history with
 `python -m scripts.build_night_charge_report`.
 
