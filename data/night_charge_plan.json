@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T12:12:27Z",
+  "generatedAt": "2026-10-13T12:14:03Z",
   "dryRun": true,
   "decision": "charge",
   "targetSoc": 37,
@@ -18,7 +18,7 @@
       "loadAfterWindow_kWh": 17.61,
       "projectedSocAtWindowEnd": 31.8,
       "requiredSocAtWindowEnd": 37,
-      "minSocWithoutCharge": 24.8
+      "minSocWithoutCharge": 24.9
     },
     "worstCase": {
       "minSocTarget": 25,
