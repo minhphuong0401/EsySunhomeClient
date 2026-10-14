@@ -277,11 +277,15 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-actual { font-variant-numeric: tabular-nums; font-weight: 600; }
 .plan-note { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
 .plan-table .plan-details td { padding-top: 0; white-space: normal; }
-.plan-details-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--input-surface); }
-.plan-details-list dt { color: var(--muted); font-weight: 600; }
-.plan-details-list dd { margin: 0; font-variant-numeric: tabular-nums; }
-.plan-detail-name { color: var(--muted); }
-.plan-detail-part { white-space: nowrap; }
+.plan-details-table { width: auto; border-collapse: separate; border-spacing: 0; padding: 6px 10px; border-radius: 12px; background: var(--input-surface); }
+.plan-table .plan-details-table th, .plan-table .plan-details-table td { padding: 5px 14px; border: 0; font-variant-numeric: tabular-nums; }
+.plan-table .plan-details-table thead th { font-size: 10px; text-align: right; }
+.plan-table .plan-details-table tbody th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: normal; text-align: left; }
+.plan-table .plan-details-table td { text-align: right; }
+.plan-table .plan-details-table .plan-details-actual { font-weight: 600; }
+.plan-history-table { margin-top: 10px; }
+.plan-history-table caption { padding: 0 14px 4px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; text-align: left; }
+.plan-table .plan-history-table thead th, .plan-table .plan-history-table td { text-align: left; }
 .plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
 .plan-trend { margin-right: 5px; font-size: 10px; cursor: help; }
 .plan-trend-great { color: var(--series-solar); font-size: 12px; font-weight: 700; }

@@ -150,6 +150,8 @@ class NightChargePlannerTests(unittest.TestCase):
         slots = plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"]
         self.assertEqual(len(slots), 36)
         self.assertAlmostEqual(sum(slots), plan["scenarios"]["expected"]["pvAfterWindow_kWh"])
+        load_slots = plan["scenarios"]["expected"]["loadSlotsAfterWindow_kWh"]
+        self.assertAlmostEqual(sum(load_slots), plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertEqual(plan["decision"], "no_charge")
 

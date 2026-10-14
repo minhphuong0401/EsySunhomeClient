@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 
 from scripts.build_history import TARIFF_PATH, load_tariff
-from scripts.build_night_charge_report import actual_outcome, build_report, latest_plans, verdict
+from scripts.build_night_charge_report import actual_outcome, build_report, decision_history, latest_plans, verdict
 
 
 def _iso(value: datetime) -> str:
@@ -81,15 +81,62 @@ class NightChargeReportTests(unittest.TestCase):
     def test_pending_day_compares_pv_so_far_with_forecast(self) -> None:
         plan = self._plan(12)
         plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"] = [1.0] * 36
+        plan["scenarios"]["expected"]["pvAfterWindow_kWh"] = 36.0
+        plan["scenarios"]["worstCase"] = {"pvAfterWindow_kWh": 27.0}
         snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 10, 15, 70, 9.5, 5.0, 0.2)]
 
         outcome = actual_outcome(plan, snapshots)
 
         # 06:00-10:15 covers eight full slots and half of the ninth.
         self.assertEqual(outcome["soFar"]["pvForecast_kWh"], 8.5)
+        self.assertEqual(outcome["soFar"]["pvWorstCase_kWh"], 6.38)
         self.assertEqual(outcome["soFar"]["pv_kWh"], 9.5)
         self.assertEqual(outcome["soFar"]["asOf"], _iso(self._local(2026, 10, 12, 10, 15)))
         self.assertIsNone(actual_outcome(self._plan(12), snapshots)["soFar"])
+
+    def test_pending_day_projects_end_of_day_load(self) -> None:
+        plan = self._plan(12)
+        plan["scenarios"]["expected"]["loadSlotsAfterWindow_kWh"] = [0.5] * 36
+        plan["scenarios"]["expected"]["loadAfterWindow_kWh"] = 18.0
+        plan["scenarios"]["worstCase"] = {"loadAfterWindow_kWh": 21.6}
+        snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 12, 0, 50, 9.0, 9.0, 0.2)]
+
+        so_far = actual_outcome(plan, snapshots)["soFar"]
+
+        self.assertEqual(so_far["loadForecast_kWh"], 6.0)
+        self.assertEqual(so_far["loadWorstCase_kWh"], 7.2)
+        self.assertEqual(so_far["load_kWh"], 7.0)
+        # 7 kWh used since 06:00 plus the 12 kWh still expected for 12:00-24:00.
+        self.assertEqual(so_far["loadProjected_kWh"], 19.0)
+        self.assertEqual(so_far["loadDayProjected_kWh"], 21.0)
+        self.assertNotIn("pv_kWh", so_far)
+
+    def test_decision_history_merges_runs_and_keeps_replays_separate(self) -> None:
+        def plan_at(hour: int, minute: int, decision: str, target: int | None, **extra) -> dict:
+            plan = self._plan(12, decision)
+            plan["generatedAt"] = _iso(self._local(2026, 10, 11 if hour >= 12 else 12, hour, minute))
+            plan["targetSoc"] = target
+            plan.update(extra)
+            return plan
+
+        original = plan_at(5, 45, "no_charge", None)
+        replay = dict(original, trigger="replay", replayedAt="2026-10-12T01:00:00Z", decision="charge", targetSoc=40)
+        plans = [
+            plan_at(15, 0, "charge", 35),
+            plan_at(22, 0, "charge", 35),
+            plan_at(22, 15, "charge", 35),
+            plan_at(23, 0, "no_charge", None),
+            original,
+            replay,
+        ]
+
+        history = decision_history(plans, timedelta(hours=2))
+
+        self.assertEqual([run["trigger"] for run in history], ["manual", "scheduled", "scheduled", "replay"])
+        self.assertEqual(history[1]["count"], 2)
+        self.assertEqual(history[2]["count"], 2)
+        self.assertEqual(history[3]["targetSoc"], 40)
+        self.assertEqual(latest_plans(plans, 1)[0]["replayedAt"], "2026-10-12T01:00:00Z")
 
     def test_verdicts_compare_decision_with_actual_lowest_soc(self) -> None:
         low = {"complete": True, "minSoc": 22}

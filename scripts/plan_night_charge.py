@@ -326,8 +326,9 @@ def build_plan(
             "peakSocWithoutCharge": round(peak, 1),
         }
         if name == "expected":
-            # Half-hour slots starting at the window end; the dashboard compares them with PV so far.
+            # Half-hour slots starting at the window end; the dashboard compares them with actuals so far.
             results[name]["pvSlotsAfterWindow_kWh"] = [round(pv, 3) for pv, _ in after]
+            results[name]["loadSlotsAfterWindow_kWh"] = [round(load_kwh, 3) for _, load_kwh in after]
 
     if missing:
         warnings.append(f"No PV forecast for {len(missing)} half-hour slots; assumed zero PV.")
@@ -454,6 +455,8 @@ def _replay_plan(night: date, tariff: Tariff, config: PlannerConfig) -> dict[str
         forecast,
         warnings,
     )
+    plan["trigger"] = "replay"
+    plan["replayedAt"] = _iso(datetime.now(timezone.utc).replace(microsecond=0))
     return plan
 
 
@@ -494,6 +497,8 @@ def main() -> int:
             plan = build_plan(
                 now, float(current["batterySoc_percent"]), window, config, tariff, profile, forecast, warnings
             )
+            scheduled = planning_window(now, tariff, config.planning_lead_hours) is not None
+            plan["trigger"] = "scheduled" if scheduled else "manual"
         args.output.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
     except (OSError, subprocess.CalledProcessError, ValueError, RuntimeError, KeyError, TypeError, ImportError) as error:
         print(f"Could not plan night charge: {error}", file=sys.stderr)

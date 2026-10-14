@@ -484,48 +484,79 @@ function makeActualCell(value, trend, note) {
   return cell;
 }
 
-function makeDetailLine(label, parts) {
-  const term = document.createElement("dt");
-  term.textContent = label;
-  const detail = document.createElement("dd");
-  parts.forEach(([name, value, trend], index) => {
-    if (index > 0) detail.append(" · ");
-    const part = document.createElement("span");
-    part.className = "plan-detail-part";
-    const partName = document.createElement("span");
-    partName.className = "plan-detail-name";
-    partName.textContent = `${name} `;
-    const partValue = document.createElement("strong");
-    partValue.textContent = value;
-    part.append(partName);
-    if (trend) part.append(makeTrendIcon(trend));
-    part.append(partValue);
-    detail.append(part);
+function makeDetailsTable(rows, headings = ["", "Forecast", "Worst case", "Actual"]) {
+  const table = document.createElement("table");
+  table.className = "plan-details-table";
+  const headRow = document.createElement("tr");
+  for (const heading of headings) {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = heading;
+    headRow.append(cell);
+  }
+  const head = document.createElement("thead");
+  head.append(headRow);
+  const body = document.createElement("tbody");
+  body.append(...rows);
+  table.append(head, body);
+  return table;
+}
+
+// ★ at or better than the forecast, ✓ between the forecast and worst case, ✗ at or worse than the worst case.
+function rangeTrend(actual, forecast, worst, higherIsGood = true) {
+  const values = [actual, forecast, worst].map(numberOrNull);
+  if (values.includes(null)) return null;
+  const [actualValue, forecastValue, worstValue] = higherIsGood ? values : values.map((value) => -value);
+  if (actualValue >= forecastValue) return { symbol: "★", tone: "great", title: "At or better than the forecast" };
+  if (actualValue > worstValue) return { symbol: "✓", tone: "good", title: "Between the forecast and the worst case" };
+  return { symbol: "✗", tone: "bad", title: "At or worse than the worst case" };
+}
+
+const PROJECTED_TITLE = "Projected: load so far plus the rest of today's forecast";
+const TRIGGER_LABELS = { scheduled: "Scheduled", manual: "Manual", replay: "Replay" };
+
+const formatPlanTime = (timestamp) =>
+  formatDate(timestamp, { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+function describeTrigger(trigger, replayedAt) {
+  const label = TRIGGER_LABELS[trigger] ?? "Scheduled";
+  return trigger === "replay" && replayedAt ? `${label} (run ${formatPlanTime(replayedAt)})` : label;
+}
+
+function makeHistoryTable(history) {
+  const rows = history.map((run) => {
+    const row = document.createElement("tr");
+    const time = run.count > 1
+      ? `${formatPlanTime(run.from)} – ${formatPlanTime(run.to)} (${run.count} runs)`
+      : formatPlanTime(run.from);
+    const charging = run.decision === "charge";
+    row.append(
+      makeCell(time),
+      makeCell(charging ? `Charge to ${run.targetSoc}%` : "No charge"),
+      makeCell(charging ? formatAmount(run.gridCharge_kWh, " kWh") : "—"),
+      makeCell(describeTrigger(run.trigger, run.replayedAt)),
+    );
+    return row;
   });
-  return [term, detail];
+  const table = makeDetailsTable(rows, ["Plan time", "Decision", "Grid charge", "How"]);
+  table.classList.add("plan-history-table");
+  const caption = document.createElement("caption");
+  caption.textContent = "Decision history";
+  table.prepend(caption);
+  return table;
 }
 
-// The arrow shows actual vs forecast; the colour shows whether that is good for the battery.
-function actualTrend(actual, forecast, higherIsGood) {
-  const actualValue = numberOrNull(actual);
-  const forecastValue = numberOrNull(forecast);
-  if (actualValue === null || forecastValue === null) return null;
-  const higher = actualValue >= forecastValue;
-  return {
-    symbol: higher ? "▲" : "▼",
-    tone: higher === higherIsGood ? "good" : "bad",
-    title: higher ? "At or above forecast" : "Below forecast",
-  };
-}
-
-function socRangeTrend(actual, expected, worst) {
-  const actualValue = numberOrNull(actual);
-  const expectedValue = numberOrNull(expected);
-  const worstValue = numberOrNull(worst);
-  if (actualValue === null || expectedValue === null || worstValue === null) return null;
-  if (actualValue >= expectedValue) return { symbol: "★", tone: "great", title: "At or above the expected forecast" };
-  if (actualValue > worstValue) return { symbol: "✓", tone: "good", title: "Between the worst case and expected forecasts" };
-  return { symbol: "✗", tone: "bad", title: "At or below the worst-case forecast" };
+function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected = false) {
+  const row = document.createElement("tr");
+  const name = document.createElement("th");
+  name.scope = "row";
+  name.textContent = label;
+  const actualText = formatAmount(actual, suffix);
+  const actualCell = makeCell(projected && actualText !== "—" ? `≈ ${actualText}` : actualText, "plan-details-actual");
+  if (projected) actualCell.title = PROJECTED_TITLE;
+  if (trend) actualCell.prepend(makeTrendIcon(trend));
+  row.append(name, makeCell(formatAmount(forecast, suffix)), makeCell(formatAmount(worst, suffix)), actualCell);
+  return row;
 }
 
 const formatAmount = (value, suffix = "") => {
@@ -556,7 +587,7 @@ function renderNightChargeRows(nights, emptyMessage) {
   }
 
   const nightFormat = new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-  for (const { night, plan, actual, verdict } of nights) {
+  for (const { night, plan, actual, verdict, trigger, history } of nights) {
     const [year, month, day] = night.split("-").map(Number);
     const expected = plan.scenarios?.expected ?? {};
     const worst = plan.scenarios?.worstCase ?? {};
@@ -565,14 +596,19 @@ function renderNightChargeRows(nights, emptyMessage) {
     const soFar = actual.soFar;
     const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
     const soFarNote = actual.complete ? null : "so far";
+    // Until the day ends, show where load is heading rather than a blank.
+    const projecting = !actual.complete && numberOrNull(soFar?.loadProjected_kWh) !== null;
+    const load06To24 = projecting ? soFar.loadProjected_kWh : actual.load_kWh;
+    const loadFullDay = projecting ? soFar.loadDayProjected_kWh : actual.loadDay_kWh;
 
     const trends = {
-      solar: actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true),
-      solarSoFar: soFar ? actualTrend(soFar.pv_kWh, soFar.pvForecast_kWh, true) : null,
-      load: actualTrend(actual.load_kWh, expected.loadAfterWindow_kWh, false),
-      loadDay: actualTrend(actual.loadDay_kWh, plan.dailyLoad_kWh?.expected, false),
-      lowest: socRangeTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge),
-      peak: socRangeTrend(actual.maxSoc, expected.peakSocWithoutCharge, worst.peakSocWithoutCharge),
+      solar: rangeTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh),
+      solarSoFar: soFar ? rangeTrend(soFar.pv_kWh, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh) : null,
+      load: rangeTrend(load06To24, expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, false),
+      loadSoFar: soFar ? rangeTrend(soFar.load_kWh, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, false) : null,
+      loadDay: rangeTrend(loadFullDay, plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, false),
+      lowest: rangeTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge),
+      peak: rangeTrend(actual.maxSoc, expected.peakSocWithoutCharge, worst.peakSocWithoutCharge),
     };
 
     const detailsId = `night-charge-details-${night}`;
@@ -599,6 +635,14 @@ function renderNightChargeRows(nights, emptyMessage) {
       cost.textContent = `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}`;
       decision.append(cost);
     }
+    const madeAt = document.createElement("span");
+    madeAt.className = "plan-note";
+    madeAt.textContent = `${TRIGGER_LABELS[trigger] ?? "Scheduled"} · ${formatPlanTime(plan.generatedAt)}`;
+    if (trigger === "replay") {
+      const replayedAt = plan.replayedAt ?? plan.forecastFetchedAt;
+      madeAt.title = `Recomputed${replayedAt ? ` ${formatPlanTime(replayedAt)}` : ""} from the data at the original plan time`;
+    }
+    decision.append(madeAt);
 
     const result = document.createElement("td");
     const badge = document.createElement("span");
@@ -610,49 +654,40 @@ function renderNightChargeRows(nights, emptyMessage) {
       ? makeActualCell(formatAmount(actual.pv_kWh, " kWh"), trends.solar)
       : makeActualCell(formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar, `to ${soFarTime}`);
 
+    const loadCell = projecting
+      ? makeActualCell(`≈ ${formatAmount(load06To24, " kWh")}`, trends.load, "projected")
+      : makeActualCell(formatAmount(actual.load_kWh, " kWh"), trends.load);
+    if (projecting) loadCell.title = PROJECTED_TITLE;
+
     const summary = document.createElement("tr");
     summary.className = "plan-summary";
     summary.append(
       nightCell,
       decision,
       solarCell,
-      makeActualCell(formatAmount(actual.load_kWh, " kWh"), trends.load),
+      loadCell,
       makeActualCell(formatAmount(actual.minSoc, "%"), trends.lowest, actual.minSoc == null ? null : soFarNote),
       makeActualCell(formatAmount(actual.maxSoc, "%"), trends.peak, actual.maxSoc == null ? null : soFarNote),
       result,
     );
 
-    const list = document.createElement("dl");
-    list.className = "plan-details-list";
-    list.append(
-      ...makeDetailLine("Solar 06–24", [
-        ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
-        ["Actual", formatAmount(actual.pv_kWh, " kWh"), trends.solar],
-        ...(soFar ? [
-          [`To ${soFarTime} forecast`, formatAmount(soFar.pvForecast_kWh, " kWh")],
-          [`To ${soFarTime} actual`, formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar],
-        ] : []),
-      ]),
-      ...makeDetailLine("Load", [
-        ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
-        ["06–24 actual", formatAmount(actual.load_kWh, " kWh"), trends.load],
-        ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
-        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh"), trends.loadDay],
-      ]),
-      ...makeDetailLine("Lowest SOC 06–24", [
-        ["Expected", formatAmount(expected.minSocWithoutCharge, "%")],
-        ["Worst case", formatAmount(worst.minSocWithoutCharge, "%")],
-        ["Actual", formatAmount(actual.minSoc, "%"), trends.lowest],
-      ]),
-      ...makeDetailLine("Peak SOC 06–24", [
-        ["Expected", formatAmount(expected.peakSocWithoutCharge, "%")],
-        ["Worst case", formatAmount(worst.peakSocWithoutCharge, "%")],
-        ["Actual", formatAmount(actual.maxSoc, "%"), trends.peak],
-      ]),
-    );
+    const list = makeDetailsTable([
+      makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, actual.pv_kWh, " kWh", trends.solar),
+      ...(soFar
+        ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
+        : []),
+      makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
+      ...(numberOrNull(soFar?.loadForecast_kWh) !== null
+        ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
+        : []),
+      makeRangeLine("Load full day", plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, loadFullDay, " kWh", trends.loadDay, projecting),
+      makeRangeLine("Lowest SOC 06–24", expected.minSocWithoutCharge, worst.minSocWithoutCharge, actual.minSoc, "%", trends.lowest),
+      makeRangeLine("Peak SOC 06–24", expected.peakSocWithoutCharge, worst.peakSocWithoutCharge, actual.maxSoc, "%", trends.peak),
+    ]);
     const detailsCell = document.createElement("td");
     detailsCell.colSpan = NIGHT_CHARGE_COLUMNS;
     detailsCell.append(list);
+    if (history?.length) detailsCell.append(makeHistoryTable(history));
     const details = document.createElement("tr");
     details.className = "plan-details";
     details.id = detailsId;
