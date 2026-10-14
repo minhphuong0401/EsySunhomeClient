@@ -1,630 +1,186 @@
 #!/usr/bin/env bash
-# Applies: night-charge details, load projection, and decision time / trigger / history.
-# Run from anywhere inside the EsySunhomeClient repository.
+# Apply the BYD charging advice changes to another EsySunhomeClient checkout.
 set -euo pipefail
 
+cd "${1:-.}"
 cd "$(git rev-parse --show-toplevel)"
-git pull --rebase --autostash
-
-patch_file="$(mktemp)"
-trap 'rm -f "$patch_file"' EXIT
-cat > "$patch_file" <<'PATCH'
-diff --git a/README.md b/README.md
-index c9daf29..55f2d85 100644
---- a/README.md
-+++ b/README.md
-@@ -84,10 +84,16 @@ refreshes the forecast at most once an hour and caches it in
- 
- The dashboard's "Grid charging decisions" table shows the last plan made for
- each of the last 5 nights next to what actually happened between 06:00 and
--midnight: solar, load, and the lowest and peak SOC, each with an icon comparing
--it with the forecast (forecasts assume no grid charge). Select a night to see
--the forecasts, PV so far for a day in progress, and the full-day load
--(00:00–24:00). The result shows the decision and
-+midnight: solar, load, and the lowest and peak SOC (forecasts assume no grid
-+charge). Each actual value has an icon: ★ at or better than the forecast, ✓
-+between the forecast and the worst case, ✗ at or worse than the worst case
-+(for load, lower is better). Select a night to see the forecast, worst case and
-+actual for each value, including solar and load so far for a day in progress and
-+the full-day load (00:00–24:00). Until the day ends, load shows a projection
-+(≈): load so far plus the rest of the day's forecast. The Decision column also
-+shows how and when the shown plan was made (scheduled, manual or replay), and
-+the expanded view lists every plan made for that night, with identical
-+consecutive scheduled decisions merged. The result shows the decision and
- whether it was right, by comparing the actual lowest SOC with the 30% target:
- "No charge – correct" (green), "No charge – fell below 30%" (red),
- "Charge – correct" (blue) and "Planned charge – not needed" (yellow). The
-diff --git a/scripts/build_night_charge_report.py b/scripts/build_night_charge_report.py
-index 76b3000..8656077 100644
---- a/scripts/build_night_charge_report.py
-+++ b/scripts/build_night_charge_report.py
-@@ -21,7 +21,7 @@ from scripts.build_history import (
-     _parse_timestamp,
-     load_tariff,
- )
--from scripts.plan_night_charge import SLOT, _iso, _parse_utc
-+from scripts.plan_night_charge import SLOT, _iso, _parse_utc, load_config
- 
- 
- PLAN_PATH = "data/night_charge_plan.json"
-@@ -47,19 +47,64 @@ def _git_json(path: str, since: datetime) -> list[tuple[str, dict[str, Any]]]:
- 
- def latest_plans(plans: list[dict[str, Any]], nights: int) -> list[dict[str, Any]]:
-     """Keep the last plan generated for each window, newest windows first."""
--    by_window: dict[str, tuple[datetime, dict[str, Any]]] = {}
-+    by_window: dict[str, tuple[tuple[datetime, str], dict[str, Any]]] = {}
-     for plan in plans:
-         try:
-             start = plan["window"]["start"]
--            generated = _parse_utc(plan["generatedAt"])
-+            # A replay keeps the original plan time, so the replay time breaks the tie.
-+            key = (_parse_utc(plan["generatedAt"]), plan.get("replayedAt") or "")
-         except (AttributeError, KeyError, TypeError, ValueError):
-             continue
--        if start not in by_window or generated > by_window[start][0]:
--            by_window[start] = (generated, plan)
-+        if start not in by_window or key > by_window[start][0]:
-+            by_window[start] = (key, plan)
-     ordered = sorted(by_window.items(), key=lambda item: _parse_utc(item[0]), reverse=True)
-     return [plan for _, (_, plan) in ordered[:nights]]
- 
- 
-+def plan_trigger(plan: dict[str, Any], lead: timedelta) -> str:
-+    """How a plan was made: scheduled, manual (outside the planning window) or replay."""
-+    if plan.get("trigger"):
-+        return plan["trigger"]
-+    # Older plans predate the "trigger" field, so infer it.
-+    generated = _parse_utc(plan["generatedAt"])
-+    fetched = plan.get("forecastFetchedAt")
-+    if fetched and _parse_utc(fetched) > generated:
-+        return "replay"
-+    return "manual" if generated < _parse_utc(plan["window"]["start"]) - lead else "scheduled"
-+
-+
-+def decision_history(plans: list[dict[str, Any]], lead: timedelta) -> list[dict[str, Any]]:
-+    """A window's plans, oldest first, with consecutive identical decisions merged into one run."""
-+    # Older replays have no replayedAt, but their forecast was fetched later than the original's.
-+    unique = {
-+        (plan["generatedAt"], plan.get("replayedAt") or plan.get("forecastFetchedAt") or ""): plan for plan in plans
-+    }
-+    runs: list[dict[str, Any]] = []
-+    for key in sorted(unique, key=lambda item: (_parse_utc(item[0]), item[1])):
-+        plan = unique[key]
-+        trigger = plan_trigger(plan, lead)
-+        same = (plan.get("decision"), plan.get("targetSoc"), trigger)
-+        if runs and trigger != "replay" and (runs[-1]["decision"], runs[-1]["targetSoc"], runs[-1]["trigger"]) == same:
-+            runs[-1]["to"] = plan["generatedAt"]
-+            runs[-1]["count"] += 1
-+            runs[-1]["gridCharge_kWh"] = plan.get("gridCharge_kWh")
-+            continue
-+        runs.append(
-+            {
-+                "from": plan["generatedAt"],
-+                "to": plan["generatedAt"],
-+                "count": 1,
-+                "decision": plan.get("decision"),
-+                "targetSoc": plan.get("targetSoc"),
-+                "gridCharge_kWh": plan.get("gridCharge_kWh"),
-+                "trigger": trigger,
-+                # Older replays lack replayedAt; their forecast was fetched when they ran.
-+                "replayedAt": plan.get("replayedAt") or (plan.get("forecastFetchedAt") if trigger == "replay" else None),
-+            }
-+        )
-+    return runs
-+
-+
- def _difference(end: dict[str, Any], start: dict[str, Any], field: str) -> float | None:
-     try:
-         return round(float(end[field]) - float(start[field]), 2)
-@@ -67,9 +112,9 @@ def _difference(end: dict[str, Any], start: dict[str, Any], field: str) -> float
-         return None
- 
- 
--def _pv_forecast_until(plan: dict[str, Any], until: datetime) -> float | None:
--    """Expected PV from the window end until `until`, or None for plans without half-hourly slots."""
--    slots = plan["scenarios"]["expected"].get("pvSlotsAfterWindow_kWh")
-+def _forecast_until(plan: dict[str, Any], slots_key: str, until: datetime) -> float | None:
-+    """Expected kWh from the window end until `until`, or None for plans without half-hourly slots."""
-+    slots = plan["scenarios"]["expected"].get(slots_key)
-     if not slots:
-         return None
-     slot_start = _parse_utc(plan["window"]["end"])
-@@ -82,6 +127,37 @@ def _pv_forecast_until(plan: dict[str, Any], until: datetime) -> float | None:
-     return round(total, 2)
- 
- 
-+def _worst_ratio(plan: dict[str, Any], total_key: str) -> float:
-+    # The worst case scales every expected slot by one factor, so partial totals scale the same way.
-+    expected_total = plan["scenarios"]["expected"].get(total_key) or 0
-+    worst_total = plan["scenarios"].get("worstCase", {}).get(total_key) or 0
-+    return worst_total / expected_total if expected_total else 0
-+
-+
-+def _so_far(plan: dict[str, Any], as_of: datetime, latest: dict[str, Any], start: dict[str, Any]) -> dict[str, Any] | None:
-+    """Actual vs forecast from 06:00 until the latest reading, plus end-of-day load projections."""
-+    pv_forecast = _forecast_until(plan, "pvSlotsAfterWindow_kWh", as_of)
-+    load_forecast = _forecast_until(plan, "loadSlotsAfterWindow_kWh", as_of)
-+    if pv_forecast is None and load_forecast is None:
-+        return None
-+    so_far: dict[str, Any] = {"asOf": _iso(as_of)}
-+    if pv_forecast is not None:
-+        so_far["pvForecast_kWh"] = pv_forecast
-+        so_far["pvWorstCase_kWh"] = round(pv_forecast * _worst_ratio(plan, "pvAfterWindow_kWh"), 2)
-+        so_far["pv_kWh"] = _difference(latest, start, FIELDS["pv_kWh"])
-+    if load_forecast is not None:
-+        load_actual = _difference(latest, start, FIELDS["load_kWh"])
-+        remaining = (plan["scenarios"]["expected"].get("loadAfterWindow_kWh") or 0) - load_forecast
-+        load_today = _difference(latest, {FIELDS["load_kWh"]: 0}, FIELDS["load_kWh"])
-+        so_far["loadForecast_kWh"] = load_forecast
-+        so_far["loadWorstCase_kWh"] = round(load_forecast * _worst_ratio(plan, "loadAfterWindow_kWh"), 2)
-+        so_far["load_kWh"] = load_actual
-+        # Projection: what has been used so far plus the rest of today's expected load.
-+        so_far["loadProjected_kWh"] = round(load_actual + remaining, 2) if load_actual is not None else None
-+        so_far["loadDayProjected_kWh"] = round(load_today + remaining, 2) if load_today is not None else None
-+    return so_far
-+
-+
- def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[str, Any]]]) -> dict[str, Any]:
-     """Summarize the snapshots between the window end and the next window (the planning horizon)."""
-     window_start = _parse_utc(plan["window"]["start"])
-@@ -114,14 +190,7 @@ def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[st
-     outcome["loadDay_kWh"] = _difference(inside[-1][1], {FIELDS["load_kWh"]: 0}, FIELDS["load_kWh"]) if complete else None
-     outcome["soFar"] = None
-     if not complete and inside and start is not None:
--        as_of, latest = inside[-1]
--        forecast = _pv_forecast_until(plan, as_of)
--        if forecast is not None:
--            outcome["soFar"] = {
--                "asOf": _iso(as_of),
--                "pvForecast_kWh": forecast,
--                "pv_kWh": _difference(latest, start, FIELDS["pv_kWh"]),
--            }
-+        outcome["soFar"] = _so_far(plan, inside[-1][0], inside[-1][1], start)
-     return outcome
- 
- 
-@@ -141,7 +210,14 @@ def build_report(
-     now: datetime,
- ) -> dict[str, Any]:
-     tz = load_tariff().timezone
-+    lead = timedelta(hours=load_config().planning_lead_hours)
-     snapshots = sorted(snapshots, key=lambda item: item[0])
-+    by_window: dict[str, list[dict[str, Any]]] = {}
-+    for plan in plans:
-+        try:
-+            by_window.setdefault(plan["window"]["start"], []).append(plan)
-+        except (KeyError, TypeError):
-+            continue
-     report_nights = []
-     for plan in latest_plans(plans, nights):
-         actual = actual_outcome(plan, snapshots)
-@@ -149,6 +225,8 @@ def build_report(
-             {
-                 "night": _parse_utc(plan["window"]["start"]).astimezone(tz).date().isoformat(),
-                 "plan": plan,
-+                "trigger": plan_trigger(plan, lead),
-+                "history": decision_history(by_window[plan["window"]["start"]], lead),
-                 "actual": actual,
-                 "verdict": verdict(plan, actual),
-             }
-diff --git a/scripts/plan_night_charge.py b/scripts/plan_night_charge.py
-index cd41b95..953a0ab 100644
---- a/scripts/plan_night_charge.py
-+++ b/scripts/plan_night_charge.py
-@@ -326,8 +326,9 @@ def build_plan(
-             "peakSocWithoutCharge": round(peak, 1),
-         }
-         if name == "expected":
--            # Half-hour slots starting at the window end; the dashboard compares them with PV so far.
-+            # Half-hour slots starting at the window end; the dashboard compares them with actuals so far.
-             results[name]["pvSlotsAfterWindow_kWh"] = [round(pv, 3) for pv, _ in after]
-+            results[name]["loadSlotsAfterWindow_kWh"] = [round(load_kwh, 3) for _, load_kwh in after]
- 
-     if missing:
-         warnings.append(f"No PV forecast for {len(missing)} half-hour slots; assumed zero PV.")
-@@ -454,6 +455,8 @@ def _replay_plan(night: date, tariff: Tariff, config: PlannerConfig) -> dict[str
-         forecast,
-         warnings,
-     )
-+    plan["trigger"] = "replay"
-+    plan["replayedAt"] = _iso(datetime.now(timezone.utc).replace(microsecond=0))
-     return plan
- 
- 
-@@ -494,6 +497,8 @@ def main() -> int:
-             plan = build_plan(
-                 now, float(current["batterySoc_percent"]), window, config, tariff, profile, forecast, warnings
-             )
-+            scheduled = planning_window(now, tariff, config.planning_lead_hours) is not None
-+            plan["trigger"] = "scheduled" if scheduled else "manual"
-         args.output.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
-     except (OSError, subprocess.CalledProcessError, ValueError, RuntimeError, KeyError, TypeError, ImportError) as error:
-         print(f"Could not plan night charge: {error}", file=sys.stderr)
-diff --git a/site/app.js b/site/app.js
-index 8cdcbd6..17b973d 100644
---- a/site/app.js
-+++ b/site/app.js
-@@ -484,48 +484,79 @@ function makeActualCell(value, trend, note) {
-   return cell;
- }
- 
--function makeDetailLine(label, parts) {
--  const term = document.createElement("dt");
--  term.textContent = label;
--  const detail = document.createElement("dd");
--  parts.forEach(([name, value, trend], index) => {
--    if (index > 0) detail.append(" · ");
--    const part = document.createElement("span");
--    part.className = "plan-detail-part";
--    const partName = document.createElement("span");
--    partName.className = "plan-detail-name";
--    partName.textContent = `${name} `;
--    const partValue = document.createElement("strong");
--    partValue.textContent = value;
--    part.append(partName);
--    if (trend) part.append(makeTrendIcon(trend));
--    part.append(partValue);
--    detail.append(part);
--  });
--  return [term, detail];
-+function makeDetailsTable(rows, headings = ["", "Forecast", "Worst case", "Actual"]) {
-+  const table = document.createElement("table");
-+  table.className = "plan-details-table";
-+  const headRow = document.createElement("tr");
-+  for (const heading of headings) {
-+    const cell = document.createElement("th");
-+    cell.scope = "col";
-+    cell.textContent = heading;
-+    headRow.append(cell);
-+  }
-+  const head = document.createElement("thead");
-+  head.append(headRow);
-+  const body = document.createElement("tbody");
-+  body.append(...rows);
-+  table.append(head, body);
-+  return table;
- }
- 
--// The arrow shows actual vs forecast; the colour shows whether that is good for the battery.
--function actualTrend(actual, forecast, higherIsGood) {
--  const actualValue = numberOrNull(actual);
--  const forecastValue = numberOrNull(forecast);
--  if (actualValue === null || forecastValue === null) return null;
--  const higher = actualValue >= forecastValue;
--  return {
--    symbol: higher ? "▲" : "▼",
--    tone: higher === higherIsGood ? "good" : "bad",
--    title: higher ? "At or above forecast" : "Below forecast",
--  };
-+// ★ at or better than the forecast, ✓ between the forecast and worst case, ✗ at or worse than the worst case.
-+function rangeTrend(actual, forecast, worst, higherIsGood = true) {
-+  const values = [actual, forecast, worst].map(numberOrNull);
-+  if (values.includes(null)) return null;
-+  const [actualValue, forecastValue, worstValue] = higherIsGood ? values : values.map((value) => -value);
-+  if (actualValue >= forecastValue) return { symbol: "★", tone: "great", title: "At or better than the forecast" };
-+  if (actualValue > worstValue) return { symbol: "✓", tone: "good", title: "Between the forecast and the worst case" };
-+  return { symbol: "✗", tone: "bad", title: "At or worse than the worst case" };
-+}
-+
-+const PROJECTED_TITLE = "Projected: load so far plus the rest of today's forecast";
-+const TRIGGER_LABELS = { scheduled: "Scheduled", manual: "Manual", replay: "Replay" };
-+
-+const formatPlanTime = (timestamp) =>
-+  formatDate(timestamp, { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-+
-+function describeTrigger(trigger, replayedAt) {
-+  const label = TRIGGER_LABELS[trigger] ?? "Scheduled";
-+  return trigger === "replay" && replayedAt ? `${label} (run ${formatPlanTime(replayedAt)})` : label;
- }
- 
--function socRangeTrend(actual, expected, worst) {
--  const actualValue = numberOrNull(actual);
--  const expectedValue = numberOrNull(expected);
--  const worstValue = numberOrNull(worst);
--  if (actualValue === null || expectedValue === null || worstValue === null) return null;
--  if (actualValue >= expectedValue) return { symbol: "★", tone: "great", title: "At or above the expected forecast" };
--  if (actualValue > worstValue) return { symbol: "✓", tone: "good", title: "Between the worst case and expected forecasts" };
--  return { symbol: "✗", tone: "bad", title: "At or below the worst-case forecast" };
-+function makeHistoryTable(history) {
-+  const rows = history.map((run) => {
-+    const row = document.createElement("tr");
-+    const time = run.count > 1
-+      ? `${formatPlanTime(run.from)} – ${formatPlanTime(run.to)} (${run.count} runs)`
-+      : formatPlanTime(run.from);
-+    const charging = run.decision === "charge";
-+    row.append(
-+      makeCell(time),
-+      makeCell(charging ? `Charge to ${run.targetSoc}%` : "No charge"),
-+      makeCell(charging ? formatAmount(run.gridCharge_kWh, " kWh") : "—"),
-+      makeCell(describeTrigger(run.trigger, run.replayedAt)),
-+    );
-+    return row;
-+  });
-+  const table = makeDetailsTable(rows, ["Plan time", "Decision", "Grid charge", "How"]);
-+  table.classList.add("plan-history-table");
-+  const caption = document.createElement("caption");
-+  caption.textContent = "Decision history";
-+  table.prepend(caption);
-+  return table;
-+}
-+
-+function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected = false) {
-+  const row = document.createElement("tr");
-+  const name = document.createElement("th");
-+  name.scope = "row";
-+  name.textContent = label;
-+  const actualText = formatAmount(actual, suffix);
-+  const actualCell = makeCell(projected && actualText !== "—" ? `≈ ${actualText}` : actualText, "plan-details-actual");
-+  if (projected) actualCell.title = PROJECTED_TITLE;
-+  if (trend) actualCell.prepend(makeTrendIcon(trend));
-+  row.append(name, makeCell(formatAmount(forecast, suffix)), makeCell(formatAmount(worst, suffix)), actualCell);
-+  return row;
- }
- 
- const formatAmount = (value, suffix = "") => {
-@@ -556,7 +587,7 @@ function renderNightChargeRows(nights, emptyMessage) {
-   }
- 
-   const nightFormat = new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
--  for (const { night, plan, actual, verdict } of nights) {
-+  for (const { night, plan, actual, verdict, trigger, history } of nights) {
-     const [year, month, day] = night.split("-").map(Number);
-     const expected = plan.scenarios?.expected ?? {};
-     const worst = plan.scenarios?.worstCase ?? {};
-@@ -565,14 +596,19 @@ function renderNightChargeRows(nights, emptyMessage) {
-     const soFar = actual.soFar;
-     const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
-     const soFarNote = actual.complete ? null : "so far";
-+    // Until the day ends, show where load is heading rather than a blank.
-+    const projecting = !actual.complete && numberOrNull(soFar?.loadProjected_kWh) !== null;
-+    const load06To24 = projecting ? soFar.loadProjected_kWh : actual.load_kWh;
-+    const loadFullDay = projecting ? soFar.loadDayProjected_kWh : actual.loadDay_kWh;
- 
-     const trends = {
--      solar: actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true),
--      solarSoFar: soFar ? actualTrend(soFar.pv_kWh, soFar.pvForecast_kWh, true) : null,
--      load: actualTrend(actual.load_kWh, expected.loadAfterWindow_kWh, false),
--      loadDay: actualTrend(actual.loadDay_kWh, plan.dailyLoad_kWh?.expected, false),
--      lowest: socRangeTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge),
--      peak: socRangeTrend(actual.maxSoc, expected.peakSocWithoutCharge, worst.peakSocWithoutCharge),
-+      solar: rangeTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh),
-+      solarSoFar: soFar ? rangeTrend(soFar.pv_kWh, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh) : null,
-+      load: rangeTrend(load06To24, expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, false),
-+      loadSoFar: soFar ? rangeTrend(soFar.load_kWh, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, false) : null,
-+      loadDay: rangeTrend(loadFullDay, plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, false),
-+      lowest: rangeTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge),
-+      peak: rangeTrend(actual.maxSoc, expected.peakSocWithoutCharge, worst.peakSocWithoutCharge),
-     };
- 
-     const detailsId = `night-charge-details-${night}`;
-@@ -599,6 +635,14 @@ function renderNightChargeRows(nights, emptyMessage) {
-       cost.textContent = `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}`;
-       decision.append(cost);
-     }
-+    const madeAt = document.createElement("span");
-+    madeAt.className = "plan-note";
-+    madeAt.textContent = `${TRIGGER_LABELS[trigger] ?? "Scheduled"} · ${formatPlanTime(plan.generatedAt)}`;
-+    if (trigger === "replay") {
-+      const replayedAt = plan.replayedAt ?? plan.forecastFetchedAt;
-+      madeAt.title = `Recomputed${replayedAt ? ` ${formatPlanTime(replayedAt)}` : ""} from the data at the original plan time`;
-+    }
-+    decision.append(madeAt);
- 
-     const result = document.createElement("td");
-     const badge = document.createElement("span");
-@@ -610,49 +654,40 @@ function renderNightChargeRows(nights, emptyMessage) {
-       ? makeActualCell(formatAmount(actual.pv_kWh, " kWh"), trends.solar)
-       : makeActualCell(formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar, `to ${soFarTime}`);
- 
-+    const loadCell = projecting
-+      ? makeActualCell(`≈ ${formatAmount(load06To24, " kWh")}`, trends.load, "projected")
-+      : makeActualCell(formatAmount(actual.load_kWh, " kWh"), trends.load);
-+    if (projecting) loadCell.title = PROJECTED_TITLE;
-+
-     const summary = document.createElement("tr");
-     summary.className = "plan-summary";
-     summary.append(
-       nightCell,
-       decision,
-       solarCell,
--      makeActualCell(formatAmount(actual.load_kWh, " kWh"), trends.load),
-+      loadCell,
-       makeActualCell(formatAmount(actual.minSoc, "%"), trends.lowest, actual.minSoc == null ? null : soFarNote),
-       makeActualCell(formatAmount(actual.maxSoc, "%"), trends.peak, actual.maxSoc == null ? null : soFarNote),
-       result,
-     );
- 
--    const list = document.createElement("dl");
--    list.className = "plan-details-list";
--    list.append(
--      ...makeDetailLine("Solar 06–24", [
--        ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
--        ["Actual", formatAmount(actual.pv_kWh, " kWh"), trends.solar],
--        ...(soFar ? [
--          [`To ${soFarTime} forecast`, formatAmount(soFar.pvForecast_kWh, " kWh")],
--          [`To ${soFarTime} actual`, formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar],
--        ] : []),
--      ]),
--      ...makeDetailLine("Load", [
--        ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
--        ["06–24 actual", formatAmount(actual.load_kWh, " kWh"), trends.load],
--        ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
--        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh"), trends.loadDay],
--      ]),
--      ...makeDetailLine("Lowest SOC 06–24", [
--        ["Expected", formatAmount(expected.minSocWithoutCharge, "%")],
--        ["Worst case", formatAmount(worst.minSocWithoutCharge, "%")],
--        ["Actual", formatAmount(actual.minSoc, "%"), trends.lowest],
--      ]),
--      ...makeDetailLine("Peak SOC 06–24", [
--        ["Expected", formatAmount(expected.peakSocWithoutCharge, "%")],
--        ["Worst case", formatAmount(worst.peakSocWithoutCharge, "%")],
--        ["Actual", formatAmount(actual.maxSoc, "%"), trends.peak],
--      ]),
--    );
-+    const list = makeDetailsTable([
-+      makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, actual.pv_kWh, " kWh", trends.solar),
-+      ...(soFar
-+        ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
-+        : []),
-+      makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
-+      ...(numberOrNull(soFar?.loadForecast_kWh) !== null
-+        ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
-+        : []),
-+      makeRangeLine("Load full day", plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, loadFullDay, " kWh", trends.loadDay, projecting),
-+      makeRangeLine("Lowest SOC 06–24", expected.minSocWithoutCharge, worst.minSocWithoutCharge, actual.minSoc, "%", trends.lowest),
-+      makeRangeLine("Peak SOC 06–24", expected.peakSocWithoutCharge, worst.peakSocWithoutCharge, actual.maxSoc, "%", trends.peak),
-+    ]);
-     const detailsCell = document.createElement("td");
-     detailsCell.colSpan = NIGHT_CHARGE_COLUMNS;
-     detailsCell.append(list);
-+    if (history?.length) detailsCell.append(makeHistoryTable(history));
-     const details = document.createElement("tr");
-     details.className = "plan-details";
-     details.id = detailsId;
-diff --git a/site/index.html b/site/index.html
-index b664be0..cf82285 100644
---- a/site/index.html
-+++ b/site/index.html
-@@ -26,9 +26,9 @@
-     </script>
-     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
--    <link rel="stylesheet" href="styles.css?v=16">
-+    <link rel="stylesheet" href="styles.css?v=20">
-     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
--    <script src="app.js?v=16" defer></script>
-+    <script src="app.js?v=20" defer></script>
-   </head>
-   <body>
-     <main class="page">
-diff --git a/site/styles.css b/site/styles.css
-index 1456e36..f590eb3 100644
---- a/site/styles.css
-+++ b/site/styles.css
-@@ -277,11 +277,15 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
- .plan-actual { font-variant-numeric: tabular-nums; font-weight: 600; }
- .plan-note { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
- .plan-table .plan-details td { padding-top: 0; white-space: normal; }
--.plan-details-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--input-surface); }
--.plan-details-list dt { color: var(--muted); font-weight: 600; }
--.plan-details-list dd { margin: 0; font-variant-numeric: tabular-nums; }
--.plan-detail-name { color: var(--muted); }
--.plan-detail-part { white-space: nowrap; }
-+.plan-details-table { width: auto; border-collapse: separate; border-spacing: 0; padding: 6px 10px; border-radius: 12px; background: var(--input-surface); }
-+.plan-table .plan-details-table th, .plan-table .plan-details-table td { padding: 5px 14px; border: 0; font-variant-numeric: tabular-nums; }
-+.plan-table .plan-details-table thead th { font-size: 10px; text-align: right; }
-+.plan-table .plan-details-table tbody th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: normal; text-align: left; }
-+.plan-table .plan-details-table td { text-align: right; }
-+.plan-table .plan-details-table .plan-details-actual { font-weight: 600; }
-+.plan-history-table { margin-top: 10px; }
-+.plan-history-table caption { padding: 0 14px 4px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; text-align: left; }
-+.plan-table .plan-history-table thead th, .plan-table .plan-history-table td { text-align: left; }
- .plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
- .plan-trend { margin-right: 5px; font-size: 10px; cursor: help; }
- .plan-trend-great { color: var(--series-solar); font-size: 12px; font-weight: 700; }
-diff --git a/tests/test_build_night_charge_report.py b/tests/test_build_night_charge_report.py
-index b0e7885..937ca77 100644
---- a/tests/test_build_night_charge_report.py
-+++ b/tests/test_build_night_charge_report.py
-@@ -4,7 +4,7 @@ import unittest
- from datetime import datetime, timedelta, timezone
- 
- from scripts.build_history import TARIFF_PATH, load_tariff
--from scripts.build_night_charge_report import actual_outcome, build_report, latest_plans, verdict
-+from scripts.build_night_charge_report import actual_outcome, build_report, decision_history, latest_plans, verdict
- 
- 
- def _iso(value: datetime) -> str:
-@@ -81,16 +81,63 @@ class NightChargeReportTests(unittest.TestCase):
-     def test_pending_day_compares_pv_so_far_with_forecast(self) -> None:
-         plan = self._plan(12)
-         plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"] = [1.0] * 36
-+        plan["scenarios"]["expected"]["pvAfterWindow_kWh"] = 36.0
-+        plan["scenarios"]["worstCase"] = {"pvAfterWindow_kWh": 27.0}
-         snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 10, 15, 70, 9.5, 5.0, 0.2)]
- 
-         outcome = actual_outcome(plan, snapshots)
- 
-         # 06:00-10:15 covers eight full slots and half of the ninth.
-         self.assertEqual(outcome["soFar"]["pvForecast_kWh"], 8.5)
-+        self.assertEqual(outcome["soFar"]["pvWorstCase_kWh"], 6.38)
-         self.assertEqual(outcome["soFar"]["pv_kWh"], 9.5)
-         self.assertEqual(outcome["soFar"]["asOf"], _iso(self._local(2026, 10, 12, 10, 15)))
-         self.assertIsNone(actual_outcome(self._plan(12), snapshots)["soFar"])
- 
-+    def test_pending_day_projects_end_of_day_load(self) -> None:
-+        plan = self._plan(12)
-+        plan["scenarios"]["expected"]["loadSlotsAfterWindow_kWh"] = [0.5] * 36
-+        plan["scenarios"]["expected"]["loadAfterWindow_kWh"] = 18.0
-+        plan["scenarios"]["worstCase"] = {"loadAfterWindow_kWh": 21.6}
-+        snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 12, 0, 50, 9.0, 9.0, 0.2)]
-+
-+        so_far = actual_outcome(plan, snapshots)["soFar"]
-+
-+        self.assertEqual(so_far["loadForecast_kWh"], 6.0)
-+        self.assertEqual(so_far["loadWorstCase_kWh"], 7.2)
-+        self.assertEqual(so_far["load_kWh"], 7.0)
-+        # 7 kWh used since 06:00 plus the 12 kWh still expected for 12:00-24:00.
-+        self.assertEqual(so_far["loadProjected_kWh"], 19.0)
-+        self.assertEqual(so_far["loadDayProjected_kWh"], 21.0)
-+        self.assertNotIn("pv_kWh", so_far)
-+
-+    def test_decision_history_merges_runs_and_keeps_replays_separate(self) -> None:
-+        def plan_at(hour: int, minute: int, decision: str, target: int | None, **extra) -> dict:
-+            plan = self._plan(12, decision)
-+            plan["generatedAt"] = _iso(self._local(2026, 10, 11 if hour >= 12 else 12, hour, minute))
-+            plan["targetSoc"] = target
-+            plan.update(extra)
-+            return plan
-+
-+        original = plan_at(5, 45, "no_charge", None)
-+        replay = dict(original, trigger="replay", replayedAt="2026-10-12T01:00:00Z", decision="charge", targetSoc=40)
-+        plans = [
-+            plan_at(15, 0, "charge", 35),
-+            plan_at(22, 0, "charge", 35),
-+            plan_at(22, 15, "charge", 35),
-+            plan_at(23, 0, "no_charge", None),
-+            original,
-+            replay,
-+        ]
-+
-+        history = decision_history(plans, timedelta(hours=2))
-+
-+        self.assertEqual([run["trigger"] for run in history], ["manual", "scheduled", "scheduled", "replay"])
-+        self.assertEqual(history[1]["count"], 2)
-+        self.assertEqual(history[2]["count"], 2)
-+        self.assertEqual(history[3]["targetSoc"], 40)
-+        self.assertEqual(latest_plans(plans, 1)[0]["replayedAt"], "2026-10-12T01:00:00Z")
-+
-     def test_verdicts_compare_decision_with_actual_lowest_soc(self) -> None:
-         low = {"complete": True, "minSoc": 22}
-         high = {"complete": True, "minSoc": 48}
-diff --git a/tests/test_plan_night_charge.py b/tests/test_plan_night_charge.py
-index e383e1c..fc87a79 100644
---- a/tests/test_plan_night_charge.py
-+++ b/tests/test_plan_night_charge.py
-@@ -150,6 +150,8 @@ class NightChargePlannerTests(unittest.TestCase):
-         slots = plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"]
-         self.assertEqual(len(slots), 36)
-         self.assertAlmostEqual(sum(slots), plan["scenarios"]["expected"]["pvAfterWindow_kWh"])
-+        load_slots = plan["scenarios"]["expected"]["loadSlotsAfterWindow_kWh"]
-+        self.assertAlmostEqual(sum(load_slots), plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
-         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
-         self.assertEqual(plan["decision"], "no_charge")
- 
-PATCH
-
-if git apply --check "$patch_file" 2>/dev/null; then
-  git apply "$patch_file"
-else
-  echo "Patch does not apply cleanly; trying a 3-way merge (resolve any conflicts it reports)." >&2
-  git apply --3way "$patch_file"
-fi
-
-if python3 -m unittest discover -s tests; then
-  echo "Changes applied. Review with 'git status' / 'git diff', then commit and push."
-else
-  echo "Changes applied but tests failed; review before committing." >&2
+if [[ ! -f config/night_charge.json || ! -f scripts/plan_night_charge.py ]]; then
+  echo "Run this script from an EsySunhomeClient checkout." >&2
   exit 1
 fi
+patch_file="$(mktemp)"
+trap 'rm -f "$patch_file"' EXIT
+
+base64 -d <<'BYD_PATCH_DATA' | gzip -d > "$patch_file"
+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
+BYD_PATCH_DATA
+
+if git apply --reverse --check "$patch_file" 2>/dev/null; then
+  echo "BYD charging changes are already applied."
+  exit 0
+fi
+if ! git apply --check "$patch_file"; then
+  echo "Patch does not apply cleanly. Update this checkout to the matching source version first; no files were changed." >&2
+  exit 1
+fi
+git apply "$patch_file"
+echo "BYD charging changes applied. Review with git status --short and run python3 -m unittest discover -s tests."s

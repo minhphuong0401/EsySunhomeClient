@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/deploy-pages.yml"
       - "data/data.json"
+      - "data/ev_charge_plan.json"
       - "config/**"
       - "scripts/**"
       - "site/**"
@@ -14,6 +15,7 @@ on:
     workflows:
       - Fetch today's energy data
       - Plan night charge (manual)
+      - Fetch BYD and plan EV charge
     types:
       - completed
     branches:
@@ -50,6 +52,12 @@ jobs:
 
       - name: Build night-charge report
         run: python -m scripts.build_night_charge_report --nights 5 --output site/data/night_charge.json
+
+      - name: Publish EV charge advice
+        run: |
+          if [[ -f data/ev_charge_plan.json ]]; then
+            cp data/ev_charge_plan.json site/data/ev_charge.json
+          fi
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

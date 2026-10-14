@@ -72,6 +72,49 @@ The simulation stops discharging at `battery_min_soc` (the inverter's lowest
 SOC limit, 15%); below that the grid supplies the house.
 Settings live in `config/night_charge.json`.
 
+## BYD charging advice (dry run)
+
+The `Fetch BYD and plan EV charge` workflow runs daily at 10:00 UTC (20:00
+AEST / 21:00 AEDT), after the configured daytime home window, and can also be
+run manually. Add `BYD_USERNAME` and `BYD_PASSWORD` as Actions secrets, and
+`BYD_BASE_URL` and `BYD_COUNTRY_CODE` as Actions variables for your BYD region.
+The workflow takes a minimal snapshot of the first vehicle on the account with
+`pybyd`: SOC, odometer, vehicle timestamp and last-50-km consumption in
+kWh/100 km. It writes `data/byd.json`, without VIN or location, and calculates
+`data/ev_charge_plan.json`. The latest valid advice appears on the dashboard.
+Do not publish the odometer history if the repository is public and you do not
+want daily driving patterns visible; Git history retains previous snapshots.
+
+Set battery capacity (45 kWh by default), reserve SOC, maximum charger current
+(integer 6-32 A), charger efficiency and the time the vehicle is home in
+`config/ev_charge.json`. The default daytime window is 11:00-17:00 local
+Sydney time. Overnight charging assumes the vehicle is also plugged in during
+the tariff's cheapest period, 00:00-06:00; change the tariff if that period
+changes. At 230 V single phase, the configured maximum of 32 A is about
+7.36 kW from the wall, before losses. Never set a current above the installed
+charger, circuit and vehicle ratings.
+
+The planner reads daily odometer differences from committed BYD snapshots and
+uses the 80th percentile of recent daily trips (weekday-specific when enough
+samples exist); until enough history exists it uses the configured daily-km
+minimum. A snapshot must have fresh vehicle telemetry. The overnight advice
+charges only enough to cover *all* of tomorrow's estimated driving plus the
+configurable reserve, even if the entire trip occurs before the car returns
+home. Today's driving is already reflected in the evening SOC and is not
+subtracted a second time. If the needed charge does not fit the cheap window,
+the plan warns rather than claiming the reserve will be met.
+
+During tomorrow's configured home hours, the planner may advise topping up
+for the following day's estimated driving using only forecast solar energy
+left after a conservative household load and a full home battery. Its cost is
+the feed-in credit forgone, not an electricity bill. When there is no such
+surplus, it recommends no daytime charging; remaining demand can be planned
+for the following night instead. The current is an integer A setting for each
+listed time slot. This is advice only: the workflow cannot set charger current
+or reliably stop a BYD charge through the cloud. The distance estimate cannot
+guarantee an unexpected long trip, and the forecast may change, so check the
+actual car SOC and charger before following a plan.
+
 `forecast.py` models the system with pvlib from Open-Meteo weather. It reads
 these repository Actions variables: `PV_LATITUDE`, `PV_LONGITUDE`, `PV_TILT`,
 `PV_AZIMUTH` (pvlib convention: 0 = north, 90 = east, 180 = south, 270 = west),

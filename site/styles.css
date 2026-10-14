@@ -250,6 +250,13 @@ h3, h4 { font-family: Manrope, sans-serif; }
 
 .history-group { margin-top: 25px; }
 .history-group-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 14px; }
+.ev-section { margin: 38px 0 8px; padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.ev-decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.ev-decision { min-width: 0; }
+.ev-decision h4 { margin: 0 0 7px; font-size: 15px; }
+.ev-decision p { margin: 0 0 5px; font-size: 13px; overflow-wrap: anywhere; }
+.ev-decision .group-description, .ev-slot, .ev-warnings { color: var(--muted); }
+.ev-warnings { font-size: 12px; }
 .history-group-heading .eyebrow { margin-bottom: 5px; }
 .history-group-heading h3 { margin: 0 0 4px; font-size: 17px; letter-spacing: -.025em; }
 .group-description { margin: 0; color: var(--muted); font-size: 11px; }
@@ -336,4 +343,5 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
   .range-controls label { flex: 1; min-width: 0; }
   .range-controls input { min-width: 0; width: 100%; }
   .history-group-heading { align-items: flex-start; flex-direction: column; gap: 13px; }
+  .ev-decisions { grid-template-columns: 1fr; }
 }

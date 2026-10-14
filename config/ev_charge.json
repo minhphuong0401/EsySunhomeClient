@@ -1,0 +1,14 @@
+{
+  "capacity_kwh": 45,
+  "min_soc_percent": 20,
+  "max_current_amps": 32,
+  "voltage_v": 230,
+  "charge_efficiency": 0.9,
+  "daytime_home_start": "11:00",
+  "daytime_home_end": "17:00",
+  "fallback_daily_km": 20,
+  "fallback_consumption_kwh_per_100km": 14,
+  "distance_quantile": 0.8,
+  "history_days": 42,
+  "max_vehicle_age_hours": 8
+}

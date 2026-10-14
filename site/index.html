@@ -26,9 +26,9 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=20">
+    <link rel="stylesheet" href="styles.css?v=21">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=20" defer></script>
+    <script src="app.js?v=21" defer></script>
   </head>
   <body>
     <main class="page">
@@ -126,6 +126,20 @@
           </div>
           <p class="metric-value" id="metric-battery-discharge">—</p>
         </article>
+      </section>
+
+      <section class="ev-section" aria-labelledby="ev-charge-title">
+        <header class="history-group-heading">
+          <div>
+            <p class="eyebrow">BYD DOLPHIN · DRY RUN</p>
+            <h3 id="ev-charge-title">Vehicle charging</h3>
+            <p class="group-description" id="ev-plan-time">Waiting for vehicle data</p>
+          </div>
+        </header>
+        <div class="ev-decisions" id="ev-decisions" aria-live="polite">
+          <p class="group-description">Loading charge advice…</p>
+        </div>
+        <p class="ev-warnings" id="ev-warnings" hidden></p>
       </section>
 
       <section class="section-heading">

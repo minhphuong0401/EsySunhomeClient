@@ -1,5 +1,6 @@
 const HISTORY_URL = "data/history.json";
 const NIGHT_CHARGE_URL = "data/night_charge.json";
+const EV_CHARGE_URL = "data/ev_charge.json";
 const DAY_MS = 24 * 60 * 60 * 1000;
 let dashboardTimezone = "Australia/Sydney";
 
@@ -723,6 +724,66 @@ async function loadNightChargeReport() {
   }
 }
 
+function renderEvAdvice(plan) {
+  const container = document.getElementById("ev-decisions");
+  const planTime = document.getElementById("ev-plan-time");
+  const warnings = document.getElementById("ev-warnings");
+  const expired = Date.now() > new Date(plan.daytime.window.end).getTime();
+  if (expired || !plan.dryRun) {
+    container.textContent = "No current vehicle charge advice.";
+    planTime.textContent = "Awaiting the next vehicle snapshot";
+    return;
+  }
+
+  planTime.textContent = `Plan ${formatPlanTime(plan.generatedAt)} · Vehicle ${formatAmount(plan.vehicleSoc, "%")} · ${formatAmount(plan.tomorrow.estimatedDistanceKm, " km")} estimated tomorrow`;
+  const overnight = document.createElement("div");
+  overnight.className = "ev-decision";
+  const nightTitle = document.createElement("h4");
+  nightTitle.textContent = plan.overnight.decision === "charge" ? "Charge overnight" : "No overnight charge";
+  const nightDetails = document.createElement("p");
+  nightDetails.textContent = plan.overnight.decision === "charge"
+    ? `${formatPlanTime(plan.overnight.start)}–${formatPlanTime(plan.overnight.end)} · ${plan.overnight.currentA} A · ${plan.overnight.durationMinutes} min · ${formatAmount(plan.overnight.energyFromGrid_kWh, " kWh")} · ${formatCurrency(plan.overnight.cost_AUD)}`
+    : "Current charge covers tomorrow's estimated driving.";
+  const nightProjection = document.createElement("p");
+  nightProjection.className = "group-description";
+  nightProjection.textContent = `After driving: ~${formatAmount(plan.tomorrow.socAfterDriving, "%")} · Reserve ${formatAmount(plan.minimumSoc, "%")}`;
+  overnight.append(nightTitle, nightDetails, nightProjection);
+
+  const daytime = document.createElement("div");
+  daytime.className = "ev-decision";
+  const dayTitle = document.createElement("h4");
+  dayTitle.textContent = plan.daytime.decision === "charge" ? "Use solar while home" : "No daytime charge planned";
+  const dayDetails = document.createElement("p");
+  dayDetails.textContent = plan.daytime.decision === "charge"
+    ? `${formatAmount(plan.daytime.energyFromSolar_kWh, " kWh")} forecast surplus · ${formatCurrency(plan.daytime.opportunityCost_AUD)} export credit forgone`
+    : "No usable solar surplus or no charge needed.";
+  daytime.append(dayTitle, dayDetails);
+  for (const slot of plan.daytime.slots) {
+    const detail = document.createElement("p");
+    detail.className = "ev-slot";
+    detail.textContent = `${formatPlanTime(slot.start)}–${formatDate(slot.end, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })} · ${slot.currentA} A · ${formatAmount(slot.energyFromSolar_kWh, " kWh")}`;
+    daytime.append(detail);
+  }
+  container.replaceChildren(overnight, daytime);
+  if (plan.warnings?.length) {
+    warnings.textContent = plan.warnings.join(" ");
+    warnings.hidden = false;
+  } else {
+    warnings.hidden = true;
+  }
+}
+
+async function loadEvAdvice() {
+  try {
+    const response = await fetch(EV_CHARGE_URL, { cache: "no-cache" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    renderEvAdvice(await response.json());
+  } catch (error) {
+    console.warn("Could not load EV charge advice.", error);
+    document.getElementById("ev-decisions").textContent = "Vehicle charge advice is unavailable.";
+  }
+}
+
 async function main() {
   if (typeof Chart === "undefined") {
     showNotice("The chart library could not be loaded. Check your network connection and reload the page.");
@@ -753,3 +814,4 @@ async function main() {
 initializeThemeToggle();
 main();
 loadNightChargeReport();
+loadEvAdvice();

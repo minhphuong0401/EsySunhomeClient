@@ -1,0 +1,64 @@
+name: Fetch BYD and plan EV charge
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-today-main
+  cancel-in-progress: false
+
+jobs:
+  fetch-and-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main and its history
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Fetch BYD telemetry
+        env:
+          BYD_USERNAME: ${{ secrets.BYD_USERNAME }}
+          BYD_PASSWORD: ${{ secrets.BYD_PASSWORD }}
+          BYD_BASE_URL: ${{ vars.BYD_BASE_URL }}
+          BYD_COUNTRY_CODE: ${{ vars.BYD_COUNTRY_CODE }}
+        run: python byd.py > data/byd.json
+
+      - name: Plan EV charge (dry run)
+        continue-on-error: true
+        env:
+          PV_LATITUDE: ${{ vars.PV_LATITUDE }}
+          PV_LONGITUDE: ${{ vars.PV_LONGITUDE }}
+          PV_TILT: ${{ vars.PV_TILT }}
+          PV_AZIMUTH: ${{ vars.PV_AZIMUTH }}
+          PV_KWP: ${{ vars.PV_KWP }}
+          PV_INVERTER_KW: ${{ vars.PV_INVERTER_KW }}
+          PV_SYSTEM_LOSS: ${{ vars.PV_SYSTEM_LOSS }}
+        run: python -m scripts.plan_ev_charge
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/byd.json
+          if [[ -f data/ev_charge_plan.json ]]; then
+            git add data/ev_charge_plan.json
+          fi
+          if git diff --cached --quiet; then
+            echo "BYD data has not changed; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update BYD charge advice"
+          git push origin HEAD:main
