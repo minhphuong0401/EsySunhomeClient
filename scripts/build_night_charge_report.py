@@ -103,7 +103,11 @@ def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[st
     else:
         start = None
 
-    outcome: dict[str, Any] = {"complete": complete, "minSoc": min(socs) if socs else None}
+    outcome: dict[str, Any] = {
+        "complete": complete,
+        "minSoc": min(socs) if socs else None,
+        "maxSoc": max(socs) if socs else None,
+    }
     for name, field in FIELDS.items():
         outcome[name] = _difference(inside[-1][1], start, field) if complete and start is not None else None
     # The daily counter starts at local midnight, so the last reading is the whole day's load.

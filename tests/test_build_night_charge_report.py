@@ -62,6 +62,7 @@ class NightChargeReportTests(unittest.TestCase):
 
         self.assertTrue(outcome["complete"])
         self.assertEqual(outcome["minSoc"], 45)
+        self.assertEqual(outcome["maxSoc"], 55)
         self.assertEqual(outcome["pv_kWh"], 35.0)
         self.assertEqual(outcome["load_kWh"], 20.0)
         self.assertEqual(outcome["loadDay_kWh"], 22.0)

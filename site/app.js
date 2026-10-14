@@ -529,7 +529,7 @@ function renderNightChargeRows(nights, emptyMessage) {
   if (nights.length === 0) {
     const row = document.createElement("tr");
     const cell = makeCell(emptyMessage, "plan-empty");
-    cell.colSpan = 7;
+    cell.colSpan = 8;
     row.append(cell);
     body.append(row);
     return;
@@ -583,6 +583,11 @@ function renderNightChargeRows(nights, emptyMessage) {
         ["Forecast · expected", formatAmount(expected.minSocWithoutCharge, "%")],
         ["Forecast · worst case", formatAmount(worst.minSocWithoutCharge, "%")],
         ["Actual", formatAmount(actual.minSoc, "%"), lowestSocTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge)],
+      ]),
+      makeComparisonCell([
+        ["Forecast · expected", formatAmount(expected.peakSocWithoutCharge, "%")],
+        ["Forecast · worst case", formatAmount(worst.peakSocWithoutCharge, "%")],
+        ["Actual", formatAmount(actual.maxSoc, "%"), actualTrend(actual.maxSoc, expected.peakSocWithoutCharge, true)],
       ]),
       result,
     );

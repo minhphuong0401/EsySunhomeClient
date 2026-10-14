@@ -133,6 +133,8 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertEqual(plan["decision"], "no_charge")
         self.assertEqual(plan["gridCharge_kWh"], 0.0)
         self.assertGreaterEqual(plan["scenarios"]["worstCase"]["minSocWithoutCharge"], 25)
+        # Midday surplus fills the battery even though it starts the day part-charged.
+        self.assertEqual(plan["scenarios"]["expected"]["peakSocWithoutCharge"], 100)
         self.assertEqual(plan["warnings"], [])
 
     def test_worst_case_scales_forecast_pv_by_configured_factor(self) -> None:

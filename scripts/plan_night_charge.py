@@ -260,13 +260,15 @@ def _scenario_slots(
     return slots
 
 
-def _simulate(start_soc: float, slots: list[tuple[float, float]], config: PlannerConfig) -> tuple[float, float]:
-    """Return (end SOC %, minimum SOC %) after applying the slots."""
+def _simulate(
+    start_soc: float, slots: list[tuple[float, float]], config: PlannerConfig
+) -> tuple[float, float, float]:
+    """Return (end SOC %, minimum SOC %, peak SOC %) after applying the slots."""
     capacity = config.battery_capacity_kwh
     # The inverter stops discharging at its SOC limit; the grid covers the rest.
     cutoff = config.battery_min_soc / 100 * capacity
     energy = start_soc / 100 * capacity
-    lowest = energy
+    lowest = highest = energy
     for pv, load in slots:
         net = pv - load
         if net >= 0:
@@ -274,7 +276,8 @@ def _simulate(start_soc: float, slots: list[tuple[float, float]], config: Planne
         else:
             energy = max(min(energy, cutoff), energy + net / config.discharge_efficiency)
         lowest = min(lowest, energy)
-    return energy / capacity * 100, lowest / capacity * 100
+        highest = max(highest, energy)
+    return energy / capacity * 100, lowest / capacity * 100, highest / capacity * 100
 
 
 def _required_soc(slots: list[tuple[float, float]], floor: float, config: PlannerConfig) -> int | None:
@@ -312,13 +315,15 @@ def build_plan(
         if required is None:
             warnings.append(f"Even a full battery may drop below {floor}% in the {name} scenario.")
             required = 100
+        _, lowest, peak = _simulate(projected, after, config)
         results[name] = {
             "minSocTarget": floor,
             "pvAfterWindow_kWh": round(sum(pv for pv, _ in after), 2),
             "loadAfterWindow_kWh": round(sum(load_kwh for _, load_kwh in after), 2),
             "projectedSocAtWindowEnd": round(projected, 1),
             "requiredSocAtWindowEnd": required,
-            "minSocWithoutCharge": round(_simulate(projected, after, config)[1], 1),
+            "minSocWithoutCharge": round(lowest, 1),
+            "peakSocWithoutCharge": round(peak, 1),
         }
         if name == "expected":
             # Half-hour slots starting at the window end; the dashboard compares them with PV so far.
