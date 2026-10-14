@@ -142,6 +142,36 @@
         <p class="ev-warnings" id="ev-warnings" hidden></p>
       </section>
 
+      <section class="history-group" aria-labelledby="night-charge-title">
+        <header class="history-group-heading">
+          <div>
+            <p class="eyebrow">GRID CHARGING · DRY RUN</p>
+            <h3 id="night-charge-title">Grid charging decisions</h3>
+            <p class="group-description">Last 5 nights · actual values measured 06:00–24:00, icons compare them with the plan's forecast · select a night for the forecasts (no charging is performed yet)</p>
+          </div>
+        </header>
+        <article class="chart-card">
+          <div class="table-wrap">
+            <table class="plan-table">
+              <thead>
+                <tr>
+                  <th scope="col">Night</th>
+                  <th scope="col">Decision</th>
+                  <th scope="col">Solar 06–24</th>
+                  <th scope="col">Load 06–24</th>
+                  <th scope="col">Lowest SOC 06–24</th>
+                  <th scope="col">Peak SOC 06–24</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody id="night-charge-rows">
+                <tr><td colspan="7" class="plan-empty">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
       <section class="section-heading">
         <div>
           <p class="eyebrow">HISTORY</p>
@@ -218,36 +248,6 @@
             <div><h4>Battery state of charge</h4><p>Charge level over time</p></div>
           </div>
           <div class="chart-wrap"><canvas id="soc-chart" role="img" aria-label="Battery charge level over time"></canvas></div>
-        </article>
-      </section>
-
-      <section class="history-group" aria-labelledby="night-charge-title">
-        <header class="history-group-heading">
-          <div>
-            <p class="eyebrow">NIGHT CHARGE PLANNER · DRY RUN</p>
-            <h3 id="night-charge-title">Grid charging decisions</h3>
-            <p class="group-description">Last 5 nights · actual values measured 06:00–24:00, icons compare them with the plan's forecast · select a night for the forecasts (no charging is performed yet)</p>
-          </div>
-        </header>
-        <article class="chart-card">
-          <div class="table-wrap">
-            <table class="plan-table">
-              <thead>
-                <tr>
-                  <th scope="col">Night</th>
-                  <th scope="col">Decision</th>
-                  <th scope="col">Solar 06–24</th>
-                  <th scope="col">Load 06–24</th>
-                  <th scope="col">Lowest SOC 06–24</th>
-                  <th scope="col">Peak SOC 06–24</th>
-                  <th scope="col">Result</th>
-                </tr>
-              </thead>
-              <tbody id="night-charge-rows">
-                <tr><td colspan="7" class="plan-empty">Loading…</td></tr>
-              </tbody>
-            </table>
-          </div>
         </article>
       </section>
 
