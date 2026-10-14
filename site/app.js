@@ -677,7 +677,7 @@ function renderNightChargeRows(nights, emptyMessage) {
       ...(soFar
         ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
         : []),
-      makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
+      makeRangeLine("Total load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
       ...(numberOrNull(soFar?.loadForecast_kWh) !== null
         ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
         : []),
@@ -736,6 +736,10 @@ function renderEvAdvice(plan) {
   }
 
   planTime.textContent = `Plan ${formatPlanTime(plan.generatedAt)} · Vehicle ${formatAmount(plan.vehicleSoc, "%")} · ${formatAmount(plan.tomorrow.estimatedDistanceKm, " km")} estimated tomorrow`;
+  const plannedEnergy = numberOrNull(plan.overnight.energyFromGrid_kWh) + numberOrNull(plan.daytime.energyFromSolar_kWh);
+  const plannedEnergyNote = document.getElementById("ev-planned-energy");
+  plannedEnergyNote.hidden = plannedEnergy === 0;
+  plannedEnergyNote.textContent = `Planned charger draw: ~${formatAmount(plannedEnergy, " kWh")} AC · estimated, not added to Grid Charging load`;
   const overnight = document.createElement("div");
   overnight.className = "ev-decision";
   const nightTitle = document.createElement("h4");
@@ -752,11 +756,11 @@ function renderEvAdvice(plan) {
   const daytime = document.createElement("div");
   daytime.className = "ev-decision";
   const dayTitle = document.createElement("h4");
-  dayTitle.textContent = plan.daytime.decision === "charge" ? "Use solar while home" : "No daytime charge planned";
+  dayTitle.textContent = plan.daytime.decision === "charge" ? "Charge from forecast PV surplus" : "No daytime charge planned";
   const dayDetails = document.createElement("p");
   dayDetails.textContent = plan.daytime.decision === "charge"
-    ? `${formatAmount(plan.daytime.energyFromSolar_kWh, " kWh")} forecast surplus · ${formatCurrency(plan.daytime.opportunityCost_AUD)} export credit forgone`
-    : "No usable solar surplus or no charge needed.";
+    ? `${formatAmount(plan.daytime.energyFromSolar_kWh, " kWh")} planned AC draw · ~${formatCurrency(plan.daytime.opportunityCost_AUD)} export credit if surplus materializes`
+    : "No forecast PV surplus available or no charge needed.";
   daytime.append(dayTitle, dayDetails);
   for (const slot of plan.daytime.slots) {
     const detail = document.createElement("p");

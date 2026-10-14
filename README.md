@@ -105,9 +105,13 @@ subtracted a second time. If the needed charge does not fit the cheap window,
 the plan warns rather than claiming the reserve will be met.
 
 During tomorrow's configured home hours, the planner may advise topping up
-for the following day's estimated driving using only forecast solar energy
-left after a conservative household load and a full home battery. Its cost is
-the feed-in credit forgone, not an electricity bill. When there is no such
+for the following day's estimated driving from forecast PV surplus after
+estimated household load and a full home battery. Neither the solar supply
+nor the feed-in credit forgone is guaranteed: household history can already
+include past EV charging, and actual PV and home load can differ. The planned
+charger AC energy is shown separately and is not added to the home-battery
+planner's load forecast, since there is no EVSE meter or charging log to
+separate past EV charging from household demand. When there is no such
 surplus, it recommends no daytime charging; remaining demand can be planned
 for the following night instead. The current is an integer A setting for each
 listed time slot. This is advice only: the workflow cannot set charger current
