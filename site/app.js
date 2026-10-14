@@ -557,6 +557,9 @@ function renderNightChargeRows(nights, emptyMessage) {
     badge.textContent = label;
     result.append(badge);
 
+    const soFar = actual.soFar;
+    const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
+
     const row = document.createElement("tr");
     row.append(
       makeCell(nightFormat.format(Date.UTC(year, month - 1, day))),
@@ -565,6 +568,10 @@ function renderNightChargeRows(nights, emptyMessage) {
       makeComparisonCell([
         ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
         ["Actual", formatAmount(actual.pv_kWh, " kWh"), actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true)],
+        ...(soFar ? [
+          [`Forecast to ${soFarTime}`, formatAmount(soFar.pvForecast_kWh, " kWh")],
+          [`Actual to ${soFarTime}`, formatAmount(soFar.pv_kWh, " kWh"), actualTrend(soFar.pv_kWh, soFar.pvForecast_kWh, true)],
+        ] : []),
       ]),
       makeComparisonCell([
         ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],

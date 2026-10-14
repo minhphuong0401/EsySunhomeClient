@@ -21,7 +21,7 @@ from scripts.build_history import (
     _parse_timestamp,
     load_tariff,
 )
-from scripts.plan_night_charge import _iso, _parse_utc
+from scripts.plan_night_charge import SLOT, _iso, _parse_utc
 
 
 PLAN_PATH = "data/night_charge_plan.json"
@@ -67,6 +67,21 @@ def _difference(end: dict[str, Any], start: dict[str, Any], field: str) -> float
         return None
 
 
+def _pv_forecast_until(plan: dict[str, Any], until: datetime) -> float | None:
+    """Expected PV from the window end until `until`, or None for plans without half-hourly slots."""
+    slots = plan["scenarios"]["expected"].get("pvSlotsAfterWindow_kWh")
+    if not slots:
+        return None
+    slot_start = _parse_utc(plan["window"]["end"])
+    total = 0.0
+    for kwh in slots:
+        if slot_start >= until:
+            break
+        total += kwh * min(1.0, (until - slot_start) / SLOT)
+        slot_start += SLOT
+    return round(total, 2)
+
+
 def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[str, Any]]]) -> dict[str, Any]:
     """Summarize the snapshots between the window end and the next window (the planning horizon)."""
     window_start = _parse_utc(plan["window"]["start"])
@@ -93,6 +108,16 @@ def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[st
         outcome[name] = _difference(inside[-1][1], start, field) if complete and start is not None else None
     # The daily counter starts at local midnight, so the last reading is the whole day's load.
     outcome["loadDay_kWh"] = _difference(inside[-1][1], {FIELDS["load_kWh"]: 0}, FIELDS["load_kWh"]) if complete else None
+    outcome["soFar"] = None
+    if not complete and inside and start is not None:
+        as_of, latest = inside[-1]
+        forecast = _pv_forecast_until(plan, as_of)
+        if forecast is not None:
+            outcome["soFar"] = {
+                "asOf": _iso(as_of),
+                "pvForecast_kWh": forecast,
+                "pv_kWh": _difference(latest, start, FIELDS["pv_kWh"]),
+            }
     return outcome
 
 

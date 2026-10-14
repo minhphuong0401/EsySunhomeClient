@@ -320,6 +320,9 @@ def build_plan(
             "requiredSocAtWindowEnd": required,
             "minSocWithoutCharge": round(_simulate(projected, after, config)[1], 1),
         }
+        if name == "expected":
+            # Half-hour slots starting at the window end; the dashboard compares them with PV so far.
+            results[name]["pvSlotsAfterWindow_kWh"] = [round(pv, 3) for pv, _ in after]
 
     if missing:
         warnings.append(f"No PV forecast for {len(missing)} half-hour slots; assumed zero PV.")

@@ -77,6 +77,19 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertIsNone(outcome["loadDay_kWh"])
         self.assertEqual(verdict(self._plan(12), outcome), "pending")
 
+    def test_pending_day_compares_pv_so_far_with_forecast(self) -> None:
+        plan = self._plan(12)
+        plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"] = [1.0] * 36
+        snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 10, 15, 70, 9.5, 5.0, 0.2)]
+
+        outcome = actual_outcome(plan, snapshots)
+
+        # 06:00-10:15 covers eight full slots and half of the ninth.
+        self.assertEqual(outcome["soFar"]["pvForecast_kWh"], 8.5)
+        self.assertEqual(outcome["soFar"]["pv_kWh"], 9.5)
+        self.assertEqual(outcome["soFar"]["asOf"], _iso(self._local(2026, 10, 12, 10, 15)))
+        self.assertIsNone(actual_outcome(self._plan(12), snapshots)["soFar"])
+
     def test_verdicts_compare_decision_with_actual_lowest_soc(self) -> None:
         low = {"complete": True, "minSoc": 22}
         high = {"complete": True, "minSoc": 48}
