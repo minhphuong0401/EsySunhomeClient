@@ -291,6 +291,7 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-table .plan-details-table tbody th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: normal; text-align: left; }
 .plan-table .plan-details-table td { text-align: right; }
 .plan-table .plan-details-table .plan-details-actual { font-weight: 600; }
+.plan-result-reason { margin: 10px 14px 6px; max-width: 64ch; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .plan-history-table { margin-top: 10px; }
 .plan-history-table caption { padding: 0 14px 4px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; text-align: left; }
 .plan-table .plan-history-table thead th, .plan-table .plan-history-table td { text-align: left; }
@@ -300,6 +301,8 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-trend-good { color: var(--series-solar); }
 .plan-trend-bad { color: var(--series-battery-discharge); }
 .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.plan-summary .badge { cursor: help; }
+.plan-summary .badge:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .badge-good { background: var(--series-solar-fill); color: var(--series-solar); }
 .badge-bad { background: var(--series-battery-discharge-fill); color: var(--series-battery-discharge); }
 .badge-warn { background: var(--series-export-fill); color: var(--series-export); }

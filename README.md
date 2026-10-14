@@ -140,11 +140,14 @@ the full-day load (00:00–24:00). Until the day ends, load shows a projection
 (≈): load so far plus the rest of the day's forecast. The Decision column also
 shows how and when the shown plan was made (scheduled, manual or replay), and
 the expanded view lists every plan made for that night, with identical
-consecutive scheduled decisions merged. The result shows the decision and
-whether it was right, by comparing the actual lowest SOC with the 30% target:
-"No charge – correct" (green), "No charge – fell below 30%" (red),
-"Charge – correct" (blue) and "Planned charge – not needed" (yellow). The
-Pages workflow generates this from the Git history with
+consecutive scheduled decisions merged. The result compares the actual lowest
+SOC with the expected-case target saved in that night's plan: "No charge –
+correct" (green), "No charge – fell below target" (red), "Charge – correct"
+(blue) and "Planned charge – not needed" (yellow). Hover or focus a result,
+or expand its row, to see the recorded SOC and the reason for the label. These
+are retrospective assessments of dry-run advice, not proof that charging
+happened or would have prevented a drop. The Pages workflow generates this
+from the Git history with
 `python -m scripts.build_night_charge_report`.
 
 ## Energy dashboard

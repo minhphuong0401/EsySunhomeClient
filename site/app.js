@@ -575,6 +575,29 @@ function nightChargeVerdict(verdict, target) {
   }
 }
 
+function explainNightChargeVerdict(verdict, plan, actual) {
+  const target = plan.scenarios.expected.minSocTarget;
+  const lowest = formatAmount(actual.minSoc, "%");
+  const observation = actual.minSoc == null
+    ? "No home-battery SOC reading has been recorded after 06:00 yet."
+    : `Lowest measured home-battery SOC ${actual.complete ? "from 06:00 to midnight" : "so far since 06:00"}: ${lowest}.`;
+  const threshold = `This night's saved expected-case target: ${target}%.`;
+  switch (verdict) {
+    case "ok":
+      return `No overnight grid charge was recommended. ${observation} It stayed at or above the ${target}% target, so the no-charge advice matched the observed result.`;
+    case "missed":
+      return `No overnight grid charge was recommended. ${observation} It fell below the ${target}% target, so the no-charge advice missed the target.`;
+    case "charge_needed":
+      return `The dry-run recommended charging the home battery to ${plan.targetSoc}%. ${observation} It fell below the ${target}% target, so charging was recommended for a reason. This does not mean charging happened or prove it would have prevented the drop.`;
+    case "charge_not_needed":
+      return `The dry-run recommended charging the home battery to ${plan.targetSoc}%. ${observation} It stayed at or above the ${target}% target. This does not prove charging was unnecessary if you charged the battery yourself; the report does not verify whether the advice was followed.`;
+    default:
+      return actual.complete
+        ? `The day is complete, but there is no usable home-battery SOC reading for a result. ${threshold}`
+        : `The 06:00-to-midnight observation period is not complete yet. ${observation} The result will be checked against the ${target}% target once the day ends.`;
+  }
+}
+
 function renderNightChargeRows(nights, emptyMessage) {
   const body = document.getElementById("night-charge-rows");
   body.replaceChildren();
@@ -594,6 +617,7 @@ function renderNightChargeRows(nights, emptyMessage) {
     const worst = plan.scenarios?.worstCase ?? {};
     const charging = plan.decision === "charge";
     const [label, badgeClass] = nightChargeVerdict(verdict, expected.minSocTarget);
+    const explanation = explainNightChargeVerdict(verdict, plan, actual);
     const soFar = actual.soFar;
     const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
     const soFarNote = actual.complete ? null : "so far";
@@ -646,9 +670,13 @@ function renderNightChargeRows(nights, emptyMessage) {
     decision.append(madeAt);
 
     const result = document.createElement("td");
+    result.title = explanation;
     const badge = document.createElement("span");
     badge.className = `badge ${badgeClass}`;
     badge.textContent = label;
+    badge.tabIndex = 0;
+    badge.title = explanation;
+    badge.setAttribute("aria-label", `${label}. ${explanation}`);
     result.append(badge);
 
     const solarCell = actual.complete || !soFar
@@ -687,7 +715,10 @@ function renderNightChargeRows(nights, emptyMessage) {
     ]);
     const detailsCell = document.createElement("td");
     detailsCell.colSpan = NIGHT_CHARGE_COLUMNS;
-    detailsCell.append(list);
+    const resultReason = document.createElement("p");
+    resultReason.className = "plan-result-reason";
+    resultReason.textContent = explanation;
+    detailsCell.append(list, resultReason);
     if (history?.length) detailsCell.append(makeHistoryTable(history));
     const details = document.createElement("tr");
     details.className = "plan-details";
