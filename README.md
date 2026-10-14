@@ -84,9 +84,10 @@ refreshes the forecast at most once an hour and caches it in
 
 The dashboard's "Grid charging decisions" table shows the last plan made for
 each of the last 5 nights next to what actually happened between 06:00 and
-midnight: solar, load, and the lowest and peak SOC (forecasts assume no grid
-charge). Load also shows the full day
-(00:00–24:00), forecast and actual. The result shows the decision and
+midnight: solar, load, and the lowest and peak SOC, each with an icon comparing
+it with the forecast (forecasts assume no grid charge). Select a night to see
+the forecasts, PV so far for a day in progress, and the full-day load
+(00:00–24:00). The result shows the decision and
 whether it was right, by comparing the actual lowest SOC with the 30% target:
 "No charge – correct" (green), "No charge – fell below 30%" (red),
 "Charge – correct" (blue) and "Planned charge – not needed" (yellow). The

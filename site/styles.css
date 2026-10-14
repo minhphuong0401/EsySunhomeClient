@@ -268,10 +268,20 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-table th { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; }
 .plan-table tbody tr:last-child td { border-bottom: 0; }
 .plan-table .plan-empty { color: var(--muted); text-align: center; }
-.plan-table .plan-comparison { min-width: 150px; white-space: normal; }
-.plan-comparison-row { display: flex; justify-content: space-between; gap: 12px; line-height: 1.6; }
-.plan-comparison-label { color: var(--muted); }
-.plan-comparison-value { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.plan-table tr.plan-summary { cursor: pointer; }
+.plan-table tr.plan-summary:hover td { background: var(--input-surface); }
+.plan-table tr.plan-summary.is-open td { border-bottom: 0; }
+.plan-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.plan-toggle::before { content: "▸"; width: 10px; color: var(--muted); font-size: 11px; }
+.plan-toggle[aria-expanded="true"]::before { content: "▾"; }
+.plan-actual { font-variant-numeric: tabular-nums; font-weight: 600; }
+.plan-note { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+.plan-table .plan-details td { padding-top: 0; white-space: normal; }
+.plan-details-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--input-surface); }
+.plan-details-list dt { color: var(--muted); font-weight: 600; }
+.plan-details-list dd { margin: 0; font-variant-numeric: tabular-nums; }
+.plan-detail-name { color: var(--muted); }
+.plan-detail-part { white-space: nowrap; }
 .plan-warning { margin-left: 6px; color: var(--series-export); cursor: help; }
 .plan-trend { margin-right: 5px; font-size: 10px; cursor: help; }
 .plan-trend-great { color: var(--series-solar); font-size: 12px; font-weight: 700; }

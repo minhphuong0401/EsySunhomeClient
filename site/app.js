@@ -459,30 +459,50 @@ function makeCell(text, className) {
   return cell;
 }
 
-function makeComparisonCell(rows) {
+const NIGHT_CHARGE_COLUMNS = 7;
+
+function makeTrendIcon(trend) {
+  const icon = document.createElement("span");
+  icon.className = `plan-trend plan-trend-${trend.tone}`;
+  icon.textContent = trend.symbol;
+  icon.title = trend.title;
+  icon.setAttribute("aria-label", trend.title);
+  return icon;
+}
+
+function makeActualCell(value, trend, note) {
   const cell = document.createElement("td");
-  cell.className = "plan-comparison";
-  for (const [label, value, trend] of rows) {
-    const row = document.createElement("div");
-    row.className = "plan-comparison-row";
-    const rowLabel = document.createElement("span");
-    rowLabel.className = "plan-comparison-label";
-    rowLabel.textContent = label;
-    const rowValue = document.createElement("span");
-    rowValue.className = "plan-comparison-value";
-    if (trend) {
-      const icon = document.createElement("span");
-      icon.className = `plan-trend plan-trend-${trend.tone}`;
-      icon.textContent = trend.symbol;
-      icon.title = trend.title;
-      icon.setAttribute("aria-label", trend.title);
-      rowValue.append(icon);
-    }
-    rowValue.append(value);
-    row.append(rowLabel, rowValue);
-    cell.append(row);
+  cell.className = "plan-actual";
+  if (trend) cell.append(makeTrendIcon(trend));
+  cell.append(value);
+  if (note) {
+    const noteText = document.createElement("span");
+    noteText.className = "plan-note";
+    noteText.textContent = note;
+    cell.append(noteText);
   }
   return cell;
+}
+
+function makeDetailLine(label, parts) {
+  const term = document.createElement("dt");
+  term.textContent = label;
+  const detail = document.createElement("dd");
+  parts.forEach(([name, value, trend], index) => {
+    if (index > 0) detail.append(" · ");
+    const part = document.createElement("span");
+    part.className = "plan-detail-part";
+    const partName = document.createElement("span");
+    partName.className = "plan-detail-name";
+    partName.textContent = `${name} `;
+    const partValue = document.createElement("strong");
+    partValue.textContent = value;
+    part.append(partName);
+    if (trend) part.append(makeTrendIcon(trend));
+    part.append(partValue);
+    detail.append(part);
+  });
+  return [term, detail];
 }
 
 // The arrow shows actual vs forecast; the colour shows whether that is good for the battery.
@@ -498,7 +518,7 @@ function actualTrend(actual, forecast, higherIsGood) {
   };
 }
 
-function lowestSocTrend(actual, expected, worst) {
+function socRangeTrend(actual, expected, worst) {
   const actualValue = numberOrNull(actual);
   const expectedValue = numberOrNull(expected);
   const worstValue = numberOrNull(worst);
@@ -529,7 +549,7 @@ function renderNightChargeRows(nights, emptyMessage) {
   if (nights.length === 0) {
     const row = document.createElement("tr");
     const cell = makeCell(emptyMessage, "plan-empty");
-    cell.colSpan = 8;
+    cell.colSpan = NIGHT_CHARGE_COLUMNS;
     row.append(cell);
     body.append(row);
     return;
@@ -542,6 +562,28 @@ function renderNightChargeRows(nights, emptyMessage) {
     const worst = plan.scenarios?.worstCase ?? {};
     const charging = plan.decision === "charge";
     const [label, badgeClass] = nightChargeVerdict(verdict, expected.minSocTarget);
+    const soFar = actual.soFar;
+    const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
+    const soFarNote = actual.complete ? null : "so far";
+
+    const trends = {
+      solar: actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true),
+      solarSoFar: soFar ? actualTrend(soFar.pv_kWh, soFar.pvForecast_kWh, true) : null,
+      load: actualTrend(actual.load_kWh, expected.loadAfterWindow_kWh, false),
+      loadDay: actualTrend(actual.loadDay_kWh, plan.dailyLoad_kWh?.expected, false),
+      lowest: socRangeTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge),
+      peak: socRangeTrend(actual.maxSoc, expected.peakSocWithoutCharge, worst.peakSocWithoutCharge),
+    };
+
+    const detailsId = `night-charge-details-${night}`;
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "plan-toggle";
+    toggle.textContent = nightFormat.format(Date.UTC(year, month - 1, day));
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-controls", detailsId);
+    const nightCell = document.createElement("td");
+    nightCell.append(toggle);
 
     const decision = makeCell(charging ? `Charge to ${plan.targetSoc}%` : "No charge");
     if (plan.warnings?.length) {
@@ -551,47 +593,83 @@ function renderNightChargeRows(nights, emptyMessage) {
       warning.title = plan.warnings.join("\n");
       decision.append(warning);
     }
+    if (charging) {
+      const cost = document.createElement("span");
+      cost.className = "plan-note";
+      cost.textContent = `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}`;
+      decision.append(cost);
+    }
+
     const result = document.createElement("td");
     const badge = document.createElement("span");
     badge.className = `badge ${badgeClass}`;
     badge.textContent = label;
     result.append(badge);
 
-    const soFar = actual.soFar;
-    const soFarTime = soFar ? formatDate(soFar.asOf, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : null;
+    const solarCell = actual.complete || !soFar
+      ? makeActualCell(formatAmount(actual.pv_kWh, " kWh"), trends.solar)
+      : makeActualCell(formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar, `to ${soFarTime}`);
 
-    const row = document.createElement("tr");
-    row.append(
-      makeCell(nightFormat.format(Date.UTC(year, month - 1, day))),
+    const summary = document.createElement("tr");
+    summary.className = "plan-summary";
+    summary.append(
+      nightCell,
       decision,
-      makeCell(charging ? `${formatAmount(plan.gridCharge_kWh, " kWh")} · ${formatCurrency(plan.estimatedChargeCost_AUD)}` : "—"),
-      makeComparisonCell([
-        ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
-        ["Actual", formatAmount(actual.pv_kWh, " kWh"), actualTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, true)],
-        ...(soFar ? [
-          [`Forecast to ${soFarTime}`, formatAmount(soFar.pvForecast_kWh, " kWh")],
-          [`Actual to ${soFarTime}`, formatAmount(soFar.pv_kWh, " kWh"), actualTrend(soFar.pv_kWh, soFar.pvForecast_kWh, true)],
-        ] : []),
-      ]),
-      makeComparisonCell([
-        ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
-        ["06–24 actual", formatAmount(actual.load_kWh, " kWh"), actualTrend(actual.load_kWh, expected.loadAfterWindow_kWh, false)],
-        ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
-        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh"), actualTrend(actual.loadDay_kWh, plan.dailyLoad_kWh?.expected, false)],
-      ]),
-      makeComparisonCell([
-        ["Forecast · expected", formatAmount(expected.minSocWithoutCharge, "%")],
-        ["Forecast · worst case", formatAmount(worst.minSocWithoutCharge, "%")],
-        ["Actual", formatAmount(actual.minSoc, "%"), lowestSocTrend(actual.minSoc, expected.minSocWithoutCharge, worst.minSocWithoutCharge)],
-      ]),
-      makeComparisonCell([
-        ["Forecast · expected", formatAmount(expected.peakSocWithoutCharge, "%")],
-        ["Forecast · worst case", formatAmount(worst.peakSocWithoutCharge, "%")],
-        ["Actual", formatAmount(actual.maxSoc, "%"), actualTrend(actual.maxSoc, expected.peakSocWithoutCharge, true)],
-      ]),
+      solarCell,
+      makeActualCell(formatAmount(actual.load_kWh, " kWh"), trends.load),
+      makeActualCell(formatAmount(actual.minSoc, "%"), trends.lowest, actual.minSoc == null ? null : soFarNote),
+      makeActualCell(formatAmount(actual.maxSoc, "%"), trends.peak, actual.maxSoc == null ? null : soFarNote),
       result,
     );
-    body.append(row);
+
+    const list = document.createElement("dl");
+    list.className = "plan-details-list";
+    list.append(
+      ...makeDetailLine("Solar 06–24", [
+        ["Forecast", formatAmount(expected.pvAfterWindow_kWh, " kWh")],
+        ["Actual", formatAmount(actual.pv_kWh, " kWh"), trends.solar],
+        ...(soFar ? [
+          [`To ${soFarTime} forecast`, formatAmount(soFar.pvForecast_kWh, " kWh")],
+          [`To ${soFarTime} actual`, formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar],
+        ] : []),
+      ]),
+      ...makeDetailLine("Load", [
+        ["06–24 forecast", formatAmount(expected.loadAfterWindow_kWh, " kWh")],
+        ["06–24 actual", formatAmount(actual.load_kWh, " kWh"), trends.load],
+        ["Full day forecast", formatAmount(plan.dailyLoad_kWh?.expected, " kWh")],
+        ["Full day actual", formatAmount(actual.loadDay_kWh, " kWh"), trends.loadDay],
+      ]),
+      ...makeDetailLine("Lowest SOC 06–24", [
+        ["Expected", formatAmount(expected.minSocWithoutCharge, "%")],
+        ["Worst case", formatAmount(worst.minSocWithoutCharge, "%")],
+        ["Actual", formatAmount(actual.minSoc, "%"), trends.lowest],
+      ]),
+      ...makeDetailLine("Peak SOC 06–24", [
+        ["Expected", formatAmount(expected.peakSocWithoutCharge, "%")],
+        ["Worst case", formatAmount(worst.peakSocWithoutCharge, "%")],
+        ["Actual", formatAmount(actual.maxSoc, "%"), trends.peak],
+      ]),
+    );
+    const detailsCell = document.createElement("td");
+    detailsCell.colSpan = NIGHT_CHARGE_COLUMNS;
+    detailsCell.append(list);
+    const details = document.createElement("tr");
+    details.className = "plan-details";
+    details.id = detailsId;
+    details.hidden = true;
+    details.append(detailsCell);
+
+    toggle.addEventListener("click", () => {
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(open));
+      summary.classList.toggle("is-open", open);
+      details.hidden = !open;
+    });
+    summary.addEventListener("click", (event) => {
+      if (!event.target.closest("button")) toggle.click();
+    });
+
+    body.append(summary, details);
   }
 }
 

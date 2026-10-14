@@ -26,9 +26,9 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=16">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=15" defer></script>
+    <script src="app.js?v=16" defer></script>
   </head>
   <body>
     <main class="page">
@@ -212,7 +212,7 @@
           <div>
             <p class="eyebrow">NIGHT CHARGE PLANNER · DRY RUN</p>
             <h3 id="night-charge-title">Grid charging decisions</h3>
-            <p class="group-description">Last 5 nights · each night's plan compared with what happened, measured 06:00–24:00 unless marked full day (no charging is performed yet)</p>
+            <p class="group-description">Last 5 nights · actual values measured 06:00–24:00, icons compare them with the plan's forecast · select a night for the forecasts (no charging is performed yet)</p>
           </div>
         </header>
         <article class="chart-card">
@@ -222,16 +222,15 @@
                 <tr>
                   <th scope="col">Night</th>
                   <th scope="col">Decision</th>
-                  <th scope="col">Grid charge</th>
                   <th scope="col">Solar 06–24</th>
-                  <th scope="col">Load</th>
+                  <th scope="col">Load 06–24</th>
                   <th scope="col">Lowest SOC 06–24</th>
                   <th scope="col">Peak SOC 06–24</th>
                   <th scope="col">Result</th>
                 </tr>
               </thead>
               <tbody id="night-charge-rows">
-                <tr><td colspan="8" class="plan-empty">Loading…</td></tr>
+                <tr><td colspan="7" class="plan-empty">Loading…</td></tr>
               </tbody>
             </table>
           </div>
