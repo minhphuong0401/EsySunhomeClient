@@ -11,6 +11,7 @@ import types
 import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 from unittest import mock
 
@@ -62,6 +63,52 @@ class EvChargePlannerTests(unittest.TestCase):
         self.assertTrue(all(6 <= slot["currentA"] <= 32 for slot in plan["daytime"]["slots"]))
         self.assertAlmostEqual(plan["daytime"]["opportunityCost_AUD"],
                                round(plan["daytime"]["energyFromSolar_kWh"] * 0.04, 2))
+
+    def test_cheap_solar_can_charge_above_next_day_requirement(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=60)
+        midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
+        plan = build_ev_plan(self.now, vehicle, {weekday: 37 for weekday in range(7)},
+                             self.config, self.tariff, solar, [])
+
+        self.assertEqual(plan["overnight"]["decision"], "no_charge")
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertGreater(plan["daytime"]["socAfterCharge"], plan["tomorrow"]["socAfterDriving"])
+        self.assertEqual(plan["daytime"]["remainingEnergyBeforeNextNight_kWh"], 0)
+
+    def test_future_solar_reduces_early_top_up(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=60)
+        midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
+        solar.update({midday + timedelta(days=1, minutes=30 * index): 3.68 for index in range(8)})
+        plan = build_ev_plan(self.now, vehicle, {weekday: 37 for weekday in range(7)},
+                             self.config, self.tariff, solar, [])
+
+        self.assertEqual(plan["daytime"]["decision"], "no_charge")
+
+    def test_early_top_up_requires_cheaper_solar(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=60)
+        midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
+        expensive_export = replace(self.tariff, feed_in_rate=Decimal("0.09"))
+        plan = build_ev_plan(self.now, vehicle, {weekday: 37 for weekday in range(7)},
+                             self.config, expensive_export, solar, [])
+        necessary = build_ev_plan(self.now, self.vehicle, {weekday: 60 for weekday in range(7)},
+                                  self.config, expensive_export, solar, [])
+
+        self.assertEqual(plan["daytime"]["decision"], "no_charge")
+        self.assertEqual(necessary["daytime"]["decision"], "charge")
+
+    def test_early_top_up_respects_configured_soc_cap(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=60)
+        midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        solar = {midday + timedelta(minutes=30 * index): 3.68 for index in range(12)}
+        config = replace(self.config, solar_soc_cap_percent=65)
+        plan = build_ev_plan(self.now, vehicle, {weekday: 60 for weekday in range(7)},
+                             config, self.tariff, solar, [])
+
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertLessEqual(plan["daytime"]["socAfterCharge"], 65)
 
     def test_stale_vehicle_data_is_rejected(self) -> None:
         vehicle = dict(self.vehicle, vehicleTime=(self.now - timedelta(hours=9)).isoformat())
@@ -151,11 +198,13 @@ class EvChargePlannerTests(unittest.TestCase):
                     mock.patch.object(plan_ev_charge, "_load_history", return_value=[]), \
                     mock.patch.object(plan_ev_charge, "build_load_profile", return_value=self.flat_profile()), \
                     mock.patch.object(plan_ev_charge, "load_forecast", return_value={"forecasts": forecasts}), \
+                    mock.patch.object(plan_ev_charge, "solar_surplus", wraps=solar_surplus) as surplus, \
                     contextlib.redirect_stdout(io.StringIO()):
                 result = plan_ev_charge.main()
             plan = json.loads(plan_file.read_text(encoding="utf-8"))
 
         self.assertEqual(result, 0)
+        self.assertEqual(surplus.call_args.args[1], datetime(2026, 10, 16, 6, tzinfo=timezone.utc))
         self.assertEqual(plan["overnight"]["decision"], "charge")
         self.assertEqual(plan["daytime"]["window"]["start"], "2026-10-15T00:00:00Z")
 
