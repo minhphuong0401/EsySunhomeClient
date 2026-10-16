@@ -279,12 +279,12 @@ h4 { margin: 0 0 4px; font-size: 14px; letter-spacing: -.02em; }
 .plan-table tr.plan-summary { cursor: pointer; }
 .plan-table tr.plan-summary:hover td { background: var(--input-surface); }
 .plan-table tr.plan-summary.is-open td { border-bottom: 0; }
-.plan-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.plan-toggle { display: inline-grid; grid-template-columns: 10px 1.1em 2.25em max-content; align-items: center; gap: 1px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
 .plan-toggle::before { content: "▸"; width: 10px; color: var(--muted); font-size: 11px; }
 .plan-toggle[aria-expanded="true"]::before { content: "▾"; }
 .plan-actual { font-variant-numeric: tabular-nums; font-weight: 600; }
 .plan-note { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
-.plan-table .plan-details td { padding-top: 0; white-space: normal; }
+.plan-table tr.plan-details > td { padding-top: 12px; white-space: normal; }
 .plan-details-table { width: auto; border-collapse: separate; border-spacing: 0; padding: 6px 10px; border-radius: 12px; background: var(--input-surface); }
 .plan-table .plan-details-table th, .plan-table .plan-details-table td { padding: 5px 14px; border: 0; font-variant-numeric: tabular-nums; }
 .plan-table .plan-details-table thead th { font-size: 10px; text-align: right; }
