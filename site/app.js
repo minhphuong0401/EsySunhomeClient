@@ -519,12 +519,21 @@ const TRIGGER_LABELS = { scheduled: "Scheduled", manual: "Manual", replay: "Repl
 const formatPlanTime = (timestamp) =>
   formatDate(timestamp, { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
+const formatPlanDateTime = (timestamp) => {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: dashboardTimezone,
+  }).formatToParts(new Date(timestamp));
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.day} ${values.month} ${values.hour}:${values.minute}`;
+};
+
 function describeTrigger(trigger, replayedAt) {
   const label = TRIGGER_LABELS[trigger] ?? "Scheduled";
   return trigger === "replay" && replayedAt ? `${label} (run ${formatPlanTime(replayedAt)})` : label;
 }
 
-function makeHistoryTable(history) {
+function makeHistoryTable(history, windowEnd) {
+  const endTime = formatDate(windowEnd, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   const rows = history.map((run) => {
     const row = document.createElement("tr");
     const time = run.count > 1
@@ -533,7 +542,7 @@ function makeHistoryTable(history) {
     const charging = run.decision === "charge";
     row.append(
       makeCell(time),
-      makeCell(charging ? `Charge to ${run.targetSoc}%` : "No charge"),
+      makeCell(charging ? `Aim for ${run.targetSoc}% by ${endTime}` : "No grid top-up needed"),
       makeCell(charging ? formatAmount(run.gridCharge_kWh, " kWh") : "—"),
       makeCell(describeTrigger(run.trigger, run.replayedAt)),
     );
@@ -613,6 +622,7 @@ function renderNightChargeRows(nights, emptyMessage) {
   const nightFormat = new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
   for (const { night, plan, actual, verdict, trigger, history } of nights) {
     const [year, month, day] = night.split("-").map(Number);
+    const dateParts = Object.fromEntries(nightFormat.formatToParts(Date.UTC(year, month - 1, day)).map(({ type, value }) => [type, value]));
     const expected = plan.scenarios?.expected ?? {};
     const worst = plan.scenarios?.worstCase ?? {};
     const charging = plan.decision === "charge";
@@ -640,13 +650,14 @@ function renderNightChargeRows(nights, emptyMessage) {
     const toggle = document.createElement("button");
     toggle.type = "button";
     toggle.className = "plan-toggle";
-    toggle.textContent = nightFormat.format(Date.UTC(year, month - 1, day));
+    const windowTime = (timestamp) => formatDate(timestamp, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    toggle.textContent = `${dateParts.weekday} ${dateParts.day} ${dateParts.month} · ${windowTime(plan.window.start)}–${windowTime(plan.window.end)}`;
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-controls", detailsId);
     const nightCell = document.createElement("td");
     nightCell.append(toggle);
 
-    const decision = makeCell(charging ? `Charge to ${plan.targetSoc}%` : "No charge");
+    const decision = makeCell(charging ? `Aim for ${plan.targetSoc}% by ${windowTime(plan.window.end)}` : "No grid top-up needed");
     if (plan.warnings?.length) {
       const warning = document.createElement("span");
       warning.className = "plan-warning";
@@ -662,7 +673,7 @@ function renderNightChargeRows(nights, emptyMessage) {
     }
     const madeAt = document.createElement("span");
     madeAt.className = "plan-note";
-    madeAt.textContent = `${TRIGGER_LABELS[trigger] ?? "Scheduled"} · ${formatPlanTime(plan.generatedAt)}`;
+    madeAt.textContent = `${TRIGGER_LABELS[trigger] ?? "Scheduled"} · ${formatPlanDateTime(plan.generatedAt)}`;
     if (trigger === "replay") {
       const replayedAt = plan.replayedAt ?? plan.forecastFetchedAt;
       madeAt.title = `Recomputed${replayedAt ? ` ${formatPlanTime(replayedAt)}` : ""} from the data at the original plan time`;
@@ -719,7 +730,7 @@ function renderNightChargeRows(nights, emptyMessage) {
     resultReason.className = "plan-result-reason";
     resultReason.textContent = explanation;
     detailsCell.append(list, resultReason);
-    if (history?.length) detailsCell.append(makeHistoryTable(history));
+    if (history?.length) detailsCell.append(makeHistoryTable(history, plan.window.end));
     const details = document.createElement("tr");
     details.className = "plan-details";
     details.id = detailsId;
