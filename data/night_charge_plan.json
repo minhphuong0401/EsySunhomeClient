@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17T12:01:06Z",
+  "generatedAt": "2026-10-17T12:15:49Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 30,
       "pvAfterWindow_kWh": 55.42,
       "loadAfterWindow_kWh": 20.92,
-      "projectedSocAtWindowEnd": 64.7,
+      "projectedSocAtWindowEnd": 65.0,
       "requiredSocAtWindowEnd": 35,
-      "minSocWithoutCharge": 59.8,
+      "minSocWithoutCharge": 60.1,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.107,
@@ -101,21 +101,19 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 41.57,
       "loadAfterWindow_kWh": 33.77,
-      "projectedSocAtWindowEnd": 60.8,
+      "projectedSocAtWindowEnd": 61.3,
       "requiredSocAtWindowEnd": 34,
-      "minSocWithoutCharge": 47.3,
+      "minSocWithoutCharge": 47.7,
       "peakSocWithoutCharge": 100.0
     }
   },
-  "forecastFetchedAt": "2026-10-17T11:01:04Z",
+  "forecastFetchedAt": "2026-10-17T12:15:49Z",
   "loadHistoryDays": 11,
   "fullLoadHistoryDays": 10,
   "dailyLoad_kWh": {
     "expected": 22.16,
     "worstCase": 35.78
   },
-  "warnings": [
-    "PV forecast refresh failed (HTTP Error 503: Service Unavailable); using forecast fetched at 2026-10-17T11:01:04Z."
-  ],
+  "warnings": [],
   "trigger": "scheduled"
 }
