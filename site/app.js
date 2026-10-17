@@ -620,7 +620,7 @@ function renderNightChargeRows(nights, emptyMessage) {
     return;
   }
 
-  const nightFormat = new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short", timeZone: "UTC" });
+  const nightFormat = new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   for (const { night, plan, actual, verdict, trigger, history } of nights) {
     const [year, month, day] = night.split("-").map(Number);
     const dateParts = Object.fromEntries(nightFormat.formatToParts(Date.UTC(year, month - 1, day)).map(({ type, value }) => [type, value]));
@@ -655,13 +655,7 @@ function renderNightChargeRows(nights, emptyMessage) {
     toggle.type = "button";
     toggle.className = "plan-toggle";
     const windowTime = (timestamp) => formatDate(timestamp, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-    const windowLabel = `${windowTime(plan.window.start)}–${windowTime(plan.window.end)}`;
-    for (const part of [dateParts.day, dateParts.month, windowLabel]) {
-      const span = document.createElement("span");
-      span.textContent = part;
-      toggle.append(span);
-    }
-    toggle.setAttribute("aria-label", `${dateParts.day} ${dateParts.month}, ${windowLabel}`);
+    toggle.textContent = `${dateParts.day} ${dateParts.month} ${dateParts.year}`;
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-controls", detailsId);
     const nightCell = document.createElement("td");
