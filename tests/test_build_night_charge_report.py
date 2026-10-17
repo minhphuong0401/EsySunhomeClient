@@ -91,8 +91,24 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertEqual(outcome["soFar"]["pvForecast_kWh"], 8.5)
         self.assertEqual(outcome["soFar"]["pvWorstCase_kWh"], 6.38)
         self.assertEqual(outcome["soFar"]["pv_kWh"], 9.5)
+        self.assertEqual(outcome["soFar"]["pvRemainingForecast_kWh"], 27.5)
+        self.assertEqual(outcome["soFar"]["pvProjected_kWh"], 37.0)
         self.assertEqual(outcome["soFar"]["asOf"], _iso(self._local(2026, 10, 12, 10, 15)))
         self.assertIsNone(actual_outcome(self._plan(12), snapshots)["soFar"])
+
+    def test_pending_day_uses_measured_solar_after_forecast_ends(self) -> None:
+        plan = self._plan(12)
+        plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"] = [1.0] * 26 + [0.0] * 10
+        plan["scenarios"]["expected"]["pvAfterWindow_kWh"] = 26.02
+        snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 19, 0, 50, 27.5, 12.0, 0.2)]
+
+        outcome = actual_outcome(plan, snapshots)
+
+        self.assertFalse(outcome["complete"])
+        self.assertIsNone(outcome["pv_kWh"])
+        self.assertEqual(outcome["soFar"]["pvForecast_kWh"], 26.0)
+        self.assertEqual(outcome["soFar"]["pvRemainingForecast_kWh"], 0.0)
+        self.assertEqual(outcome["soFar"]["pvProjected_kWh"], 27.5)
 
     def test_pending_day_projects_end_of_day_load(self) -> None:
         plan = self._plan(12)

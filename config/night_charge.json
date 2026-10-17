@@ -9,6 +9,10 @@
   "worst_case_fallback_load_factor": 1.2,
   "charge_efficiency": 0.95,
   "discharge_efficiency": 0.95,
+  "battery_max_charge_kw": 6.0,
+  "battery_max_discharge_kw": 5.5,
+  "battery_taper_soc_percent": 85.0,
+  "battery_taper_charge_kw": 2.0,
   "min_grid_charge_kwh": 1.0,
   "history_days": 28,
   "planning_lead_hours": 2

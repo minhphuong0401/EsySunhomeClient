@@ -14,6 +14,7 @@ from scripts.build_history import TARIFF_PATH, load_tariff
 from scripts.plan_night_charge import (
     LoadProfile,
     PlannerConfig,
+    _simulate,
     build_load_profile,
     build_plan,
     load_config,
@@ -52,6 +53,10 @@ class NightChargePlannerTests(unittest.TestCase):
             worst_case_fallback_load_factor=1.2,
             charge_efficiency=0.95,
             discharge_efficiency=0.95,
+            battery_max_charge_kw=6.0,
+            battery_max_discharge_kw=5.5,
+            battery_taper_soc_percent=85.0,
+            battery_taper_charge_kw=2.0,
             min_grid_charge_kwh=1.0,
             history_days=28,
             planning_lead_hours=2,
@@ -71,6 +76,24 @@ class NightChargePlannerTests(unittest.TestCase):
 
     def test_repository_config_loads(self) -> None:
         self.assertEqual(load_config().battery_capacity_kwh, 25)
+
+    def test_battery_power_limits_apply_to_full_and_partial_slots(self) -> None:
+        charged = _simulate(20, [(4.0, 0.0, 1.0)], self.config)[0]
+        partial = _simulate(20, [(2.0, 0.0, 0.5)], self.config)[0]
+        discharged = _simulate(80, [(0.0, 4.0, 1.0)], self.config)[0]
+
+        self.assertAlmostEqual(charged, 20 + 3.0 * 0.95 / 25 * 100)
+        self.assertAlmostEqual(partial, 20 + 1.5 * 0.95 / 25 * 100)
+        self.assertAlmostEqual(discharged, 80 - 2.75 / 0.95 / 25 * 100)
+
+    def test_battery_charge_slows_when_soc_crosses_taper_threshold(self) -> None:
+        before_taper_ac = (85 - 80) / 100 * 25 / 0.95
+        after_taper_ac = (0.5 - before_taper_ac / 6) * 2
+        crossing = _simulate(80, [(4.0, 0.0, 1.0)], self.config)[0]
+        already_tapered = _simulate(90, [(4.0, 0.0, 1.0)], self.config)[0]
+
+        self.assertAlmostEqual(crossing, 80 + (before_taper_ac + after_taper_ac) * 0.95 / 25 * 100)
+        self.assertAlmostEqual(already_tapered, 90 + 1.0 * 0.95 / 25 * 100)
 
     def test_planning_window_targets_the_upcoming_night_saver_period(self) -> None:
         start, end = self._local(2026, 10, 12, 0, 0), self._local(2026, 10, 12, 6, 0)

@@ -514,6 +514,7 @@ function rangeTrend(actual, forecast, worst, higherIsGood = true) {
 }
 
 const PROJECTED_TITLE = "Projected: load so far plus the rest of today's forecast";
+const PROJECTED_SOLAR_TITLE = "Projected: solar generated so far plus the rest of today's forecast";
 const TRIGGER_LABELS = { scheduled: "Scheduled", manual: "Manual", replay: "Replay" };
 
 const formatPlanTime = (timestamp) =>
@@ -635,9 +636,12 @@ function renderNightChargeRows(nights, emptyMessage) {
     const projecting = !actual.complete && numberOrNull(soFar?.loadProjected_kWh) !== null;
     const load06To24 = projecting ? soFar.loadProjected_kWh : actual.load_kWh;
     const loadFullDay = projecting ? soFar.loadDayProjected_kWh : actual.loadDay_kWh;
+    const solarAvailable = !actual.complete && numberOrNull(soFar?.pvProjected_kWh) !== null;
+    const solar06To24 = solarAvailable ? soFar.pvProjected_kWh : actual.pv_kWh;
+    const projectingSolar = solarAvailable && soFar.pvRemainingForecast_kWh > 0;
 
     const trends = {
-      solar: rangeTrend(actual.pv_kWh, expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh),
+      solar: rangeTrend(solar06To24, expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh),
       solarSoFar: soFar ? rangeTrend(soFar.pv_kWh, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh) : null,
       load: rangeTrend(load06To24, expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, false),
       loadSoFar: soFar ? rangeTrend(soFar.load_kWh, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, false) : null,
@@ -690,9 +694,10 @@ function renderNightChargeRows(nights, emptyMessage) {
     badge.setAttribute("aria-label", `${label}. ${explanation}`);
     result.append(badge);
 
-    const solarCell = actual.complete || !soFar
-      ? makeActualCell(formatAmount(actual.pv_kWh, " kWh"), trends.solar)
-      : makeActualCell(formatAmount(soFar.pv_kWh, " kWh"), trends.solarSoFar, `to ${soFarTime}`);
+    const solarCell = solarAvailable
+      ? makeActualCell(`${projectingSolar ? "≈ " : ""}${formatAmount(solar06To24, " kWh")}`, trends.solar, projectingSolar ? "projected" : `to ${soFarTime}`)
+      : makeActualCell(formatAmount(actual.pv_kWh, " kWh"), trends.solar);
+    if (projectingSolar) solarCell.title = PROJECTED_SOLAR_TITLE;
 
     const loadCell = projecting
       ? makeActualCell(`≈ ${formatAmount(load06To24, " kWh")}`, trends.load, "projected")
@@ -712,11 +717,11 @@ function renderNightChargeRows(nights, emptyMessage) {
     );
 
     const list = makeDetailsTable([
-      makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, actual.pv_kWh, " kWh", trends.solar),
+      makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, solar06To24, " kWh", trends.solar, projectingSolar),
       ...(soFar
         ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
         : []),
-      makeRangeLine("Total load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
+      makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
       ...(numberOrNull(soFar?.loadForecast_kWh) !== null
         ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
         : []),

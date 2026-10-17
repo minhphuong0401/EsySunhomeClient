@@ -62,6 +62,10 @@ class PlannerConfig:
     worst_case_fallback_load_factor: float
     charge_efficiency: float
     discharge_efficiency: float
+    battery_max_charge_kw: float
+    battery_max_discharge_kw: float
+    battery_taper_soc_percent: float
+    battery_taper_charge_kw: float
     min_grid_charge_kwh: float
     history_days: int
     planning_lead_hours: float
@@ -72,7 +76,12 @@ def load_config(path: Path = CONFIG_PATH) -> PlannerConfig:
     expected = {field.name for field in fields(PlannerConfig)}
     if not isinstance(raw, dict) or set(raw) != expected:
         raise ValueError(f"{path} must define exactly: {', '.join(sorted(expected))}")
-    return PlannerConfig(**raw)
+    config = PlannerConfig(**raw)
+    if (config.battery_max_charge_kw <= 0 or config.battery_max_discharge_kw <= 0
+            or not 0 < config.battery_taper_soc_percent < 100
+            or not 0 < config.battery_taper_charge_kw <= config.battery_max_charge_kw):
+        raise ValueError("Invalid battery power limits or charging taper")
+    return config
 
 
 def _iso(value: datetime) -> str:
@@ -243,9 +252,9 @@ def _scenario_slots(
     load: list[float],
     tz: ZoneInfo,
     missing: set[datetime],
-) -> list[tuple[float, float]]:
+) -> list[tuple[float, float, float]]:
     """Return (pv kWh, load kWh) per 30-minute slot between start and end."""
-    slots: list[tuple[float, float]] = []
+    slots: list[tuple[float, float, float]] = []
     cursor = start
     while cursor < end:
         slot_start = _floor_slot(cursor)
@@ -255,13 +264,25 @@ def _scenario_slots(
         if forecast is None:
             missing.add(slot_start)
         pv_kwh = forecast["pv_estimate"] * 0.5 * pv_factor if forecast else 0.0
-        slots.append((pv_kwh * fraction, load[_slot_index(slot_start, tz)] * fraction))
+        slots.append((pv_kwh * fraction, load[_slot_index(slot_start, tz)] * fraction, fraction))
         cursor = slot_end
     return slots
 
 
+def _charge_battery(energy: float, surplus: float, hours: float, config: PlannerConfig) -> tuple[float, float]:
+    """Return battery energy and solar AC left after charging within one slot."""
+    if surplus <= 0 or hours <= 0:
+        return energy, max(0.0, surplus)
+    charge_kw = min(surplus / hours, config.battery_max_charge_kw)
+    taper_energy = config.battery_capacity_kwh * config.battery_taper_soc_percent / 100
+    before_taper = min(max(0.0, (taper_energy - energy) / config.charge_efficiency), charge_kw * hours)
+    after_taper = min(surplus / hours, config.battery_taper_charge_kw) * (hours - before_taper / charge_kw)
+    charged_ac = min(surplus, max(0.0, (config.battery_capacity_kwh - energy) / config.charge_efficiency), before_taper + after_taper)
+    return energy + charged_ac * config.charge_efficiency, max(0.0, surplus - charged_ac)
+
+
 def _simulate(
-    start_soc: float, slots: list[tuple[float, float]], config: PlannerConfig
+    start_soc: float, slots: list[tuple[float, float, float]], config: PlannerConfig
 ) -> tuple[float, float, float]:
     """Return (end SOC %, minimum SOC %, peak SOC %) after applying the slots."""
     capacity = config.battery_capacity_kwh
@@ -269,18 +290,18 @@ def _simulate(
     cutoff = config.battery_min_soc / 100 * capacity
     energy = start_soc / 100 * capacity
     lowest = highest = energy
-    for pv, load in slots:
+    for pv, load, fraction in slots:
         net = pv - load
         if net >= 0:
-            energy = min(capacity, energy + net * config.charge_efficiency)
+            energy, _ = _charge_battery(energy, net, 0.5 * fraction, config)
         else:
-            energy = max(min(energy, cutoff), energy + net / config.discharge_efficiency)
+            energy = max(min(energy, cutoff), energy - min(-net, config.battery_max_discharge_kw * 0.5 * fraction) / config.discharge_efficiency)
         lowest = min(lowest, energy)
         highest = max(highest, energy)
     return energy / capacity * 100, lowest / capacity * 100, highest / capacity * 100
 
 
-def _required_soc(slots: list[tuple[float, float]], floor: float, config: PlannerConfig) -> int | None:
+def _required_soc(slots: list[tuple[float, float, float]], floor: float, config: PlannerConfig) -> int | None:
     for soc in range(101):
         if _simulate(soc, slots, config)[1] >= floor:
             return soc
@@ -318,8 +339,8 @@ def build_plan(
         _, lowest, peak = _simulate(projected, after, config)
         results[name] = {
             "minSocTarget": floor,
-            "pvAfterWindow_kWh": round(sum(pv for pv, _ in after), 2),
-            "loadAfterWindow_kWh": round(sum(load_kwh for _, load_kwh in after), 2),
+            "pvAfterWindow_kWh": round(sum(pv for pv, _, _ in after), 2),
+            "loadAfterWindow_kWh": round(sum(load_kwh for _, load_kwh, _ in after), 2),
             "projectedSocAtWindowEnd": round(projected, 1),
             "requiredSocAtWindowEnd": required,
             "minSocWithoutCharge": round(lowest, 1),
@@ -327,8 +348,8 @@ def build_plan(
         }
         if name == "expected":
             # Half-hour slots starting at the window end; the dashboard compares them with actuals so far.
-            results[name]["pvSlotsAfterWindow_kWh"] = [round(pv, 3) for pv, _ in after]
-            results[name]["loadSlotsAfterWindow_kWh"] = [round(load_kwh, 3) for _, load_kwh in after]
+            results[name]["pvSlotsAfterWindow_kWh"] = [round(pv, 3) for pv, _, _ in after]
+            results[name]["loadSlotsAfterWindow_kWh"] = [round(load_kwh, 3) for _, load_kwh, _ in after]
 
     if missing:
         warnings.append(f"No PV forecast for {len(missing)} half-hour slots; assumed zero PV.")

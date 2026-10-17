@@ -69,7 +69,10 @@ case (until 7 full days exist, the shape is used as-is and the worst case adds
 above 30%, and the worst case (high load, forecast PV scaled by
 `worst_case_pv_factor`, 75% by default) keeps it at or above 20%.
 The simulation stops discharging at `battery_min_soc` (the inverter's lowest
-SOC limit, 15%); below that the grid supplies the house.
+SOC limit, 15%); below that the grid supplies the house. Home-battery charging
+is limited to 6 kW, slowing to 2 kW at 85% SOC, and discharge is limited to
+5.5 kW. These limits are independent of the PV inverter rating: set
+`PV_INVERTER_KW` to 8 for this installation.
 Settings live in `config/night_charge.json`.
 
 ## BYD charging advice (dry run)
@@ -107,8 +110,9 @@ the plan warns rather than claiming the reserve will be met.
 
 During tomorrow's configured home hours, the planner may advise topping up
 for the following day's estimated driving from forecast PV surplus after
-estimated household load and a full home battery. When exporting solar earns
-less than buying power in the cheapest night window, it can also top up for
+estimated household load and the home battery's limited charging input. Solar
+can be available for the EV before the home battery is full. When exporting
+solar earns less than buying power in the cheapest night window, it can also top up for
 up to two further estimated driving days, subject to the configured solar SOC
 cap. Forecast usable surplus on the following day reduces that early top-up;
 missing future surplus is not assumed to be available. The cap does not override
@@ -143,7 +147,9 @@ between the forecast and the worst case, ✗ at or worse than the worst case
 (for load, lower is better). Select a night to see the forecast, worst case and
 actual for each value, including solar and load so far for a day in progress and
 the full-day load (00:00–24:00). Until the day ends, load shows a projection
-(≈): load so far plus the rest of the day's forecast. The Decision column also
+(≈): load so far plus the rest of the day's forecast. Solar does the same until
+the PV forecast has no energy left, then shows the latest measured total and
+its reading time without waiting for midnight. The Decision column also
 shows how and when the shown plan was made (scheduled, manual or replay), and
 the expanded view lists every plan made for that night, with identical
 consecutive scheduled decisions merged. The result compares the actual lowest

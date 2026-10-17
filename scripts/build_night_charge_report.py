@@ -144,7 +144,11 @@ def _so_far(plan: dict[str, Any], as_of: datetime, latest: dict[str, Any], start
     if pv_forecast is not None:
         so_far["pvForecast_kWh"] = pv_forecast
         so_far["pvWorstCase_kWh"] = round(pv_forecast * _worst_ratio(plan, "pvAfterWindow_kWh"), 2)
-        so_far["pv_kWh"] = _difference(latest, start, FIELDS["pv_kWh"])
+        pv_actual = _difference(latest, start, FIELDS["pv_kWh"])
+        remaining = max(0.0, round(sum(plan["scenarios"]["expected"]["pvSlotsAfterWindow_kWh"]) - pv_forecast, 2))
+        so_far["pv_kWh"] = pv_actual
+        so_far["pvRemainingForecast_kWh"] = remaining
+        so_far["pvProjected_kWh"] = round(pv_actual + remaining, 2) if pv_actual is not None else None
     if load_forecast is not None:
         load_actual = _difference(latest, start, FIELDS["load_kWh"])
         remaining = (plan["scenarios"]["expected"].get("loadAfterWindow_kWh") or 0) - load_forecast

@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Apply the Grid Charging table display changes to another checkout.
+# Apply Grid Charging solar reporting and home-battery power limits to another checkout.
 set -euo pipefail
 
 cd "${1:-.}"
 cd "$(git rev-parse --show-toplevel)"
-if [[ ! -f site/app.js || ! -f site/index.html ]]; then
-  echo "Run this script from an EsySunhomeClient checkout." >&2
-  exit 1
-fi
+files=(README.md config/night_charge.json scripts/build_night_charge_report.py scripts/plan_ev_charge.py scripts/plan_night_charge.py site/app.js site/index.html tests/test_build_night_charge_report.py tests/test_plan_ev_charge.py tests/test_plan_night_charge.py)
+for file_path in "${files[@]}"; do
+  if [[ ! -f "$file_path" ]]; then
+    echo "Missing $file_path; run this script from an EsySunhomeClient checkout." >&2
+    exit 1
+  fi
+done
 
 patch_file="$(mktemp)"
 merge_dir=""
@@ -19,66 +22,134 @@ cleanup() {
 }
 trap cleanup EXIT
 
-base64 -d <<'GRID_UI_PATCH' | gzip -d > "$patch_file"
-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
-qYS0m5w/W+pGaABPKmhUF/0vR+W7MSIYAAA=
-GRID_UI_PATCH
+base64 -d <<'BATTERY_SOLAR_PATCH' | gzip -d > "$patch_file"
+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
+uCneyHhtNmv/A1xQrcPwVwAA
+BATTERY_SOLAR_PATCH
 
-files=(site/app.js site/index.html)
 if git apply --reverse --check "$patch_file" 2>/dev/null; then
-  echo "Grid charging display is already updated."
+  echo "Grid charging and battery limits are already updated."
   exit 0
 fi
 if git apply --check "$patch_file" 2>/dev/null; then
   git apply "$patch_file"
-  echo "Grid charging display updated. Review with git diff -- ${files[*]}."
+  echo "Grid charging and battery limits updated. Review with git diff -- ${files[*]}."
   exit 0
 fi
 
-base_revision=1f2a056bd3efada261a04e9ec02f800a602333b5
+base_revision=3faf6c6f4c00afa38e8c999f0cd59bdfdffbbb8f
 if ! git cat-file -e "$base_revision^{commit}" 2>/dev/null; then
-  echo "Cannot apply the grid UI patch and its base commit is unavailable; no UI files were changed." >&2
+  echo "Cannot apply the patch and its base commit is unavailable; no files were changed." >&2
   exit 1
 fi
 merge_dir="$(mktemp -d)"
 for file_path in "${files[@]}"; do
-  if [[ ! -f "$file_path" ]]; then
-    echo "Missing $file_path; no UI files were changed." >&2
-    exit 1
-  fi
   for folder in base desired merged; do
     mkdir -p "$merge_dir/$folder/$(dirname "$file_path")"
   done
@@ -88,11 +159,11 @@ done
 (cd "$merge_dir/desired" && git apply "$patch_file")
 for file_path in "${files[@]}"; do
   if ! git merge-file -p "$file_path" "$merge_dir/base/$file_path" "$merge_dir/desired/$file_path" > "$merge_dir/merged/$file_path"; then
-    echo "Cannot safely merge $file_path; no UI files were changed." >&2
+    echo "Cannot safely merge $file_path; no files were changed." >&2
     exit 1
   fi
 done
 for file_path in "${files[@]}"; do
   cp "$merge_dir/merged/$file_path" "$file_path"
 done
-echo "Grid charging display merged. Review with git diff -- ${files[*]}."
+echo "Grid charging and battery limits merged. Review with git diff -- ${files[*]}."

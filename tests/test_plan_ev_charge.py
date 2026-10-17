@@ -155,7 +155,7 @@ class EvChargePlannerTests(unittest.TestCase):
         self.assertEqual(distances[(self.now + timedelta(days=5)).astimezone(self.tariff.timezone).weekday()], 104)
         self.assertEqual(daily_distances([], self.tariff.timezone, self.config)[0], self.config.fallback_daily_km)
 
-    def test_solar_surplus_only_after_home_battery_is_full(self) -> None:
+    def test_solar_surplus_after_home_battery_charge_tapers(self) -> None:
         config = load_config()
         start = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
         forecasts = [
@@ -163,11 +163,33 @@ class EvChargePlannerTests(unittest.TestCase):
             for index in range(3)
         ]
         profile = LoadProfile([0.5] * 48, [0.5] * 48, 7, 7)
-        surplus = solar_surplus(start, start + timedelta(minutes=90), 90, forecasts,
+        surplus = solar_surplus(start, start + timedelta(minutes=90), 75, forecasts,
                                 profile, self.tariff, config)
 
         self.assertEqual(surplus[start], 0)
         self.assertGreater(surplus[start + timedelta(minutes=30)], 0)
+
+    def test_solar_surplus_respects_home_battery_charge_power(self) -> None:
+        config = replace(load_config(), worst_case_pv_factor=1)
+        start = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        forecasts = [{"period_end": (start + timedelta(minutes=30)).isoformat(), "pv_estimate": 8}]
+        profile = LoadProfile([0.0] * 48, [0.0] * 48, 7, 7)
+
+        surplus = solar_surplus(start, start + timedelta(minutes=30), 20, forecasts,
+                                profile, self.tariff, config)
+
+        self.assertAlmostEqual(surplus[start], 1.0)
+
+    def test_solar_surplus_increases_when_home_battery_charge_tapers(self) -> None:
+        config = replace(load_config(), worst_case_pv_factor=1)
+        start = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        forecasts = [{"period_end": (start + timedelta(minutes=30)).isoformat(), "pv_estimate": 8}]
+        profile = LoadProfile([0.0] * 48, [0.0] * 48, 7, 7)
+
+        surplus = solar_surplus(start, start + timedelta(minutes=30), 90, forecasts,
+                                profile, self.tariff, config)
+
+        self.assertAlmostEqual(surplus[start], 3.0)
 
     def test_workflow_entrypoint_writes_a_plan_from_snapshots(self) -> None:
         class FixedDatetime(datetime):

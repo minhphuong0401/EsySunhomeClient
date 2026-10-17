@@ -14,6 +14,7 @@ from typing import Any
 from scripts.build_history import REPOSITORY_ROOT, _git_snapshot_contents, _parse_timestamp, load_tariff
 from scripts.plan_night_charge import (
     SLOT,
+    _charge_battery,
     _floor_slot,
     _iso,
     _load_history,
@@ -114,11 +115,9 @@ def solar_surplus(
         slot_load = profile.worst[_slot_index(cursor, tariff.timezone)]
         net = slot_pv - slot_load
         if net > 0:
-            stored = min(capacity - energy, net * home_config.charge_efficiency)
-            energy += stored
-            surplus[cursor] = max(0.0, net - stored / home_config.charge_efficiency)
+            energy, surplus[cursor] = _charge_battery(energy, net, 0.5, home_config)
         else:
-            energy = max(floor, energy + net / home_config.discharge_efficiency)
+            energy = max(floor, energy - min(-net, home_config.battery_max_discharge_kw * 0.5) / home_config.discharge_efficiency)
         cursor += SLOT
     return surplus
 
