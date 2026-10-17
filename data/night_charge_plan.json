@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-17T11:45:54Z",
+  "generatedAt": "2026-10-17T12:01:06Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
   "gridCharge_kWh": 0.0,
   "estimatedChargeCost_AUD": 0.0,
-  "batterySoc": 72.0,
+  "batterySoc": 71.0,
   "window": {
     "start": "2026-10-17T13:00:00Z",
     "end": "2026-10-17T19:00:00Z",
@@ -16,9 +16,9 @@
       "minSocTarget": 30,
       "pvAfterWindow_kWh": 55.42,
       "loadAfterWindow_kWh": 20.92,
-      "projectedSocAtWindowEnd": 65.4,
+      "projectedSocAtWindowEnd": 64.7,
       "requiredSocAtWindowEnd": 35,
-      "minSocWithoutCharge": 60.5,
+      "minSocWithoutCharge": 59.8,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.107,
@@ -92,7 +92,7 @@
         0.402,
         0.173,
         0.157,
-        0.132,
+        0.133,
         0.134,
         0.124
       ]
@@ -101,9 +101,9 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 41.57,
       "loadAfterWindow_kWh": 33.77,
-      "projectedSocAtWindowEnd": 61.4,
+      "projectedSocAtWindowEnd": 60.8,
       "requiredSocAtWindowEnd": 34,
-      "minSocWithoutCharge": 47.8,
+      "minSocWithoutCharge": 47.3,
       "peakSocWithoutCharge": 100.0
     }
   },
@@ -114,6 +114,8 @@
     "expected": 22.16,
     "worstCase": 35.78
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (HTTP Error 503: Service Unavailable); using forecast fetched at 2026-10-17T11:01:04Z."
+  ],
   "trigger": "scheduled"
 }
