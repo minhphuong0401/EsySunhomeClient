@@ -807,8 +807,15 @@ function renderEvAdvice(plan) {
   const dayDetails = document.createElement("p");
   dayDetails.textContent = plan.daytime.decision === "charge"
     ? `${formatAmount(plan.daytime.energyFromSolar_kWh, " kWh")} planned AC draw · ~${formatCurrency(plan.daytime.opportunityCost_AUD)} export credit if surplus materializes`
-    : "No forecast PV surplus available or no charge needed.";
+    : "No usable solar charging slots forecast (6 A minimum), or vehicle at its charge limit.";
   daytime.append(dayTitle, dayDetails);
+  const requiredThreeDays = numberOrNull(plan.daytime.requiredSocForNextThreeDays);
+  if (requiredThreeDays !== null && plan.tomorrow.socAfterDriving > requiredThreeDays) {
+    const reserveNote = document.createElement("p");
+    reserveNote.className = "group-description";
+    reserveNote.textContent = `Even without daytime charging: ~${formatAmount(plan.tomorrow.socAfterDriving, "%")} after tomorrow's drive, above ~${formatAmount(requiredThreeDays, "%")} estimated for the next 3 days including reserve.`;
+    daytime.append(reserveNote);
+  }
   for (const slot of plan.daytime.slots) {
     const detail = document.createElement("p");
     detail.className = "ev-slot";

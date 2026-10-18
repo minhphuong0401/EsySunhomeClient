@@ -11,5 +11,5 @@
   "distance_quantile": 0.8,
   "history_days": 42,
   "max_vehicle_age_hours": 8,
-  "solar_soc_cap_percent": 80
+  "solar_soc_cap_percent": 100
 }

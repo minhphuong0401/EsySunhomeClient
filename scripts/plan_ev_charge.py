@@ -191,26 +191,11 @@ def build_ev_plan(
     soc_on_return = max(0.0, soc_after_night - energy_tomorrow / config.capacity_kwh * 100)
 
     required_following_kwh = min(config.capacity_kwh, reserve_kwh + following_km * consumption / 100)
-    target_day_kwh = required_following_kwh
-    if float(tariff.feed_in_rate) < night_rate:
-        next_day_start, next_day_end = _local_window(
-            following, time.fromisoformat(config.daytime_home_start),
-            time.fromisoformat(config.daytime_home_end), tariff.timezone,
-        )
-        min_slot_kwh = config.voltage_v * 6 / 2000
-        max_slot_kwh = night_kw * 0.5
-        future_solar_kwh = sum(
-            min(solar_kwh, max_slot_kwh) for slot, solar_kwh in available_solar.items()
-            if next_day_start <= slot < next_day_end and solar_kwh >= min_slot_kwh
-        ) * config.charge_efficiency
-        later_kwh = sum(
-            distances[(following + timedelta(days=offset)).weekday()] * consumption / 100
-            for offset in (1, 2)
-        )
-        target_day_kwh = max(required_following_kwh, min(
-            config.capacity_kwh * config.solar_soc_cap_percent / 100,
-            required_following_kwh + max(0.0, later_kwh - future_solar_kwh),
-        ))
+    required_three_days_kwh = reserve_kwh + sum(
+        distances[(following + timedelta(days=offset)).weekday()] * consumption / 100
+        for offset in range(3)
+    )
+    target_day_kwh = max(required_following_kwh, config.capacity_kwh * config.solar_soc_cap_percent / 100)
     day_needed_ac = max(0.0, target_day_kwh - soc_on_return / 100 * config.capacity_kwh) / config.charge_efficiency
     day_slots = []
     for slot, solar_kwh in sorted(available_solar.items()):
@@ -258,6 +243,7 @@ def build_ev_plan(
             "opportunityCost_AUD": round(day_ac_kwh * float(tariff.feed_in_rate), 2),
             "socAfterCharge": round(min(100, soc_on_return + day_ac_kwh * config.charge_efficiency / config.capacity_kwh * 100), 1),
             "estimatedNextDayKm": round(following_km, 1),
+            "requiredSocForNextThreeDays": round(min(100, required_three_days_kwh / config.capacity_kwh * 100), 1),
             "remainingEnergyBeforeNextNight_kWh": round(max(0, (
                 required_following_kwh - soc_on_return / 100 * config.capacity_kwh
             ) / config.charge_efficiency - day_ac_kwh), 2),
@@ -296,9 +282,9 @@ def main() -> int:
             history.append((home_time, float(home["totalConsumptionToday_kWh"])))
             profile = build_load_profile(history, tariff.timezone, home_config)
             forecast = load_forecast(now, now - timedelta(hours=1), warnings)
-            following = now.astimezone(tariff.timezone).date() + timedelta(days=2)
+            tomorrow = now.astimezone(tariff.timezone).date() + timedelta(days=1)
             day_end = _local_window(
-                following, time.fromisoformat(config.daytime_home_start),
+                tomorrow, time.fromisoformat(config.daytime_home_start),
                 time.fromisoformat(config.daytime_home_end), tariff.timezone,
             )[1]
             available_solar = solar_surplus(

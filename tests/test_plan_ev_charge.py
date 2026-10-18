@@ -76,17 +76,40 @@ class EvChargePlannerTests(unittest.TestCase):
         self.assertGreater(plan["daytime"]["socAfterCharge"], plan["tomorrow"]["socAfterDriving"])
         self.assertEqual(plan["daytime"]["remainingEnergyBeforeNextNight_kWh"], 0)
 
-    def test_future_solar_reduces_early_top_up(self) -> None:
+    def test_high_soc_still_uses_available_solar(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=90)
+        midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
+        solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
+        plan = build_ev_plan(self.now, vehicle, {weekday: 30 for weekday in range(7)},
+                             self.config, self.tariff, solar, [])
+
+        self.assertEqual(plan["overnight"]["decision"], "no_charge")
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertGreater(plan["daytime"]["socAfterCharge"], plan["tomorrow"]["socAfterDriving"])
+        self.assertGreater(plan["tomorrow"]["socAfterDriving"], plan["daytime"]["requiredSocForNextThreeDays"])
+
+    def test_no_solar_still_reports_three_day_sufficiency(self) -> None:
+        vehicle = dict(self.vehicle, socPercent=90)
+        plan = build_ev_plan(self.now, vehicle, {weekday: 30 for weekday in range(7)},
+                             self.config, self.tariff, {}, [])
+
+        self.assertEqual(plan["daytime"]["decision"], "no_charge")
+        self.assertGreater(plan["tomorrow"]["socAfterDriving"], plan["daytime"]["requiredSocForNextThreeDays"])
+
+    def test_future_solar_does_not_prevent_todays_top_up(self) -> None:
         vehicle = dict(self.vehicle, socPercent=60)
         midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
         solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
+        without_future_solar = build_ev_plan(self.now, vehicle, {weekday: 37 for weekday in range(7)},
+                                             self.config, self.tariff, solar, [])
         solar.update({midday + timedelta(days=1, minutes=30 * index): 3.68 for index in range(8)})
         plan = build_ev_plan(self.now, vehicle, {weekday: 37 for weekday in range(7)},
                              self.config, self.tariff, solar, [])
 
-        self.assertEqual(plan["daytime"]["decision"], "no_charge")
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertEqual(plan["daytime"]["slots"], without_future_solar["daytime"]["slots"])
 
-    def test_early_top_up_requires_cheaper_solar(self) -> None:
+    def test_export_price_does_not_block_solar_top_up(self) -> None:
         vehicle = dict(self.vehicle, socPercent=60)
         midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
         solar = {midday + timedelta(minutes=30 * index): 1.84 for index in range(8)}
@@ -96,7 +119,9 @@ class EvChargePlannerTests(unittest.TestCase):
         necessary = build_ev_plan(self.now, self.vehicle, {weekday: 60 for weekday in range(7)},
                                   self.config, expensive_export, solar, [])
 
-        self.assertEqual(plan["daytime"]["decision"], "no_charge")
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertAlmostEqual(plan["daytime"]["opportunityCost_AUD"],
+                       round(plan["daytime"]["energyFromSolar_kWh"] * 0.09, 2))
         self.assertEqual(necessary["daytime"]["decision"], "charge")
 
     def test_early_top_up_respects_configured_soc_cap(self) -> None:
@@ -226,7 +251,7 @@ class EvChargePlannerTests(unittest.TestCase):
             plan = json.loads(plan_file.read_text(encoding="utf-8"))
 
         self.assertEqual(result, 0)
-        self.assertEqual(surplus.call_args.args[1], datetime(2026, 10, 16, 6, tzinfo=timezone.utc))
+        self.assertEqual(surplus.call_args.args[1], datetime(2026, 10, 15, 6, tzinfo=timezone.utc))
         self.assertEqual(plan["overnight"]["decision"], "charge")
         self.assertEqual(plan["daytime"]["window"]["start"], "2026-10-15T00:00:00Z")
 

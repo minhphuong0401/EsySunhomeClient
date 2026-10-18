@@ -89,7 +89,7 @@ Do not publish the odometer history if the repository is public and you do not
 want daily driving patterns visible; Git history retains previous snapshots.
 
 Set battery capacity (45 kWh by default), reserve SOC, maximum charger current
-(integer 6-32 A), charger efficiency, solar top-up SOC cap (80% by default),
+(integer 6-32 A), charger efficiency, solar top-up SOC cap (100% by default),
 and the time the vehicle is home in `config/ev_charge.json`. The default daytime
 window is 11:00-17:00 local Sydney time. Overnight charging assumes the vehicle
 is also plugged in during the tariff's cheapest period, 00:00-06:00; change
@@ -108,15 +108,15 @@ home. Today's driving is already reflected in the evening SOC and is not
 subtracted a second time. If the needed charge does not fit the cheap window,
 the plan warns rather than claiming the reserve will be met.
 
-During tomorrow's configured home hours, the planner may advise topping up
-for the following day's estimated driving from forecast PV surplus after
-estimated household load and the home battery's limited charging input. Solar
-can be available for the EV before the home battery is full. When exporting
-solar earns less than buying power in the cheapest night window, it can also top up for
-up to two further estimated driving days, subject to the configured solar SOC
-cap. Forecast usable surplus on the following day reduces that early top-up;
-missing future surplus is not assumed to be available. The cap does not override
-energy needed for the immediately following day's drive and reserve. Neither
+During tomorrow's configured home hours, the planner recommends using eligible
+forecast PV surplus after estimated household load and the home battery's
+limited charging input, even when the EV already has enough energy for the next
+three estimated driving days. It charges toward the configured solar SOC cap
+(100% by default) instead of exporting usable surplus; export price and later
+sunny days do not prevent today's solar top-up. A separate estimate compares
+the SOC after tomorrow's drive, without daytime charging, with the reserve and
+next three days' driving needs. Solar can be available for the EV before the
+home battery is full. Neither
 the solar supply nor the feed-in credit forgone is guaranteed: household history
 can already include past EV charging, and actual PV and home load can differ. The planned
 charger AC energy is shown separately and is not added to the home-battery
