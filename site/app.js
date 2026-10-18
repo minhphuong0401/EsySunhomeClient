@@ -783,14 +783,18 @@ function renderEvAdvice(plan) {
   }
 
   planTime.textContent = `Plan ${formatPlanTime(plan.generatedAt)} · Vehicle ${formatAmount(plan.vehicleSoc, "%")} · ${formatAmount(plan.tomorrow.estimatedDistanceKm, " km")} estimated tomorrow`;
-  const plannedEnergy = numberOrNull(plan.overnight.energyFromGrid_kWh) + numberOrNull(plan.daytime.energyFromSolar_kWh);
-  const plannedEnergyNote = document.getElementById("ev-planned-energy");
-  plannedEnergyNote.hidden = plannedEnergy === 0;
-  plannedEnergyNote.textContent = `Planned charger draw: ~${formatAmount(plannedEnergy, " kWh")} AC · estimated, not added to Grid Charging load`;
   const overnight = document.createElement("div");
   overnight.className = "ev-decision";
+  const nightPeriod = document.createElement("p");
+  nightPeriod.className = "ev-period";
+  nightPeriod.textContent = "Overnight · 00–06";
+  const nightSummary = document.createElement("div");
+  nightSummary.className = "ev-decision-summary";
   const nightTitle = document.createElement("h4");
-  nightTitle.textContent = plan.overnight.decision === "charge" ? "Charge overnight" : "No overnight charge";
+  nightTitle.textContent = plan.overnight.decision === "charge" ? "Charge from grid" : "No charge";
+  nightSummary.append(nightTitle);
+  const nightContext = document.createElement("div");
+  nightContext.className = "ev-decision-detail";
   const nightDetails = document.createElement("p");
   nightDetails.textContent = plan.overnight.decision === "charge"
     ? `${formatPlanTime(plan.overnight.start)}–${formatPlanTime(plan.overnight.end)} · ${plan.overnight.currentA} A · ${plan.overnight.durationMinutes} min · ${formatAmount(plan.overnight.energyFromGrid_kWh, " kWh")} · ${formatCurrency(plan.overnight.cost_AUD)}`
@@ -798,30 +802,39 @@ function renderEvAdvice(plan) {
   const nightProjection = document.createElement("p");
   nightProjection.className = "group-description";
   nightProjection.textContent = `After driving: ~${formatAmount(plan.tomorrow.socAfterDriving, "%")} · Reserve ${formatAmount(plan.minimumSoc, "%")}`;
-  overnight.append(nightTitle, nightDetails, nightProjection);
+  nightContext.append(nightDetails, nightProjection);
+  overnight.append(nightPeriod, nightSummary, nightContext);
 
   const daytime = document.createElement("div");
   daytime.className = "ev-decision";
+  const dayPeriod = document.createElement("p");
+  dayPeriod.className = "ev-period";
+  dayPeriod.textContent = `Daytime · ${formatDate(plan.daytime.window.start, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}–${formatDate(plan.daytime.window.end, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })}`;
+  const daySummary = document.createElement("div");
+  daySummary.className = "ev-decision-summary";
   const dayTitle = document.createElement("h4");
-  dayTitle.textContent = plan.daytime.decision === "charge" ? "Charge from forecast PV surplus" : "No daytime charge planned";
+  dayTitle.textContent = plan.daytime.decision === "charge" ? "Charge from solar" : "No charge";
   const dayDetails = document.createElement("p");
   dayDetails.textContent = plan.daytime.decision === "charge"
     ? `${formatAmount(plan.daytime.energyFromSolar_kWh, " kWh")} planned AC draw · ~${formatCurrency(plan.daytime.opportunityCost_AUD)} export credit if surplus materializes`
     : "No usable solar charging slots forecast (6 A minimum), or vehicle at its charge limit.";
-  daytime.append(dayTitle, dayDetails);
+  daySummary.append(dayTitle, dayDetails);
+  const dayContext = document.createElement("div");
+  dayContext.className = "ev-decision-detail";
   const requiredThreeDays = numberOrNull(plan.daytime.requiredSocForNextThreeDays);
-  if (requiredThreeDays !== null && plan.tomorrow.socAfterDriving > requiredThreeDays) {
-    const reserveNote = document.createElement("p");
-    reserveNote.className = "group-description";
-    reserveNote.textContent = `Even without daytime charging: ~${formatAmount(plan.tomorrow.socAfterDriving, "%")} after tomorrow's drive, above ~${formatAmount(requiredThreeDays, "%")} estimated for the next 3 days including reserve.`;
-    daytime.append(reserveNote);
-  }
   for (const slot of plan.daytime.slots) {
     const detail = document.createElement("p");
     detail.className = "ev-slot";
     detail.textContent = `${formatPlanTime(slot.start)}–${formatDate(slot.end, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })} · ${slot.currentA} A · ${formatAmount(slot.energyFromSolar_kWh, " kWh")}`;
-    daytime.append(detail);
+    dayContext.append(detail);
   }
+  if (requiredThreeDays !== null && plan.tomorrow.socAfterDriving > requiredThreeDays) {
+    const reserveNote = document.createElement("p");
+    reserveNote.className = "group-description ev-reserve-note";
+    reserveNote.textContent = `Even without daytime charging: ~${formatAmount(plan.tomorrow.socAfterDriving, "%")} after tomorrow's drive, above ~${formatAmount(requiredThreeDays, "%")} estimated for the next 3 days including reserve.`;
+    dayContext.append(reserveNote);
+  }
+  daytime.append(dayPeriod, daySummary, dayContext);
   container.replaceChildren(overnight, daytime);
   if (plan.warnings?.length) {
     warnings.textContent = plan.warnings.join(" ");
