@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T14:31:08Z",
+  "generatedAt": "2026-10-18T14:45:51Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 55.2,
       "loadAfterWindow_kWh": 21.6,
-      "projectedSocAtWindowEnd": 72.0,
+      "projectedSocAtWindowEnd": 72.2,
       "requiredSocAtWindowEnd": 30,
-      "minSocWithoutCharge": 67.3,
+      "minSocWithoutCharge": 67.6,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.115,
@@ -69,7 +69,7 @@
         0.275,
         0.197,
         0.224,
-        0.856,
+        0.857,
         0.817,
         0.941,
         1.055,
@@ -100,8 +100,8 @@
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 41.4,
-      "loadAfterWindow_kWh": 32.56,
-      "projectedSocAtWindowEnd": 69.9,
+      "loadAfterWindow_kWh": 32.57,
+      "projectedSocAtWindowEnd": 70.3,
       "requiredSocAtWindowEnd": 32,
       "minSocWithoutCharge": 54.3,
       "peakSocWithoutCharge": 100.0
