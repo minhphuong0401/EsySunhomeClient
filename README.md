@@ -188,6 +188,13 @@ individual snapshots. The dashboard has Auto, Light, and Dark theme modes.
 Auto follows the browser's color-scheme preference, including changes while
 the page is open; manually selected modes are remembered.
 
+The read-only Settings page at `site/settings.html` shows labelled tariff,
+home-battery and BYD charging assumptions. The Pages build generates
+`site/data/settings.json` from an explicit allowlist of the three files in
+`config/`; additional fields and credentials are not published. Settings
+reflect the last Pages build, not unsaved local edits. For a local preview,
+run `python3 -m scripts.build_settings_report` before serving `site/`.
+
 Electricity prices are kept in `config/electricity_tariff.json` in AUD with
 GST included: peak $0.4362/kWh, off-peak $0.2882/kWh, shoulder $0.2052/kWh,
 Night Saver EV $0.08/kWh, supply $0.8716/day, and feed-in $0.04/kWh. The

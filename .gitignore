@@ -10,3 +10,4 @@ __pycache__/
 *.crt
 site/data/history.json
 site/data/night_charge.json
+site/data/settings.json
