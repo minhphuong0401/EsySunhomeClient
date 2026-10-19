@@ -77,9 +77,15 @@ Settings live in `config/night_charge.json`.
 
 ## BYD charging advice (dry run)
 
-The `Fetch BYD and plan EV charge` workflow runs daily at 10:00 UTC (20:00
-AEST / 21:00 AEDT), after the configured daytime home window, and can also be
-run manually. Add `BYD_USERNAME` and `BYD_PASSWORD` as Actions secrets, and
+The `Fetch BYD and plan EV charge` workflow is dispatched by an external
+scheduler (or manually); it has no built-in cron. For the default Sydney
+windows, run after the day's driving around 21:00-23:00 local time for the
+upcoming cheap night, then refresh at 06:15 and optionally at 10:30 or 12:30
+local time for the current day's remaining solar slots. Refresh home energy
+data alongside BYD telemetry: the planner requires a home snapshot under three
+hours old and vehicle telemetry under eight hours old. Schedule in Sydney local
+time so daylight-saving changes do not shift these runs. Add `BYD_USERNAME` and
+`BYD_PASSWORD` as Actions secrets, and
 `BYD_BASE_URL` and `BYD_COUNTRY_CODE` as Actions variables for your BYD region.
 The workflow takes a minimal snapshot of the first vehicle on the account with
 `pybyd`: SOC, odometer, vehicle timestamp and last-50-km consumption in
@@ -106,9 +112,14 @@ charges only enough to cover *all* of tomorrow's estimated driving plus the
 configurable reserve, even if the entire trip occurs before the car returns
 home. Today's driving is already reflected in the evening SOC and is not
 subtracted a second time. If the needed charge does not fit the cheap window,
-the plan warns rather than claiming the reserve will be met.
+the plan warns rather than claiming the reserve will be met. Runs before the
+configured daytime window closes target that same local day; later runs target
+the next day. Once the cheap window has ended, overnight advice is marked
+closed, and daytime charging uses the freshly measured vehicle SOC and only
+future half-hour slots. The no-charge driving projection conservatively assumes
+the full estimated drive is still ahead if no trip timing is available.
 
-During tomorrow's configured home hours, the planner recommends using eligible
+During the selected day's configured home hours, the planner recommends using eligible
 forecast PV surplus after estimated household load and the home battery's
 limited charging input, even when the EV already has enough energy for the next
 three estimated driving days. It charges toward the configured solar SOC cap

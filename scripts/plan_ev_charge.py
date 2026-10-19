@@ -110,6 +110,8 @@ def solar_surplus(
     floor = home_config.battery_min_soc / 100 * capacity
     surplus: dict[datetime, float] = {}
     cursor = _floor_slot(start)
+    if cursor < start:
+        cursor += SLOT
     while cursor < end:
         slot_pv = pv_by_slot.get(cursor, 0.0) * 0.5 * home_config.worst_case_pv_factor
         slot_load = profile.worst[_slot_index(cursor, tariff.timezone)]
@@ -127,6 +129,13 @@ def _local_window(day: date, start: time, end: time, tz: Any) -> tuple[datetime,
         datetime.combine(day, start, tzinfo=tz).astimezone(timezone.utc),
         datetime.combine(day, end, tzinfo=tz).astimezone(timezone.utc),
     )
+
+
+def _charge_day(now: datetime, config: EvConfig, tariff: Any) -> date:
+    today = now.astimezone(tariff.timezone).date()
+    day_end = _local_window(today, time.fromisoformat(config.daytime_home_start),
+                            time.fromisoformat(config.daytime_home_end), tariff.timezone)[1]
+    return today if now < day_end else today + timedelta(days=1)
 
 
 def build_ev_plan(
@@ -153,7 +162,8 @@ def build_ev_plan(
         warnings.append("Recent BYD consumption unavailable; using configured fallback.")
     consumption = float(consumption)
 
-    tomorrow = now.astimezone(tariff.timezone).date() + timedelta(days=1)
+    tomorrow = _charge_day(now, config, tariff)
+    same_day = tomorrow == now.astimezone(tariff.timezone).date()
     following = tomorrow + timedelta(days=1)
     night_start_minute, night_end_minute, night_rate = cheap_window(tariff)
     night_start, night_end = _local_window(
@@ -164,14 +174,12 @@ def build_ev_plan(
         tomorrow, time.fromisoformat(config.daytime_home_start),
         time.fromisoformat(config.daytime_home_end), tariff.timezone,
     )
-    if now >= night_end:
-        raise ValueError("Run the EV planner after the day's driving, before the next cheap window ends")
     tomorrow_km = distances[tomorrow.weekday()]
     following_km = distances[following.weekday()]
     energy_tomorrow = tomorrow_km * consumption / 100
     reserve_kwh = config.min_soc_percent / 100 * config.capacity_kwh
     required_night_kwh = reserve_kwh + energy_tomorrow
-    available_hours = (night_end - max(night_start, now)).total_seconds() / 3600
+    available_hours = max(0.0, (night_end - max(night_start, now)).total_seconds() / 3600)
     if required_night_kwh > config.capacity_kwh:
         warnings.append("Tomorrow's estimated drive plus reserve exceeds the vehicle battery capacity.")
     night_battery_kwh = min(config.capacity_kwh, max(0.0, required_night_kwh))
@@ -185,10 +193,11 @@ def build_ev_plan(
     )
     night_finish = night_end if night_minutes else None
     night_begin = night_finish - timedelta(minutes=night_minutes) if night_finish else None
-    if night_ac_kwh + 1e-6 < needed_ac_kwh:
+    if now < night_end and night_ac_kwh + 1e-6 < needed_ac_kwh:
         warnings.append("The required overnight charge cannot fit in the available cheap window.")
     soc_after_night = min(100.0, soc + night_ac_kwh * config.charge_efficiency / config.capacity_kwh * 100)
     soc_on_return = max(0.0, soc_after_night - energy_tomorrow / config.capacity_kwh * 100)
+    daytime_soc = soc_after_night if same_day else soc_on_return
 
     required_following_kwh = min(config.capacity_kwh, reserve_kwh + following_km * consumption / 100)
     required_three_days_kwh = reserve_kwh + sum(
@@ -196,10 +205,10 @@ def build_ev_plan(
         for offset in range(3)
     )
     target_day_kwh = max(required_following_kwh, config.capacity_kwh * config.solar_soc_cap_percent / 100)
-    day_needed_ac = max(0.0, target_day_kwh - soc_on_return / 100 * config.capacity_kwh) / config.charge_efficiency
+    day_needed_ac = max(0.0, target_day_kwh - daytime_soc / 100 * config.capacity_kwh) / config.charge_efficiency
     day_slots = []
     for slot, solar_kwh in sorted(available_solar.items()):
-        if not day_start <= slot < day_end or day_needed_ac <= 0:
+        if not day_start <= slot < day_end or slot < now or day_needed_ac <= 0:
             continue
         current = min(config.max_current_amps, math.floor(solar_kwh * 2000 / config.voltage_v))
         if current < 6:
@@ -227,6 +236,7 @@ def build_ev_plan(
                      "socAfterDriving": round(soc_on_return, 1)},
         "overnight": {
             "decision": "charge" if night_minutes else "no_charge",
+            "windowClosed": now >= night_end,
             "start": _iso(night_begin) if night_begin else None,
             "end": _iso(night_finish) if night_finish else None,
             "currentA": config.max_current_amps if night_minutes else None,
@@ -241,11 +251,11 @@ def build_ev_plan(
             "slots": day_slots,
             "energyFromSolar_kWh": round(day_ac_kwh, 2),
             "opportunityCost_AUD": round(day_ac_kwh * float(tariff.feed_in_rate), 2),
-            "socAfterCharge": round(min(100, soc_on_return + day_ac_kwh * config.charge_efficiency / config.capacity_kwh * 100), 1),
+            "socAfterCharge": round(min(100, daytime_soc + day_ac_kwh * config.charge_efficiency / config.capacity_kwh * 100), 1),
             "estimatedNextDayKm": round(following_km, 1),
             "requiredSocForNextThreeDays": round(min(100, required_three_days_kwh / config.capacity_kwh * 100), 1),
             "remainingEnergyBeforeNextNight_kWh": round(max(0, (
-                required_following_kwh - soc_on_return / 100 * config.capacity_kwh
+                required_following_kwh - daytime_soc / 100 * config.capacity_kwh
             ) / config.charge_efficiency - day_ac_kwh), 2),
         },
         "warnings": warnings,
@@ -282,7 +292,7 @@ def main() -> int:
             history.append((home_time, float(home["totalConsumptionToday_kWh"])))
             profile = build_load_profile(history, tariff.timezone, home_config)
             forecast = load_forecast(now, now - timedelta(hours=1), warnings)
-            tomorrow = now.astimezone(tariff.timezone).date() + timedelta(days=1)
+            tomorrow = _charge_day(now, config, tariff)
             day_end = _local_window(
                 tomorrow, time.fromisoformat(config.daytime_home_start),
                 time.fromisoformat(config.daytime_home_end), tariff.timezone,

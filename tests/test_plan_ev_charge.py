@@ -51,6 +51,39 @@ class EvChargePlannerTests(unittest.TestCase):
         self.assertGreaterEqual(plan["tomorrow"]["socAfterDriving"], 20)
         self.assertEqual(plan["daytime"]["decision"], "no_charge")
 
+    def test_morning_refresh_targets_today_after_cheap_window(self) -> None:
+        morning = datetime(2026, 10, 13, 19, 15, tzinfo=timezone.utc)
+        vehicle = dict(self.vehicle, fetchedAt=morning.isoformat(), vehicleTime=morning.isoformat(), socPercent=75)
+        solar_slot = datetime(2026, 10, 14, 1, 0, tzinfo=timezone.utc)
+        plan = build_ev_plan(morning, vehicle, {weekday: 30 for weekday in range(7)},
+                             self.config, self.tariff, {solar_slot: 1.84}, [])
+
+        self.assertEqual(plan["tomorrow"]["date"], "2026-10-14")
+        self.assertEqual(plan["overnight"]["decision"], "no_charge")
+        self.assertTrue(plan["overnight"]["windowClosed"])
+        self.assertEqual(plan["daytime"]["window"]["start"], "2026-10-14T00:00:00Z")
+        self.assertEqual(plan["daytime"]["decision"], "charge")
+        self.assertGreaterEqual(plan["daytime"]["slots"][0]["start"], morning.isoformat().replace("+00:00", "Z"))
+        self.assertGreater(plan["daytime"]["socAfterCharge"], vehicle["socPercent"])
+
+    def test_afternoon_refresh_skips_elapsed_slots_and_evening_targets_next_day(self) -> None:
+        afternoon = datetime(2026, 10, 14, 3, 10, tzinfo=timezone.utc)
+        vehicle = dict(self.vehicle, fetchedAt=afternoon.isoformat(), vehicleTime=afternoon.isoformat(), socPercent=75)
+        solar = {datetime(2026, 10, 14, 2, 30, tzinfo=timezone.utc): 1.84,
+                 datetime(2026, 10, 14, 4, 0, tzinfo=timezone.utc): 1.84}
+        plan = build_ev_plan(afternoon, vehicle, {weekday: 30 for weekday in range(7)},
+                             self.config, self.tariff, solar, [])
+
+        self.assertEqual(plan["tomorrow"]["date"], "2026-10-14")
+        self.assertEqual([slot["start"] for slot in plan["daytime"]["slots"]], ["2026-10-14T04:00:00Z"])
+
+        evening = datetime(2026, 10, 14, 9, 0, tzinfo=timezone.utc)
+        vehicle.update(fetchedAt=evening.isoformat(), vehicleTime=evening.isoformat())
+        next_plan = build_ev_plan(evening, vehicle, {weekday: 30 for weekday in range(7)},
+                                  self.config, self.tariff, {}, [])
+        self.assertEqual(next_plan["tomorrow"]["date"], "2026-10-15")
+        self.assertFalse(next_plan["overnight"]["windowClosed"])
+
     def test_daytime_solar_is_used_only_when_needed_and_available(self) -> None:
         vehicle = dict(self.vehicle, socPercent=65)
         midday = datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc)
@@ -215,6 +248,22 @@ class EvChargePlannerTests(unittest.TestCase):
                                 profile, self.tariff, config)
 
         self.assertAlmostEqual(surplus[start], 3.0)
+
+    def test_solar_surplus_skips_partial_slot_before_home_snapshot(self) -> None:
+        config = replace(load_config(), worst_case_pv_factor=1)
+        snapshot_time = datetime(2026, 10, 15, 1, 15, tzinfo=timezone.utc)
+        forecasts = [
+            {"period_end": (datetime(2026, 10, 15, 1, 30, tzinfo=timezone.utc)
+                            + timedelta(minutes=30 * index)).isoformat(), "pv_estimate": 8}
+            for index in range(2)
+        ]
+        profile = LoadProfile([0.0] * 48, [0.0] * 48, 7, 7)
+
+        surplus = solar_surplus(snapshot_time, snapshot_time + timedelta(minutes=45), 100, forecasts,
+                                profile, self.tariff, config)
+
+        self.assertNotIn(datetime(2026, 10, 15, 1, 0, tzinfo=timezone.utc), surplus)
+        self.assertEqual(surplus[datetime(2026, 10, 15, 1, 30, tzinfo=timezone.utc)], 4.0)
 
     def test_workflow_entrypoint_writes_a_plan_from_snapshots(self) -> None:
         class FixedDatetime(datetime):
