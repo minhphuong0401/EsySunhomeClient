@@ -227,6 +227,9 @@ h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 38px); letter-spacing: -.04
 .icon-cost { color: var(--series-cost); }
 .icon-purple { color: #8a72cb; }
 .metric-value { position: relative; margin: 18px 0 2px; font-family: Manrope, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.04em; }
+.metric-cost .metric-value { margin-top: 12px; overflow-wrap: anywhere; }
+.metric-cost-detail, .metric-cost-period { position: relative; margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.metric-cost-detail span { color: var(--ink); font-weight: 600; }
 .metric-solar { background: linear-gradient(140deg, var(--surface-strong), var(--surface) 72%, rgb(121 200 181 / 13%)); }
 
 .section-heading { margin: 43px 0 16px; }

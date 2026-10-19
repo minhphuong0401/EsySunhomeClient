@@ -60,8 +60,41 @@ const offsetDate = (dateValue, days) => {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 };
 
+function billingCycleRange(today, startDay) {
+  const [year, month] = today.split("-").map(Number);
+  const monthStart = (offset) => {
+    const first = new Date(Date.UTC(year, month - 1 + offset, 1));
+    const lastDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    const day = Math.min(startDay, lastDay);
+    return `${first.getUTCFullYear()}-${String(first.getUTCMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  };
+  const previousMonth = today < monthStart(0);
+  return {
+    start: monthStart(previousMonth ? -1 : 0),
+    end: offsetDate(monthStart(previousMonth ? 0 : 1), -1),
+  };
+}
+
+function billingCycleCost(latestByDay, today, startDay) {
+  const { start, end } = billingCycleRange(today, startDay);
+  let total = 0;
+  let through = null;
+  for (let day = start; day <= today && day <= end; day = offsetDate(day, 1)) {
+    const cost = numberOrNull(latestByDay.get(day)?.[FIELDS.netCost]);
+    if (cost === null) break;
+    total += cost;
+    through = day;
+  }
+  return { start, end, through, total: through === null ? null : total };
+}
+
 const formatDate = (timestamp, options) =>
   new Intl.DateTimeFormat("en-AU", { ...options, timeZone: dashboardTimezone }).format(new Date(timestamp));
+
+const formatBillingDay = (day, includeYear = false) =>
+  new Intl.DateTimeFormat("en-AU", {
+    day: "numeric", month: "short", year: includeYear ? "numeric" : undefined, timeZone: "UTC",
+  }).format(new Date(`${day}T00:00:00Z`));
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
@@ -262,7 +295,7 @@ function showNotice(message) {
   notice.hidden = false;
 }
 
-function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
+function renderDashboard(records, generatedAt, timeZone, costWarnings = [], billingCycleStartDay = null) {
   dashboardTimezone = timeZone;
   new Intl.DateTimeFormat("en-AU", { timeZone: dashboardTimezone });
   const now = Date.now();
@@ -283,6 +316,9 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
 
   const latest = recent[recent.length - 1];
   const latestTimestamp = latest.timestamp ?? latest.mqttCurrentTime;
+  const latestDay = latest.tariffLocalDate ?? localDay(latestTimestamp);
+  document.getElementById("metric-daily-label").textContent = latestDay === dateInputValue(new Date(now))
+    ? "Today" : formatBillingDay(latestDay);
   setMetric("metric-pv", numberOrNull(latest[FIELDS.pv]), " kWh");
   setMetric("metric-consumption", numberOrNull(latest[FIELDS.consumption]), " kWh");
   setMetric("metric-bought", numberOrNull(latest[FIELDS.bought]), " kWh");
@@ -298,7 +334,7 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
 
   const latestByDay = new Map();
   for (const record of recent) {
-    latestByDay.set(localDay(record.timestamp ?? record.mqttCurrentTime), record);
+    latestByDay.set(record.tariffLocalDate ?? localDay(record.timestamp ?? record.mqttCurrentTime), record);
   }
   const dailyRecords = [...latestByDay.values()];
   if (costWarnings.length > 0) {
@@ -306,6 +342,16 @@ function renderDashboard(records, generatedAt, timeZone, costWarnings = []) {
     showNotice(`Some daily cost estimates may be incomplete due to missing or reset meter readings (${warningDates}).`);
   }
   const today = dateInputValue(new Date(now));
+  if (Number.isInteger(billingCycleStartDay) && billingCycleStartDay >= 1 && billingCycleStartDay <= 31) {
+    const cycle = billingCycleCost(latestByDay, today, billingCycleStartDay);
+    setCurrencyMetric("metric-cycle-cost", cycle.total);
+    const range = `${formatBillingDay(cycle.start)}–${formatBillingDay(cycle.end, true)}`;
+    document.getElementById("metric-cycle-period").textContent = cycle.through
+      ? `${range} · through ${formatBillingDay(cycle.through)}`
+      : `${range} · no readings from cycle start`;
+  } else {
+    document.getElementById("metric-cycle-period").textContent = "Billing cycle not configured";
+  }
   const earliest = offsetDate(today, -90);
   const defaultStart = offsetDate(today, -6);
   const dateInputs = {
@@ -886,6 +932,7 @@ async function main() {
       history.generatedAt ?? new Date().toISOString(),
       history.tariff?.timezone ?? "Australia/Sydney",
       history.costWarnings ?? [],
+      history.tariff?.billingCycleStartDay,
     );
   } catch (error) {
     showNotice(`${error.message} Run the “Deploy energy dashboard” workflow on GitHub.`);

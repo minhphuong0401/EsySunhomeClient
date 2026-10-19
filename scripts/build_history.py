@@ -36,6 +36,7 @@ class Tariff:
     timezone_name: str
     timezone: ZoneInfo
     currency: str
+    billing_cycle_start_day: int
     feed_in_rate: Decimal
     supply_charge: Decimal
     periods: tuple[TariffPeriod, ...]
@@ -86,6 +87,9 @@ def load_tariff(path: Path = TARIFF_PATH) -> Tariff:
         raise ValueError(f"Unknown electricity tariff timezone {timezone_name!r}.") from error
     if config.get("currency") != "AUD":
         raise ValueError("Electricity tariff currency must be AUD.")
+    billing_cycle_start_day = config.get("billing_cycle_start_day")
+    if type(billing_cycle_start_day) is not int or not 1 <= billing_cycle_start_day <= 31:
+        raise ValueError("Electricity tariff billing_cycle_start_day must be an integer from 1 to 31.")
 
     parsed_rates = {
         name: _decimal_value(value, name)
@@ -120,6 +124,7 @@ def load_tariff(path: Path = TARIFF_PATH) -> Tariff:
         timezone_name=timezone_name,
         timezone=timezone_info,
         currency=config["currency"],
+        billing_cycle_start_day=billing_cycle_start_day,
         feed_in_rate=feed_in_rate,
         supply_charge=supply_charge,
         periods=tuple(periods),
@@ -344,7 +349,11 @@ def build_history(days: int, now: datetime, tariff_path: Path = TARIFF_PATH) -> 
     return {
         "generatedAt": now.isoformat().replace("+00:00", "Z"),
         "days": days,
-        "tariff": {"timezone": tariff.timezone_name, "currency": tariff.currency},
+        "tariff": {
+            "timezone": tariff.timezone_name,
+            "currency": tariff.currency,
+            "billingCycleStartDay": tariff.billing_cycle_start_day,
+        },
         "costWarnings": [
             {"date": day, "message": message}
             for day, message in sorted(cost_warnings.items())

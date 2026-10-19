@@ -1,159 +1,120 @@
 #!/usr/bin/env bash
-# Apply date-based EV advice and same-day morning refresh to another checkout.
 set -euo pipefail
 
 cd "${1:-.}"
 cd "$(git rev-parse --show-toplevel)"
-files=(README.md scripts/plan_ev_charge.py site/app.js site/index.html tests/test_plan_ev_charge.py)
-for file_path in "${files[@]}"; do
-  if [[ ! -f "$file_path" ]]; then
-    echo "Missing $file_path; run this script from an EsySunhomeClient checkout." >&2
-    exit 1
-  fi
-done
 
 patch_file="$(mktemp)"
-merge_dir=""
-cleanup() {
-  rm -f "$patch_file"
-  if [[ -n "$merge_dir" ]]; then
-    rm -r "$merge_dir"
-  fi
-}
-trap cleanup EXIT
+trap 'rm -f "$patch_file"' EXIT
 
-base64 -d <<'EV_REFRESH_PATCH' | gzip -d > "$patch_file"
-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
-nhovZDqPvMb/Av0BdiaiUAAA
-EV_REFRESH_PATCH
+base64 -d <<'BILLING_CYCLE_PATCH' | gzip -dc > "$patch_file"
+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
+BILLING_CYCLE_PATCH
 
-if git apply --reverse --check "$patch_file" 2>/dev/null; then
-  echo "EV morning refresh and advice wording are already updated."
-  exit 0
-fi
-if git apply --check "$patch_file" 2>/dev/null; then
-  git apply "$patch_file"
-  echo "EV morning refresh and advice wording updated. Review with git diff -- ${files[*]}."
-  exit 0
-fi
-
-base_revision=a2e88a8c2dd62cc9a9983cd8e857d3429f939ab5
-if ! git cat-file -e "$base_revision^{commit}" 2>/dev/null; then
-  echo "Cannot apply the EV patch and its base commit is unavailable; no files were changed." >&2
+expected_sha=628d5f0c468fa99d022500704d2b7ce85fd9def465b70bfd3e32b7adf7c6175a
+if command -v shasum > /dev/null 2>&1; then
+  actual_sha="$(shasum -a 256 "$patch_file")"
+elif command -v sha256sum > /dev/null 2>&1; then
+  actual_sha="$(sha256sum "$patch_file")"
+else
+  echo "A SHA-256 checksum tool (shasum or sha256sum) is required." >&2
   exit 1
 fi
-merge_dir="$(mktemp -d)"
-for file_path in "${files[@]}"; do
-  for folder in base desired merged; do
-    mkdir -p "$merge_dir/$folder/$(dirname "$file_path")"
-  done
-  git show "$base_revision:$file_path" > "$merge_dir/base/$file_path"
-  cp "$merge_dir/base/$file_path" "$merge_dir/desired/$file_path"
-done
-(cd "$merge_dir/desired" && git apply "$patch_file")
-for file_path in "${files[@]}"; do
-  if ! git merge-file -p "$file_path" "$merge_dir/base/$file_path" "$merge_dir/desired/$file_path" > "$merge_dir/merged/$file_path"; then
-    echo "Cannot safely merge $file_path; no files were changed." >&2
-    exit 1
-  fi
-done
-for file_path in "${files[@]}"; do
-  cp "$merge_dir/merged/$file_path" "$file_path"
-done
-echo "EV morning refresh and advice wording merged. Review with git diff -- ${files[*]}."
+if [[ "${actual_sha%% *}" != "$expected_sha" ]]; then
+  echo "Patch checksum mismatch; no files were changed." >&2
+  exit 1
+fi
+
+if git apply --reverse --check "$patch_file" 2>/dev/null; then
+  echo "Billing-cycle changes are already applied."
+  exit 0
+fi
+if ! git apply --check "$patch_file"; then
+  echo "Patch does not apply cleanly; no files were changed. Update this checkout and retry." >&2
+  exit 1
+fi
+git apply "$patch_file"
+echo "Billing-cycle changes applied. Review with git diff and run python3 -m unittest discover -s tests -q."

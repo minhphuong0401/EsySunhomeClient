@@ -1,6 +1,7 @@
 {
   "currency": "AUD",
   "timezone": "Australia/Sydney",
+  "billing_cycle_start_day": 8,
   "rates": {
     "peak": "0.4362",
     "off_peak": "0.2882",

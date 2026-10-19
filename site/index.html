@@ -26,9 +26,9 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=28">
+    <link rel="stylesheet" href="styles.css?v=31">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
-    <script src="app.js?v=31" defer></script>
+    <script src="app.js?v=36" defer></script>
   </head>
   <body>
     <main class="page">
@@ -81,14 +81,16 @@
           </div>
           <p class="metric-value" id="metric-sold">—</p>
         </article>
-        <article class="metric-card">
+        <article class="metric-card metric-cost">
           <div class="metric-heading">
             <span class="metric-icon icon-cost" aria-hidden="true">
               <svg viewBox="0 0 32 32"><rect x="4" y="7" width="24" height="19" rx="3"></rect><path d="M4 12h24M9 20h5"></path><circle cx="22" cy="19" r="3"></circle></svg>
             </span>
-            <span>Estimated net cost</span>
+            <span>Estimated net cost · cycle</span>
           </div>
-          <p class="metric-value" id="metric-daily-cost">—</p>
+          <p class="metric-value" id="metric-cycle-cost">—</p>
+          <p class="metric-cost-detail"><span id="metric-daily-label">Today</span> <span id="metric-daily-cost">—</span></p>
+          <p class="metric-cost-period" id="metric-cycle-period">—</p>
         </article>
         <article class="metric-card metric-solar">
           <div class="metric-heading">

@@ -203,6 +203,17 @@ measured by tariff period. Counter resets make the affected day's estimate
 unavailable; missing or invalid individual readings are reported and can make
 that snapshot's estimate unavailable.
 
+Set `billing_cycle_start_day` (1–31) in `config/electricity_tariff.json` to
+the first local day of each electricity billing cycle. For example, 8 means
+8 October through 7 November. In a shorter month, a start day beyond its last
+day is treated as that month's last day. The dashboard shows the current
+Australia/Sydney cycle's estimated net cost using the last cost estimate for
+each consecutive day from the cycle start, plus the latest day's estimate
+separately (dated when the readings are stale).
+The displayed "through" date shows how far history has been included; a
+missing day or unavailable cost stops the total rather than silently skipping
+it. A negative net value is a charge, and a positive one is an export credit.
+
 To publish it, enable **Settings → Pages → Build and deployment → GitHub
 Actions**. The `Deploy energy dashboard` workflow deploys on pushes to `main`
 that update dashboard files or `data/data.json`, and can also be started

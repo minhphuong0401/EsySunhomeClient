@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import json
 import unittest
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from scripts.build_history import (
     TARIFF_PATH,
     _add_daily_cost_estimates,
     _energy_charge,
     _local_day_bounds,
+    build_history,
     load_tariff,
 )
 
@@ -20,6 +25,7 @@ class ElectricityTariffTests(unittest.TestCase):
 
     def test_tariff_contains_confirmed_gst_inclusive_rates(self) -> None:
         self.assertEqual(self.tariff.timezone_name, "Australia/Sydney")
+        self.assertEqual(self.tariff.billing_cycle_start_day, 8)
         self.assertEqual(self.tariff.feed_in_rate, Decimal("0.04"))
         self.assertEqual(self.tariff.supply_charge, Decimal("0.8716"))
         self.assertEqual(
@@ -33,6 +39,23 @@ class ElectricityTariffTests(unittest.TestCase):
                 Decimal("0.2882"),
             ],
         )
+
+    def test_history_includes_billing_cycle_start_day(self) -> None:
+        with patch("scripts.build_history._git_snapshot_contents", return_value=[]):
+            history = build_history(90, datetime(2026, 10, 19, tzinfo=timezone.utc))
+
+        self.assertEqual(history["tariff"]["billingCycleStartDay"], 8)
+
+    def test_billing_cycle_start_day_must_be_an_integer_from_one_to_31(self) -> None:
+        config = json.loads(TARIFF_PATH.read_text(encoding="utf-8"))
+        with TemporaryDirectory() as directory:
+            tariff_path = Path(directory) / "tariff.json"
+            for value in (0, 32, True, 8.5, "8"):
+                with self.subTest(value=value):
+                    config["billing_cycle_start_day"] = value
+                    tariff_path.write_text(json.dumps(config), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "billing_cycle_start_day"):
+                        load_tariff(tariff_path)
 
     def test_prices_usage_across_peak_boundary_by_elapsed_time(self) -> None:
         start = datetime(2026, 6, 1, 14, 30, tzinfo=self.tariff.timezone).astimezone(timezone.utc)
