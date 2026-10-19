@@ -45,7 +45,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.x"
+          python-version: "3.14"
 
       - name: Build recent energy history
         run: python scripts/build_history.py --days 90 --output site/data/history.json
