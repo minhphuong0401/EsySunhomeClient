@@ -603,7 +603,7 @@ function makeHistoryTable(history, windowEnd) {
   return table;
 }
 
-function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected = false) {
+function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected = false, soFar = false) {
   const row = document.createElement("tr");
   const name = document.createElement("th");
   name.scope = "row";
@@ -612,19 +612,18 @@ function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected 
   const actualCell = makeCell(projected && actualText !== "—" ? `≈ ${actualText}` : actualText, "plan-details-actual");
   if (projected) actualCell.title = PROJECTED_TITLE;
   if (trend) actualCell.prepend(makeTrendIcon(trend));
+  if (soFar && actualText !== "—") {
+    const note = document.createElement("span");
+    note.className = "plan-note";
+    note.textContent = "so far";
+    actualCell.append(note);
+  }
   row.append(name, makeCell(formatAmount(forecast, suffix)), makeCell(formatAmount(worst, suffix)), actualCell);
   return row;
 }
 
 function makeGridLine(label, forecast, worst, actual, soFar = false) {
-  const row = makeRangeLine(label, forecast, worst, actual, " kWh", null);
-  if (soFar && numberOrNull(actual) !== null) {
-    const note = document.createElement("span");
-    note.className = "plan-note";
-    note.textContent = "so far";
-    row.lastElementChild.append(note);
-  }
-  return row;
+  return makeRangeLine(label, forecast, worst, actual, " kWh", null, false, soFar);
 }
 
 const formatAmount = (value, suffix = "") => {
@@ -776,11 +775,11 @@ function renderNightChargeRows(nights, emptyMessage) {
     const list = makeDetailsTable([
       makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, solar06To24, " kWh", trends.solar, projectingSolar),
       ...(numberOrNull(soFar?.pvForecast_kWh) !== null
-        ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
+        ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar, false, true)]
         : []),
       makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
       ...(numberOrNull(soFar?.loadForecast_kWh) !== null
-        ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
+        ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar, false, true)]
         : []),
       makeRangeLine("Load full day", plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, loadFullDay, " kWh", trends.loadDay, projecting),
       makeGridLine("Grid import 06–24", expected.gridImportAfterWindow_kWh, worst.gridImportAfterWindow_kWh, actual.gridImport_kWh),
