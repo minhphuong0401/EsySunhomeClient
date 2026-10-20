@@ -178,6 +178,26 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertGreater(worst["loadAfterWindow_kWh"], plan["scenarios"]["expected"]["loadAfterWindow_kWh"])
         self.assertEqual(plan["decision"], "no_charge")
 
+    def test_grid_exchange_forecast_tracks_slots_and_requires_a_midnight_start_for_full_day(self) -> None:
+        now = self._local(2026, 10, 11, 23, 30)
+        window = planning_window(now, self.tariff, 2)
+        forecast = _forecast(now, 30, {hour: 6.0 for hour in range(8, 16)}, self.tz)
+        plan = build_plan(now, 70, window, self.config, self.tariff, self.flat_profile, forecast, [])
+
+        for scenario in plan["scenarios"].values():
+            self.assertEqual(len(scenario["gridImportSlotsAfterWindow_kWh"]), 36)
+            self.assertEqual(len(scenario["gridExportSlotsAfterWindow_kWh"]), 36)
+            self.assertAlmostEqual(sum(scenario["gridImportSlotsAfterWindow_kWh"]), scenario["gridImportAfterWindow_kWh"], delta=0.05)
+            self.assertAlmostEqual(sum(scenario["gridExportSlotsAfterWindow_kWh"]), scenario["gridExportAfterWindow_kWh"], delta=0.05)
+            self.assertGreaterEqual(scenario["gridImportDay_kWh"], scenario["gridImportAfterWindow_kWh"])
+            self.assertGreaterEqual(scenario["gridExportDay_kWh"], scenario["gridExportAfterWindow_kWh"])
+
+        after_midnight = self._local(2026, 10, 12, 3, 0)
+        later_plan = build_plan(after_midnight, 70, window, self.config, self.tariff, self.flat_profile, forecast, [])
+        for scenario in later_plan["scenarios"].values():
+            self.assertNotIn("gridImportDay_kWh", scenario)
+            self.assertNotIn("gridExportDay_kWh", scenario)
+
     def test_forecast_comes_from_forecast_py_and_is_cached(self) -> None:
         fake = types.ModuleType("forecast")
         fake.load_system = lambda: object()
@@ -209,6 +229,10 @@ class NightChargePlannerTests(unittest.TestCase):
         self.assertEqual(plan["decision"], "charge")
         self.assertGreater(plan["targetSoc"], plan["scenarios"]["expected"]["projectedSocAtWindowEnd"])
         self.assertAlmostEqual(plan["estimatedChargeCost_AUD"], round(plan["gridCharge_kWh"] * 0.08, 2), places=2)
+        for scenario in plan["scenarios"].values():
+            max_top_up = max(0, plan["targetSoc"] - scenario["projectedSocAtWindowEnd"]) / 100 * self.config.battery_capacity_kwh / self.config.charge_efficiency
+            forecast_top_up = scenario["gridImportDay_kWh"] - scenario["gridImportAfterWindow_kWh"]
+            self.assertLessEqual(forecast_top_up, max_top_up + 0.02)
 
     def test_unreachable_floor_targets_full_battery_with_warning(self) -> None:
         now = self._local(2026, 10, 11, 23, 30)

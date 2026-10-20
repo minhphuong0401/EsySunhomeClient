@@ -160,8 +160,16 @@ actual for each value, including solar and load so far for a day in progress and
 the full-day load (00:00–24:00). Until the day ends, load shows a projection
 (≈): load so far plus the rest of the day's forecast. Solar does the same until
 the PV forecast has no energy left, then shows the latest measured total and
-its reading time without waiting for midnight. The Decision column also
-shows how and when the shown plan was made (scheduled, manual or replay), and
+its reading time without waiting for midnight. The expanded view also shows
+grid import and export for 06:00–24:00,
+06:00–the latest reading, and the full day (00:00–24:00). Their expected and
+worst-case estimates simulate battery limits and assume any recommended
+overnight grid top-up is followed; the workflow is still dry run. Full-day
+grid forecasts are unavailable for plans created after midnight, because
+their earlier hours cannot be reconstructed. Actual in-progress grid readings
+are labelled "so far"; older saved plans may not contain grid forecasts. The
+Decision column shows how and when the shown plan was made (scheduled, manual
+or replay), and
 the expanded view lists every plan made for that night, with identical
 consecutive scheduled decisions merged. The result compares the actual lowest
 SOC with the expected-case target saved in that night's plan: "No charge –

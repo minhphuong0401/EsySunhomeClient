@@ -616,6 +616,17 @@ function makeRangeLine(label, forecast, worst, actual, suffix, trend, projected 
   return row;
 }
 
+function makeGridLine(label, forecast, worst, actual, soFar = false) {
+  const row = makeRangeLine(label, forecast, worst, actual, " kWh", null);
+  if (soFar && numberOrNull(actual) !== null) {
+    const note = document.createElement("span");
+    note.className = "plan-note";
+    note.textContent = "so far";
+    row.lastElementChild.append(note);
+  }
+  return row;
+}
+
 const formatAmount = (value, suffix = "") => {
   const number = numberOrNull(value);
   return number === null ? "—" : `${number.toLocaleString("en-AU", { maximumFractionDigits: 1 })}${suffix}`;
@@ -764,7 +775,7 @@ function renderNightChargeRows(nights, emptyMessage) {
 
     const list = makeDetailsTable([
       makeRangeLine("Solar 06–24", expected.pvAfterWindow_kWh, worst.pvAfterWindow_kWh, solar06To24, " kWh", trends.solar, projectingSolar),
-      ...(soFar
+      ...(numberOrNull(soFar?.pvForecast_kWh) !== null
         ? [makeRangeLine(`Solar 06–${soFarTime}`, soFar.pvForecast_kWh, soFar.pvWorstCase_kWh, soFar.pv_kWh, " kWh", trends.solarSoFar)]
         : []),
       makeRangeLine("Load 06–24", expected.loadAfterWindow_kWh, worst.loadAfterWindow_kWh, load06To24, " kWh", trends.load, projecting),
@@ -772,6 +783,12 @@ function renderNightChargeRows(nights, emptyMessage) {
         ? [makeRangeLine(`Load 06–${soFarTime}`, soFar.loadForecast_kWh, soFar.loadWorstCase_kWh, soFar.load_kWh, " kWh", trends.loadSoFar)]
         : []),
       makeRangeLine("Load full day", plan.dailyLoad_kWh?.expected, plan.dailyLoad_kWh?.worstCase, loadFullDay, " kWh", trends.loadDay, projecting),
+      makeGridLine("Grid import 06–24", expected.gridImportAfterWindow_kWh, worst.gridImportAfterWindow_kWh, actual.gridImport_kWh),
+      ...(soFar ? [makeGridLine(`Grid import 06–${soFarTime}`, soFar.gridImportForecast_kWh, soFar.gridImportWorstCase_kWh, soFar.gridImport_kWh, true)] : []),
+      makeGridLine("Grid import full day", expected.gridImportDay_kWh, worst.gridImportDay_kWh, actual.complete ? actual.gridImportDay_kWh : soFar?.gridImportDay_kWh, !actual.complete),
+      makeGridLine("Grid export 06–24", expected.gridExportAfterWindow_kWh, worst.gridExportAfterWindow_kWh, actual.gridExport_kWh),
+      ...(soFar ? [makeGridLine(`Grid export 06–${soFarTime}`, soFar.gridExportForecast_kWh, soFar.gridExportWorstCase_kWh, soFar.gridExport_kWh, true)] : []),
+      makeGridLine("Grid export full day", expected.gridExportDay_kWh, worst.gridExportDay_kWh, actual.complete ? actual.gridExportDay_kWh : soFar?.gridExportDay_kWh, !actual.complete),
       makeRangeLine("Lowest SOC 06–24", expected.minSocWithoutCharge, worst.minSocWithoutCharge, actual.minSoc, "%", trends.lowest),
       makeRangeLine("Peak SOC 06–24", expected.peakSocWithoutCharge, worst.peakSocWithoutCharge, actual.maxSoc, "%", trends.peak),
     ]);
@@ -780,7 +797,17 @@ function renderNightChargeRows(nights, emptyMessage) {
     const resultReason = document.createElement("p");
     resultReason.className = "plan-result-reason";
     resultReason.textContent = explanation;
-    detailsCell.append(list, resultReason);
+    detailsCell.append(list);
+    if (charging || expected.gridImportDay_kWh == null) {
+      const gridNote = document.createElement("p");
+      gridNote.className = "plan-result-reason";
+      gridNote.textContent = [
+        charging ? "Grid forecasts assume the recommended overnight charge is followed; this is a dry run." : null,
+        expected.gridImportDay_kWh == null ? "Full-day grid forecast is unavailable when the plan was made after midnight or predates grid forecasting." : null,
+      ].filter(Boolean).join(" ");
+      detailsCell.append(gridNote);
+    }
+    detailsCell.append(resultReason);
     if (history?.length) detailsCell.append(makeHistoryTable(history, plan.window.end));
     const details = document.createElement("tr");
     details.className = "plan-details";

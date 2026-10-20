@@ -30,6 +30,7 @@ FIELDS = {
     "pv_kWh": "photovoltaicPowerGenerationToday_kWh",
     "load_kWh": "totalConsumptionToday_kWh",
     "gridImport_kWh": "buyElectricityToday_kWh",
+    "gridExport_kWh": "sellingElectricityToday_kWh",
 }
 
 
@@ -112,9 +113,27 @@ def _difference(end: dict[str, Any], start: dict[str, Any], field: str) -> float
         return None
 
 
-def _forecast_until(plan: dict[str, Any], slots_key: str, until: datetime) -> float | None:
+def _grid_difference(end: dict[str, Any], start: dict[str, Any], field: str) -> float | None:
+    change = _difference(end, start, field)
+    return change if change is None or change >= 0 else None
+
+
+def _counter_reset(snapshots: list[tuple[datetime, dict[str, Any]]], field: str) -> bool:
+    previous: float | None = None
+    for _, record in snapshots:
+        try:
+            reading = float(record[field])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if previous is not None and reading < previous:
+            return True
+        previous = reading
+    return False
+
+
+def _forecast_until(plan: dict[str, Any], slots_key: str, until: datetime, scenario: str = "expected") -> float | None:
     """Expected kWh from the window end until `until`, or None for plans without half-hourly slots."""
-    slots = plan["scenarios"]["expected"].get(slots_key)
+    slots = plan["scenarios"].get(scenario, {}).get(slots_key)
     if not slots:
         return None
     slot_start = _parse_utc(plan["window"]["end"])
@@ -138,8 +157,6 @@ def _so_far(plan: dict[str, Any], as_of: datetime, latest: dict[str, Any], start
     """Actual vs forecast from 06:00 until the latest reading, plus end-of-day load projections."""
     pv_forecast = _forecast_until(plan, "pvSlotsAfterWindow_kWh", as_of)
     load_forecast = _forecast_until(plan, "loadSlotsAfterWindow_kWh", as_of)
-    if pv_forecast is None and load_forecast is None:
-        return None
     so_far: dict[str, Any] = {"asOf": _iso(as_of)}
     if pv_forecast is not None:
         so_far["pvForecast_kWh"] = pv_forecast
@@ -159,6 +176,12 @@ def _so_far(plan: dict[str, Any], as_of: datetime, latest: dict[str, Any], start
         # Projection: what has been used so far plus the rest of today's expected load.
         so_far["loadProjected_kWh"] = round(load_actual + remaining, 2) if load_actual is not None else None
         so_far["loadDayProjected_kWh"] = round(load_today + remaining, 2) if load_today is not None else None
+    for name in ("gridImport", "gridExport"):
+        field = FIELDS[f"{name}_kWh"]
+        so_far[f"{name}Forecast_kWh"] = _forecast_until(plan, f"{name}SlotsAfterWindow_kWh", as_of)
+        so_far[f"{name}WorstCase_kWh"] = _forecast_until(plan, f"{name}SlotsAfterWindow_kWh", as_of, "worstCase")
+        so_far[f"{name}_kWh"] = _grid_difference(latest, start, field)
+        so_far[f"{name}Day_kWh"] = _grid_difference(latest, {field: 0}, field)
     return so_far
 
 
@@ -168,8 +191,10 @@ def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[st
     window_end = _parse_utc(plan["window"]["end"])
     horizon_end = _parse_utc(plan["window"]["horizonEnd"])
     inside = [(timestamp, record) for timestamp, record in snapshots if window_end <= timestamp < horizon_end]
+    day_readings = [(timestamp, record) for timestamp, record in snapshots if window_start <= timestamp < horizon_end]
     # Counters reset at the window start (local midnight), so any reading from the window is a valid baseline.
     baseline = [record for timestamp, record in snapshots if window_start <= timestamp <= window_end]
+    window_readings = ([(window_end, baseline[-1])] if baseline else []) + inside
     socs = [
         float(record["batterySoc_percent"])
         for _, record in inside
@@ -189,12 +214,26 @@ def actual_outcome(plan: dict[str, Any], snapshots: list[tuple[datetime, dict[st
         "maxSoc": max(socs) if socs else None,
     }
     for name, field in FIELDS.items():
-        outcome[name] = _difference(inside[-1][1], start, field) if complete and start is not None else None
+        difference = _grid_difference if name.startswith("grid") else _difference
+        outcome[name] = difference(inside[-1][1], start, field) if complete and start is not None else None
+        if name.startswith("grid") and _counter_reset(window_readings, field):
+            outcome[name] = None
     # The daily counter starts at local midnight, so the last reading is the whole day's load.
     outcome["loadDay_kWh"] = _difference(inside[-1][1], {FIELDS["load_kWh"]: 0}, FIELDS["load_kWh"]) if complete else None
+    for name in ("gridImport", "gridExport"):
+        field = FIELDS[f"{name}_kWh"]
+        outcome[f"{name}Day_kWh"] = _grid_difference(inside[-1][1], {field: 0}, field) if complete else None
+        if _counter_reset(day_readings, field):
+            outcome[f"{name}Day_kWh"] = None
     outcome["soFar"] = None
     if not complete and inside and start is not None:
         outcome["soFar"] = _so_far(plan, inside[-1][0], inside[-1][1], start)
+        for name in ("gridImport", "gridExport"):
+            field = FIELDS[f"{name}_kWh"]
+            if _counter_reset(window_readings, field):
+                outcome["soFar"][f"{name}_kWh"] = None
+            if _counter_reset(day_readings, field):
+                outcome["soFar"][f"{name}Day_kWh"] = None
     return outcome
 
 

@@ -281,24 +281,37 @@ def _charge_battery(energy: float, surplus: float, hours: float, config: Planner
     return energy + charged_ac * config.charge_efficiency, max(0.0, surplus - charged_ac)
 
 
-def _simulate(
+def _simulate_grid_exchange(
     start_soc: float, slots: list[tuple[float, float, float]], config: PlannerConfig
-) -> tuple[float, float, float]:
-    """Return (end SOC %, minimum SOC %, peak SOC %) after applying the slots."""
+) -> tuple[float, float, float, list[float], list[float]]:
+    """Simulate SOC and per-slot grid exchange after applying the slots."""
     capacity = config.battery_capacity_kwh
-    # The inverter stops discharging at its SOC limit; the grid covers the rest.
     cutoff = config.battery_min_soc / 100 * capacity
     energy = start_soc / 100 * capacity
     lowest = highest = energy
+    grid_import: list[float] = []
+    grid_export: list[float] = []
     for pv, load, fraction in slots:
         net = pv - load
         if net >= 0:
-            energy, _ = _charge_battery(energy, net, 0.5 * fraction, config)
+            energy, export = _charge_battery(energy, net, 0.5 * fraction, config)
+            imported = 0.0
         else:
+            previous_energy = energy
             energy = max(min(energy, cutoff), energy - min(-net, config.battery_max_discharge_kw * 0.5 * fraction) / config.discharge_efficiency)
+            imported = max(0.0, -net - (previous_energy - energy) * config.discharge_efficiency)
+            export = 0.0
+        grid_import.append(imported)
+        grid_export.append(export)
         lowest = min(lowest, energy)
         highest = max(highest, energy)
-    return energy / capacity * 100, lowest / capacity * 100, highest / capacity * 100
+    return energy / capacity * 100, lowest / capacity * 100, highest / capacity * 100, grid_import, grid_export
+
+
+def _simulate(
+    start_soc: float, slots: list[tuple[float, float, float]], config: PlannerConfig
+) -> tuple[float, float, float]:
+    return _simulate_grid_exchange(start_soc, slots, config)[:3]
 
 
 def _required_soc(slots: list[tuple[float, float, float]], floor: float, config: PlannerConfig) -> int | None:
@@ -328,9 +341,11 @@ def build_plan(
         "worstCase": (config.worst_case_pv_factor, profile.worst, config.worst_case_min_soc),
     }
     results: dict[str, dict[str, Any]] = {}
+    after_slots: dict[str, list[tuple[float, float, float]]] = {}
     for name, (pv_factor, load, floor) in scenarios.items():
         before = _scenario_slots(now, window_end, pv_by_slot, pv_factor, load, tariff.timezone, missing)
         after = _scenario_slots(window_end, horizon_end, pv_by_slot, pv_factor, load, tariff.timezone, missing)
+        after_slots[name] = after
         projected = _simulate(soc, before, config)[0]
         required = _required_soc(after, floor, config)
         if required is None:
@@ -360,12 +375,29 @@ def build_plan(
     )
     grid_kwh = shortfall / 100 * config.battery_capacity_kwh / config.charge_efficiency
     charge = grid_kwh >= config.min_grid_charge_kwh
+    target_soc = max(result["requiredSocAtWindowEnd"] for result in results.values()) if charge else None
+    for name, (pv_factor, load, _) in scenarios.items():
+        projected = results[name]["projectedSocAtWindowEnd"]
+        charged_kwh = min(grid_kwh, max(0.0, (target_soc - projected) / 100 * config.battery_capacity_kwh / config.charge_efficiency)) if target_soc is not None else 0.0
+        day_start_soc = projected + charged_kwh * config.charge_efficiency / config.battery_capacity_kwh * 100
+        _, _, _, imported, exported = _simulate_grid_exchange(day_start_soc, after_slots[name], config)
+        results[name]["gridImportAfterWindow_kWh"] = round(sum(imported), 2)
+        results[name]["gridExportAfterWindow_kWh"] = round(sum(exported), 2)
+        results[name]["gridImportSlotsAfterWindow_kWh"] = [round(value, 3) for value in imported]
+        results[name]["gridExportSlotsAfterWindow_kWh"] = [round(value, 3) for value in exported]
+        if now <= window_start:
+            earlier = _scenario_slots(now, window_start, pv_by_slot, pv_factor, load, tariff.timezone, missing)
+            midnight_soc = _simulate(soc, earlier, config)[0]
+            overnight = _scenario_slots(window_start, window_end, pv_by_slot, pv_factor, load, tariff.timezone, missing)
+            _, _, _, night_imported, night_exported = _simulate_grid_exchange(midnight_soc, overnight, config)
+            results[name]["gridImportDay_kWh"] = round(sum(night_imported) + charged_kwh + sum(imported), 2)
+            results[name]["gridExportDay_kWh"] = round(sum(night_exported) + sum(exported), 2)
     night_rate = cheap_window(tariff)[2]
     return {
         "generatedAt": _iso(now),
         "dryRun": True,
         "decision": "charge" if charge else "no_charge",
-        "targetSoc": max(result["requiredSocAtWindowEnd"] for result in results.values()) if charge else None,
+        "targetSoc": target_soc,
         "gridCharge_kWh": round(grid_kwh, 2) if charge else 0.0,
         "estimatedChargeCost_AUD": round(grid_kwh * night_rate, 2) if charge else 0.0,
         "batterySoc": soc,

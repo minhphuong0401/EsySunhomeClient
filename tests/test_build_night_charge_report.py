@@ -31,7 +31,7 @@ class NightChargeReportTests(unittest.TestCase):
             "scenarios": {"expected": {"minSocTarget": 30}},
         }
 
-    def _snapshot(self, day: int, hour: int, minute: int, soc: float, pv: float, load: float, grid: float):
+    def _snapshot(self, day: int, hour: int, minute: int, soc: float, pv: float, load: float, grid: float, export: float = 0.0):
         return (
             self._local(2026, 10, day, hour, minute),
             {
@@ -39,6 +39,7 @@ class NightChargeReportTests(unittest.TestCase):
                 "photovoltaicPowerGenerationToday_kWh": pv,
                 "totalConsumptionToday_kWh": load,
                 "buyElectricityToday_kWh": grid,
+                "sellingElectricityToday_kWh": export,
             },
         )
 
@@ -52,9 +53,9 @@ class NightChargeReportTests(unittest.TestCase):
 
     def test_actual_outcome_measures_horizon_after_window(self) -> None:
         snapshots = [
-            self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1),
-            self._snapshot(12, 12, 0, 45, 20.0, 9.0, 0.2),
-            self._snapshot(12, 23, 45, 55, 35.0, 22.0, 0.6),
+            self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1, 0.1),
+            self._snapshot(12, 12, 0, 45, 20.0, 9.0, 0.2, 0.3),
+            self._snapshot(12, 23, 45, 55, 35.0, 22.0, 0.6, 0.9),
             self._snapshot(13, 0, 15, 54, 0.0, 0.1, 0.0),
         ]
 
@@ -67,6 +68,9 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertEqual(outcome["load_kWh"], 20.0)
         self.assertEqual(outcome["loadDay_kWh"], 22.0)
         self.assertEqual(outcome["gridImport_kWh"], 0.5)
+        self.assertEqual(outcome["gridExport_kWh"], 0.8)
+        self.assertEqual(outcome["gridImportDay_kWh"], 0.6)
+        self.assertEqual(outcome["gridExportDay_kWh"], 0.9)
 
     def test_outcome_is_pending_until_the_day_ends(self) -> None:
         snapshots = [self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1), self._snapshot(12, 15, 0, 40, 20.0, 12.0, 0.2)]
@@ -94,7 +98,9 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertEqual(outcome["soFar"]["pvRemainingForecast_kWh"], 27.5)
         self.assertEqual(outcome["soFar"]["pvProjected_kWh"], 37.0)
         self.assertEqual(outcome["soFar"]["asOf"], _iso(self._local(2026, 10, 12, 10, 15)))
-        self.assertIsNone(actual_outcome(self._plan(12), snapshots)["soFar"])
+        older_plan = actual_outcome(self._plan(12), snapshots)["soFar"]
+        self.assertEqual(older_plan["gridImport_kWh"], 0.1)
+        self.assertIsNone(older_plan["gridImportForecast_kWh"])
 
     def test_pending_day_uses_measured_solar_after_forecast_ends(self) -> None:
         plan = self._plan(12)
@@ -126,6 +132,54 @@ class NightChargeReportTests(unittest.TestCase):
         self.assertEqual(so_far["loadProjected_kWh"], 19.0)
         self.assertEqual(so_far["loadDayProjected_kWh"], 21.0)
         self.assertNotIn("pv_kWh", so_far)
+
+    def test_pending_grid_exchange_compares_so_far_with_both_scenarios(self) -> None:
+        plan = self._plan(12)
+        plan["scenarios"]["expected"].update({
+            "pvSlotsAfterWindow_kWh": [0.0] * 36,
+            "gridImportSlotsAfterWindow_kWh": [0.2] * 36,
+            "gridExportSlotsAfterWindow_kWh": [0.1] * 36,
+        })
+        plan["scenarios"]["worstCase"] = {
+            "gridImportSlotsAfterWindow_kWh": [0.4] * 36,
+            "gridExportSlotsAfterWindow_kWh": [0.2] * 36,
+        }
+        snapshots = [
+            self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.1, 0.1),
+            self._snapshot(12, 10, 15, 70, 9.5, 5.0, 0.2, 0.5),
+        ]
+
+        outcome = actual_outcome(plan, snapshots)
+        so_far = outcome["soFar"]
+
+        self.assertEqual(so_far["gridImportForecast_kWh"], 1.7)
+        self.assertEqual(so_far["gridImportWorstCase_kWh"], 3.4)
+        self.assertEqual(so_far["gridExportForecast_kWh"], 0.85)
+        self.assertEqual(so_far["gridExportWorstCase_kWh"], 1.7)
+        self.assertEqual(so_far["gridImport_kWh"], 0.1)
+        self.assertEqual(so_far["gridExport_kWh"], 0.4)
+        self.assertEqual(so_far["gridImportDay_kWh"], 0.2)
+        self.assertEqual(so_far["gridExportDay_kWh"], 0.5)
+
+    def test_grid_counter_reset_is_not_reported_as_negative_usage(self) -> None:
+        snapshots = [
+            self._snapshot(12, 5, 45, 60, 0.0, 2.0, 0.4, 0.4),
+            self._snapshot(12, 12, 0, 50, 14.0, 10.0, 0.05, 0.02),
+            self._snapshot(12, 23, 45, 55, 35.0, 22.0, 0.7, 0.5),
+            self._snapshot(13, 0, 15, 54, 0.0, 0.1, 0.0),
+        ]
+
+        outcome = actual_outcome(self._plan(12), snapshots)
+
+        self.assertIsNone(outcome["gridImport_kWh"])
+        self.assertIsNone(outcome["gridExport_kWh"])
+        self.assertIsNone(outcome["gridImportDay_kWh"])
+        self.assertIsNone(outcome["gridExportDay_kWh"])
+        pending = actual_outcome(self._plan(12), snapshots[:2])["soFar"]
+        self.assertIsNone(pending["gridImport_kWh"])
+        self.assertIsNone(pending["gridExport_kWh"])
+        self.assertIsNone(pending["gridImportDay_kWh"])
+        self.assertIsNone(pending["gridExportDay_kWh"])
 
     def test_decision_history_merges_runs_and_keeps_replays_separate(self) -> None:
         def plan_at(hour: int, minute: int, decision: str, target: int | None, **extra) -> dict:
