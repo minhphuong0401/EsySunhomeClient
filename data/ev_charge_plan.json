@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-10-20T01:37:42.382832Z",
+  "generatedAt": "2026-10-20T10:37:39.156740Z",
   "dryRun": true,
-  "vehicleSoc": 96.0,
-  "vehicleFetchedAt": "2026-10-20T01:37:42.219980Z",
-  "consumption50km_kWhPer100km": 13.8,
+  "vehicleSoc": 93.0,
+  "vehicleFetchedAt": "2026-10-20T10:37:39.024460Z",
+  "consumption50km_kWhPer100km": 14.6,
   "minimumSoc": 20,
   "tomorrow": {
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 96.0,
-    "socAfterDriving": 86.8
+    "socAfterOvernightCharge": 93.0,
+    "socAfterDriving": 83.3
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": true,
+    "windowClosed": false,
     "start": null,
     "end": null,
     "currentA": null,
@@ -23,36 +23,54 @@
   },
   "daytime": {
     "window": {
-      "start": "2026-10-20T00:00:00Z",
-      "end": "2026-10-20T06:00:00Z"
+      "start": "2026-10-21T00:00:00Z",
+      "end": "2026-10-21T06:00:00Z"
     },
     "decision": "charge",
     "source": "forecast solar surplus after house and home battery",
     "slots": [
       {
-        "start": "2026-10-20T02:00:00Z",
-        "end": "2026-10-20T02:30:00Z",
-        "currentA": 14,
-        "energyFromSolar_kWh": 1.61
+        "start": "2026-10-21T02:00:00Z",
+        "end": "2026-10-21T02:30:00Z",
+        "currentA": 8,
+        "energyFromSolar_kWh": 0.92
       },
       {
-        "start": "2026-10-20T02:30:00Z",
-        "end": "2026-10-20T02:35:00Z",
-        "currentA": 17,
-        "energyFromSolar_kWh": 0.326
+        "start": "2026-10-21T02:30:00Z",
+        "end": "2026-10-21T03:00:00Z",
+        "currentA": 18,
+        "energyFromSolar_kWh": 2.07
       },
       {
-        "start": "2026-10-20T03:00:00Z",
-        "end": "2026-10-20T03:01:00Z",
-        "currentA": 13,
-        "energyFromSolar_kWh": 0.05
+        "start": "2026-10-21T03:00:00Z",
+        "end": "2026-10-21T03:30:00Z",
+        "currentA": 15,
+        "energyFromSolar_kWh": 1.725
+      },
+      {
+        "start": "2026-10-21T03:30:00Z",
+        "end": "2026-10-21T04:00:00Z",
+        "currentA": 11,
+        "energyFromSolar_kWh": 1.265
+      },
+      {
+        "start": "2026-10-21T04:00:00Z",
+        "end": "2026-10-21T04:30:00Z",
+        "currentA": 11,
+        "energyFromSolar_kWh": 1.265
+      },
+      {
+        "start": "2026-10-21T04:30:00Z",
+        "end": "2026-10-21T05:00:00Z",
+        "currentA": 6,
+        "energyFromSolar_kWh": 0.69
       }
     ],
-    "energyFromSolar_kWh": 1.99,
-    "opportunityCost_AUD": 0.08,
-    "socAfterCharge": 100.0,
+    "energyFromSolar_kWh": 7.93,
+    "opportunityCost_AUD": 0.32,
+    "socAfterCharge": 99.1,
     "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 47.6,
+    "requiredSocForNextThreeDays": 49.2,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
