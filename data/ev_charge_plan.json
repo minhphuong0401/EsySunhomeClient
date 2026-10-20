@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-20T19:37:41.008327Z",
+  "generatedAt": "2026-10-20T23:37:32.041928Z",
   "dryRun": true,
-  "vehicleSoc": 93.0,
-  "vehicleFetchedAt": "2026-10-20T19:37:40.858562Z",
-  "consumption50km_kWhPer100km": 14.6,
+  "vehicleSoc": 84.0,
+  "vehicleFetchedAt": "2026-10-20T23:37:31.937329Z",
+  "consumption50km_kWhPer100km": 14.0,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-10-21",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 93.0,
-    "socAfterDriving": 83.3
+    "socAfterOvernightCharge": 84.0,
+    "socAfterDriving": 74.7
   },
   "overnight": {
     "decision": "no_charge",
@@ -32,8 +32,8 @@
       {
         "start": "2026-10-21T01:30:00Z",
         "end": "2026-10-21T02:00:00Z",
-        "currentA": 9,
-        "energyFromSolar_kWh": 1.035
+        "currentA": 7,
+        "energyFromSolar_kWh": 0.805
       },
       {
         "start": "2026-10-21T02:00:00Z",
@@ -43,16 +43,34 @@
       },
       {
         "start": "2026-10-21T02:30:00Z",
-        "end": "2026-10-21T02:43:00Z",
+        "end": "2026-10-21T03:00:00Z",
         "currentA": 17,
-        "energyFromSolar_kWh": 0.847
+        "energyFromSolar_kWh": 1.955
+      },
+      {
+        "start": "2026-10-21T03:00:00Z",
+        "end": "2026-10-21T03:30:00Z",
+        "currentA": 14,
+        "energyFromSolar_kWh": 1.61
+      },
+      {
+        "start": "2026-10-21T03:30:00Z",
+        "end": "2026-10-21T04:00:00Z",
+        "currentA": 11,
+        "energyFromSolar_kWh": 1.265
+      },
+      {
+        "start": "2026-10-21T04:00:00Z",
+        "end": "2026-10-21T04:16:00Z",
+        "currentA": 12,
+        "energyFromSolar_kWh": 0.736
       }
     ],
-    "energyFromSolar_kWh": 3.49,
-    "opportunityCost_AUD": 0.14,
+    "energyFromSolar_kWh": 7.98,
+    "opportunityCost_AUD": 0.32,
     "socAfterCharge": 100.0,
     "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 49.2,
+    "requiredSocForNextThreeDays": 48.0,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
