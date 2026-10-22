@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T11:15:53Z",
+  "generatedAt": "2026-10-22T11:31:06Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 46.76,
       "loadAfterWindow_kWh": 21.22,
-      "projectedSocAtWindowEnd": 71.3,
+      "projectedSocAtWindowEnd": 71.6,
       "requiredSocAtWindowEnd": 31,
-      "minSocWithoutCharge": 66.3,
+      "minSocWithoutCharge": 66.6,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.089,
@@ -97,7 +97,7 @@
         0.141
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 23.86,
+      "gridExportAfterWindow_kWh": 23.94,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -145,11 +145,11 @@
         0.0,
         0.0,
         0.0,
-        1.119,
+        1.162,
         1.047,
         1.132,
-        0.935,
-        2.132,
+        0.953,
+        2.15,
         2.036,
         2.366,
         2.723,
@@ -175,18 +175,18 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 23.86
+      "gridExportDay_kWh": 23.94
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 35.07,
       "loadAfterWindow_kWh": 30.99,
-      "projectedSocAtWindowEnd": 67.7,
+      "projectedSocAtWindowEnd": 68.2,
       "requiredSocAtWindowEnd": 32,
       "minSocWithoutCharge": 55.5,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 5.85,
+      "gridExportAfterWindow_kWh": 5.98,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -242,7 +242,7 @@
         0.0,
         0.369,
         0.891,
-        0.903,
+        1.034,
         1.526,
         1.434,
         0.726,
@@ -264,7 +264,7 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 5.85
+      "gridExportDay_kWh": 5.98
     }
   },
   "forecastFetchedAt": "2026-10-22T11:01:12Z",
