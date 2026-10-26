@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-26T11:45:55Z",
+  "generatedAt": "2026-10-26T12:01:16Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
   "gridCharge_kWh": 0.0,
   "estimatedChargeCost_AUD": 0.0,
-  "batterySoc": 78.0,
+  "batterySoc": 77.0,
   "window": {
     "start": "2026-10-26T13:00:00Z",
     "end": "2026-10-26T19:00:00Z",
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 47.32,
       "loadAfterWindow_kWh": 21.2,
-      "projectedSocAtWindowEnd": 70.9,
+      "projectedSocAtWindowEnd": 70.2,
       "requiredSocAtWindowEnd": 30,
-      "minSocWithoutCharge": 66.8,
+      "minSocWithoutCharge": 66.1,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.151,
@@ -97,7 +97,7 @@
         0.142
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 23.98,
+      "gridExportAfterWindow_kWh": 23.79,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -145,11 +145,11 @@
         0.0,
         0.0,
         0.0,
-        1.277,
+        1.169,
         1.126,
         1.361,
         1.11,
-        2.212,
+        2.136,
         2.151,
         2.565,
         2.876,
@@ -175,18 +175,18 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 23.98
+      "gridExportDay_kWh": 23.79
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 35.49,
       "loadAfterWindow_kWh": 34.54,
-      "projectedSocAtWindowEnd": 66.4,
+      "projectedSocAtWindowEnd": 65.9,
       "requiredSocAtWindowEnd": 32,
       "minSocWithoutCharge": 50.1,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 3.67,
+      "gridExportAfterWindow_kWh": 3.53,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -240,11 +240,11 @@
         0.0,
         0.0,
         0.0,
-        0.345,
+        0.31,
         0.871,
         0.333,
         0.095,
-        1.377,
+        1.28,
         0.645,
         0.0,
         0.0,
@@ -264,10 +264,10 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 3.67
+      "gridExportDay_kWh": 3.53
     }
   },
-  "forecastFetchedAt": "2026-10-26T11:01:11Z",
+  "forecastFetchedAt": "2026-10-26T12:01:16Z",
   "loadHistoryDays": 20,
   "fullLoadHistoryDays": 19,
   "dailyLoad_kWh": {
