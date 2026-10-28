@@ -863,7 +863,7 @@ function renderEvAdvice(plan) {
   overnight.className = "ev-decision";
   const nightPeriod = document.createElement("p");
   nightPeriod.className = "ev-period";
-  nightPeriod.textContent = `Overnight · ${tripDate} · 00–06`;
+  nightPeriod.textContent = `Overnight · ${tripDate} · 00:00–06:00`;
   const nightSummary = document.createElement("div");
   nightSummary.className = "ev-decision-summary";
   const nightTitle = document.createElement("h4");
