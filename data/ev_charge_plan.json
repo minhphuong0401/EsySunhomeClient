@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-29T19:37:38.725742Z",
+  "generatedAt": "2026-10-29T23:37:37.155615Z",
   "dryRun": true,
-  "vehicleSoc": 83.0,
-  "vehicleFetchedAt": "2026-10-29T19:37:38.596155Z",
-  "consumption50km_kWhPer100km": 14.5,
+  "vehicleSoc": 78.0,
+  "vehicleFetchedAt": "2026-10-29T23:37:37.043712Z",
+  "consumption50km_kWhPer100km": 13.7,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-10-30",
     "estimatedDistanceKm": 32.6,
-    "socAfterOvernightCharge": 83.0,
-    "socAfterDriving": 72.5
+    "socAfterOvernightCharge": 78.0,
+    "socAfterDriving": 68.1
   },
   "overnight": {
     "decision": "no_charge",
@@ -29,12 +29,6 @@
     "decision": "charge",
     "source": "forecast solar surplus after house and home battery",
     "slots": [
-      {
-        "start": "2026-10-30T01:00:00Z",
-        "end": "2026-10-30T01:30:00Z",
-        "currentA": 8,
-        "energyFromSolar_kWh": 0.92
-      },
       {
         "start": "2026-10-30T01:30:00Z",
         "end": "2026-10-30T02:00:00Z",
@@ -61,16 +55,28 @@
       },
       {
         "start": "2026-10-30T03:30:00Z",
-        "end": "2026-10-30T03:48:00Z",
-        "currentA": 13,
-        "energyFromSolar_kWh": 0.897
+        "end": "2026-10-30T04:00:00Z",
+        "currentA": 12,
+        "energyFromSolar_kWh": 1.38
+      },
+      {
+        "start": "2026-10-30T04:00:00Z",
+        "end": "2026-10-30T04:30:00Z",
+        "currentA": 12,
+        "energyFromSolar_kWh": 1.38
+      },
+      {
+        "start": "2026-10-30T04:30:00Z",
+        "end": "2026-10-30T05:00:00Z",
+        "currentA": 6,
+        "energyFromSolar_kWh": 0.69
       }
     ],
-    "energyFromSolar_kWh": 8.49,
-    "opportunityCost_AUD": 0.34,
-    "socAfterCharge": 100.0,
+    "energyFromSolar_kWh": 10.12,
+    "opportunityCost_AUD": 0.4,
+    "socAfterCharge": 98.2,
     "estimatedNextDayKm": 37.0,
-    "requiredSocForNextThreeDays": 55.8,
+    "requiredSocForNextThreeDays": 53.8,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
