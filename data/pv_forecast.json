@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-29T12:01:14Z",
+  "fetchedAt": "2026-10-29T13:01:24Z",
   "source": "open-meteo",
   "forecasts": [
     {
@@ -52,35 +52,35 @@
     },
     {
       "period_end": "2026-10-29T05:30:00Z",
-      "pv_estimate": 3.7172
+      "pv_estimate": 3.7074
     },
     {
       "period_end": "2026-10-29T06:00:00Z",
-      "pv_estimate": 3.7172
+      "pv_estimate": 3.7074
     },
     {
       "period_end": "2026-10-29T06:30:00Z",
-      "pv_estimate": 1.9705
+      "pv_estimate": 1.9591
     },
     {
       "period_end": "2026-10-29T07:00:00Z",
-      "pv_estimate": 1.9705
+      "pv_estimate": 1.9591
     },
     {
       "period_end": "2026-10-29T07:30:00Z",
-      "pv_estimate": 0.3406
+      "pv_estimate": 0.3351
     },
     {
       "period_end": "2026-10-29T08:00:00Z",
-      "pv_estimate": 0.3406
+      "pv_estimate": 0.3351
     },
     {
       "period_end": "2026-10-29T08:30:00Z",
-      "pv_estimate": 0.0234
+      "pv_estimate": 0.0157
     },
     {
       "period_end": "2026-10-29T09:00:00Z",
-      "pv_estimate": 0.0234
+      "pv_estimate": 0.0157
     },
     {
       "period_end": "2026-10-29T09:30:00Z",
@@ -164,107 +164,107 @@
     },
     {
       "period_end": "2026-10-29T19:30:00Z",
-      "pv_estimate": 0.382
+      "pv_estimate": 0.3929
     },
     {
       "period_end": "2026-10-29T20:00:00Z",
-      "pv_estimate": 0.382
+      "pv_estimate": 0.3929
     },
     {
       "period_end": "2026-10-29T20:30:00Z",
-      "pv_estimate": 2.078
+      "pv_estimate": 2.1569
     },
     {
       "period_end": "2026-10-29T21:00:00Z",
-      "pv_estimate": 2.078
+      "pv_estimate": 2.1569
     },
     {
       "period_end": "2026-10-29T21:30:00Z",
-      "pv_estimate": 3.973
+      "pv_estimate": 3.9719
     },
     {
       "period_end": "2026-10-29T22:00:00Z",
-      "pv_estimate": 3.973
+      "pv_estimate": 3.9719
     },
     {
       "period_end": "2026-10-29T22:30:00Z",
-      "pv_estimate": 5.4919
+      "pv_estimate": 5.497
     },
     {
       "period_end": "2026-10-29T23:00:00Z",
-      "pv_estimate": 5.4919
+      "pv_estimate": 5.497
     },
     {
       "period_end": "2026-10-29T23:30:00Z",
-      "pv_estimate": 5.9241
+      "pv_estimate": 6.2209
     },
     {
       "period_end": "2026-10-30T00:00:00Z",
-      "pv_estimate": 5.9241
+      "pv_estimate": 6.2209
     },
     {
       "period_end": "2026-10-30T00:30:00Z",
-      "pv_estimate": 6.9083
+      "pv_estimate": 7.3301
     },
     {
       "period_end": "2026-10-30T01:00:00Z",
-      "pv_estimate": 6.9083
+      "pv_estimate": 7.3301
     },
     {
       "period_end": "2026-10-30T01:30:00Z",
-      "pv_estimate": 7.6201
+      "pv_estimate": 7.6581
     },
     {
       "period_end": "2026-10-30T02:00:00Z",
-      "pv_estimate": 7.6201
+      "pv_estimate": 7.6581
     },
     {
       "period_end": "2026-10-30T02:30:00Z",
-      "pv_estimate": 7.3676
+      "pv_estimate": 7.3642
     },
     {
       "period_end": "2026-10-30T03:00:00Z",
-      "pv_estimate": 7.3676
+      "pv_estimate": 7.3642
     },
     {
       "period_end": "2026-10-30T03:30:00Z",
-      "pv_estimate": 6.6118
+      "pv_estimate": 6.5799
     },
     {
       "period_end": "2026-10-30T04:00:00Z",
-      "pv_estimate": 6.6118
+      "pv_estimate": 6.5799
     },
     {
       "period_end": "2026-10-30T04:30:00Z",
-      "pv_estimate": 5.0314
+      "pv_estimate": 5.2131
     },
     {
       "period_end": "2026-10-30T05:00:00Z",
-      "pv_estimate": 5.0314
+      "pv_estimate": 5.2131
     },
     {
       "period_end": "2026-10-30T05:30:00Z",
-      "pv_estimate": 3.4383
+      "pv_estimate": 3.3392
     },
     {
       "period_end": "2026-10-30T06:00:00Z",
-      "pv_estimate": 3.4383
+      "pv_estimate": 3.3392
     },
     {
       "period_end": "2026-10-30T06:30:00Z",
-      "pv_estimate": 1.8721
+      "pv_estimate": 1.8198
     },
     {
       "period_end": "2026-10-30T07:00:00Z",
-      "pv_estimate": 1.8721
+      "pv_estimate": 1.8198
     },
     {
       "period_end": "2026-10-30T07:30:00Z",
-      "pv_estimate": 0.3893
+      "pv_estimate": 0.3653
     },
     {
       "period_end": "2026-10-30T08:00:00Z",
-      "pv_estimate": 0.3893
+      "pv_estimate": 0.3653
     },
     {
       "period_end": "2026-10-30T08:30:00Z",
@@ -356,115 +356,115 @@
     },
     {
       "period_end": "2026-10-30T19:30:00Z",
-      "pv_estimate": 0.3561
+      "pv_estimate": 0.4006
     },
     {
       "period_end": "2026-10-30T20:00:00Z",
-      "pv_estimate": 0.3561
+      "pv_estimate": 0.4006
     },
     {
       "period_end": "2026-10-30T20:30:00Z",
-      "pv_estimate": 1.0273
+      "pv_estimate": 1.5864
     },
     {
       "period_end": "2026-10-30T21:00:00Z",
-      "pv_estimate": 1.0273
+      "pv_estimate": 1.5864
     },
     {
       "period_end": "2026-10-30T21:30:00Z",
-      "pv_estimate": 2.4176
+      "pv_estimate": 2.8093
     },
     {
       "period_end": "2026-10-30T22:00:00Z",
-      "pv_estimate": 2.4176
+      "pv_estimate": 2.8093
     },
     {
       "period_end": "2026-10-30T22:30:00Z",
-      "pv_estimate": 4.7624
+      "pv_estimate": 4.1039
     },
     {
       "period_end": "2026-10-30T23:00:00Z",
-      "pv_estimate": 4.7624
+      "pv_estimate": 4.1039
     },
     {
       "period_end": "2026-10-30T23:30:00Z",
-      "pv_estimate": 6.2354
+      "pv_estimate": 5.9807
     },
     {
       "period_end": "2026-10-31T00:00:00Z",
-      "pv_estimate": 6.2354
+      "pv_estimate": 5.9807
     },
     {
       "period_end": "2026-10-31T00:30:00Z",
-      "pv_estimate": 6.2504
+      "pv_estimate": 6.6784
     },
     {
       "period_end": "2026-10-31T01:00:00Z",
-      "pv_estimate": 6.2504
+      "pv_estimate": 6.6784
     },
     {
       "period_end": "2026-10-31T01:30:00Z",
-      "pv_estimate": 5.4915
+      "pv_estimate": 5.8591
     },
     {
       "period_end": "2026-10-31T02:00:00Z",
-      "pv_estimate": 5.4915
+      "pv_estimate": 5.8591
     },
     {
       "period_end": "2026-10-31T02:30:00Z",
-      "pv_estimate": 6.7249
+      "pv_estimate": 4.9207
     },
     {
       "period_end": "2026-10-31T03:00:00Z",
-      "pv_estimate": 6.7249
+      "pv_estimate": 4.9207
     },
     {
       "period_end": "2026-10-31T03:30:00Z",
-      "pv_estimate": 5.23
+      "pv_estimate": 5.228
     },
     {
       "period_end": "2026-10-31T04:00:00Z",
-      "pv_estimate": 5.23
+      "pv_estimate": 5.228
     },
     {
       "period_end": "2026-10-31T04:30:00Z",
-      "pv_estimate": 2.6774
+      "pv_estimate": 3.8111
     },
     {
       "period_end": "2026-10-31T05:00:00Z",
-      "pv_estimate": 2.6774
+      "pv_estimate": 3.8111
     },
     {
       "period_end": "2026-10-31T05:30:00Z",
-      "pv_estimate": 2.2542
+      "pv_estimate": 1.5723
     },
     {
       "period_end": "2026-10-31T06:00:00Z",
-      "pv_estimate": 2.2542
+      "pv_estimate": 1.5723
     },
     {
       "period_end": "2026-10-31T06:30:00Z",
-      "pv_estimate": 1.1375
+      "pv_estimate": 0.5855
     },
     {
       "period_end": "2026-10-31T07:00:00Z",
-      "pv_estimate": 1.1375
+      "pv_estimate": 0.5855
     },
     {
       "period_end": "2026-10-31T07:30:00Z",
-      "pv_estimate": 0.4136
+      "pv_estimate": 0.4017
     },
     {
       "period_end": "2026-10-31T08:00:00Z",
-      "pv_estimate": 0.4136
+      "pv_estimate": 0.4017
     },
     {
       "period_end": "2026-10-31T08:30:00Z",
-      "pv_estimate": 0.0154
+      "pv_estimate": 0.0155
     },
     {
       "period_end": "2026-10-31T09:00:00Z",
-      "pv_estimate": 0.0154
+      "pv_estimate": 0.0155
     },
     {
       "period_end": "2026-10-31T09:30:00Z",
@@ -548,35 +548,35 @@
     },
     {
       "period_end": "2026-10-31T19:30:00Z",
-      "pv_estimate": 0.4006
+      "pv_estimate": 0.4154
     },
     {
       "period_end": "2026-10-31T20:00:00Z",
-      "pv_estimate": 0.4006
+      "pv_estimate": 0.4154
     },
     {
       "period_end": "2026-10-31T20:30:00Z",
-      "pv_estimate": 2.0996
+      "pv_estimate": 2.064
     },
     {
       "period_end": "2026-10-31T21:00:00Z",
-      "pv_estimate": 2.0996
+      "pv_estimate": 2.064
     },
     {
       "period_end": "2026-10-31T21:30:00Z",
-      "pv_estimate": 3.7278
+      "pv_estimate": 3.5125
     },
     {
       "period_end": "2026-10-31T22:00:00Z",
-      "pv_estimate": 3.7278
+      "pv_estimate": 3.5125
     },
     {
       "period_end": "2026-10-31T22:30:00Z",
-      "pv_estimate": 4.7027
+      "pv_estimate": 4.4753
     },
     {
       "period_end": "2026-10-31T23:00:00Z",
-      "pv_estimate": 4.7027
+      "pv_estimate": 4.4753
     }
   ]
 }
