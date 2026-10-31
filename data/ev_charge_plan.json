@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-30T23:37:41.315770Z",
+  "generatedAt": "2026-10-31T01:37:41.204020Z",
   "dryRun": true,
-  "vehicleSoc": 70.0,
-  "vehicleFetchedAt": "2026-10-30T23:37:41.154002Z",
-  "consumption50km_kWhPer100km": 13.8,
+  "vehicleSoc": 79.0,
+  "vehicleFetchedAt": "2026-10-31T01:37:41.000241Z",
+  "consumption50km_kWhPer100km": 13.9,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-10-31",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 70.0,
-    "socAfterDriving": 60.8
+    "socAfterOvernightCharge": 79.0,
+    "socAfterDriving": 69.7
   },
   "overnight": {
     "decision": "no_charge",
@@ -30,18 +30,6 @@
     "source": "forecast solar surplus after house and home battery",
     "slots": [
       {
-        "start": "2026-10-31T01:00:00Z",
-        "end": "2026-10-31T01:30:00Z",
-        "currentA": 6,
-        "energyFromSolar_kWh": 0.69
-      },
-      {
-        "start": "2026-10-31T02:00:00Z",
-        "end": "2026-10-31T02:30:00Z",
-        "currentA": 10,
-        "energyFromSolar_kWh": 1.15
-      },
-      {
         "start": "2026-10-31T02:30:00Z",
         "end": "2026-10-31T03:00:00Z",
         "currentA": 14,
@@ -50,21 +38,27 @@
       {
         "start": "2026-10-31T03:00:00Z",
         "end": "2026-10-31T03:30:00Z",
-        "currentA": 10,
-        "energyFromSolar_kWh": 1.15
+        "currentA": 12,
+        "energyFromSolar_kWh": 1.38
+      },
+      {
+        "start": "2026-10-31T03:30:00Z",
+        "end": "2026-10-31T04:00:00Z",
+        "currentA": 7,
+        "energyFromSolar_kWh": 0.805
       },
       {
         "start": "2026-10-31T04:00:00Z",
         "end": "2026-10-31T04:30:00Z",
-        "currentA": 8,
-        "energyFromSolar_kWh": 0.92
+        "currentA": 9,
+        "energyFromSolar_kWh": 1.035
       }
     ],
-    "energyFromSolar_kWh": 5.52,
-    "opportunityCost_AUD": 0.22,
-    "socAfterCharge": 81.0,
+    "energyFromSolar_kWh": 4.83,
+    "opportunityCost_AUD": 0.19,
+    "socAfterCharge": 88.7,
     "estimatedNextDayKm": 37.0,
-    "requiredSocForNextThreeDays": 54.0,
+    "requiredSocForNextThreeDays": 54.3,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
