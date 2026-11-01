@@ -1,10 +1,10 @@
 {
-  "photovoltaicPowerGenerationToday_kWh": 16.703,
+  "photovoltaicPowerGenerationToday_kWh": 18.571,
   "buyElectricityToday_kWh": 0.16,
-  "sellingElectricityToday_kWh": 4.466,
-  "totalConsumptionToday_kWh": 5.66,
-  "batterySoc_percent": 98,
-  "dailyBattCharge_kWh": 9.353,
+  "sellingElectricityToday_kWh": 5.396,
+  "totalConsumptionToday_kWh": 6.215,
+  "batterySoc_percent": 100,
+  "dailyBattCharge_kWh": 9.723,
   "dailyBattDischarge_kWh": 3.031,
-  "mqttCurrentTime": "2026-11-01T00:31:04+00:00"
+  "mqttCurrentTime": "2026-11-01T00:45:57+00:00"
 }
