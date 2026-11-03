@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T12:45:59Z",
+  "generatedAt": "2026-11-03T13:01:13Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 48.55,
       "loadAfterWindow_kWh": 19.28,
-      "projectedSocAtWindowEnd": 67.4,
+      "projectedSocAtWindowEnd": 67.7,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 63.9,
+      "minSocWithoutCharge": 64.2,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.18,
@@ -97,7 +97,7 @@
         0.132
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 26.02,
+      "gridExportAfterWindow_kWh": 26.1,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -144,11 +144,11 @@
         0.0,
         0.0,
         0.0,
-        0.281,
+        0.307,
         1.171,
         1.12,
         1.602,
-        2.168,
+        2.221,
         2.339,
         2.254,
         2.371,
@@ -173,20 +173,18 @@
         0.0,
         0.0,
         0.0
-      ],
-      "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 26.02
+      ]
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 36.41,
       "loadAfterWindow_kWh": 33.32,
-      "projectedSocAtWindowEnd": 63.4,
+      "projectedSocAtWindowEnd": 63.9,
       "requiredSocAtWindowEnd": 30,
       "minSocWithoutCharge": 52.3,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 4.54,
+      "gridExportAfterWindow_kWh": 4.67,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -242,7 +240,7 @@
         0.0,
         0.179,
         0.702,
-        0.81,
+        0.941,
         0.985,
         1.124,
         0.589,
@@ -262,13 +260,11 @@
         0.0,
         0.0,
         0.0
-      ],
-      "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 4.54
+      ]
     }
   },
   "forecastFetchedAt": "2026-11-03T12:01:20Z",
-  "loadHistoryDays": 28,
+  "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 20.54,
