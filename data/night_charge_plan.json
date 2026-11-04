@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T11:45:59Z",
+  "generatedAt": "2026-11-04T12:01:11Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 54.87,
       "loadAfterWindow_kWh": 19.27,
-      "projectedSocAtWindowEnd": 75.2,
+      "projectedSocAtWindowEnd": 75.5,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 72.0,
+      "minSocWithoutCharge": 72.3,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.242,
@@ -97,7 +97,7 @@
         0.133
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 34.33,
+      "gridExportAfterWindow_kWh": 34.41,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -142,11 +142,11 @@
         0.0,
         0.0,
         0.0,
-        0.751,
+        0.788,
         1.677,
         1.553,
         2.064,
-        2.959,
+        3.0,
         2.842,
         2.751,
         2.207,
@@ -175,18 +175,18 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 34.33
+      "gridExportDay_kWh": 34.41
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 41.15,
       "loadAfterWindow_kWh": 33.3,
-      "projectedSocAtWindowEnd": 70.3,
+      "projectedSocAtWindowEnd": 70.8,
       "requiredSocAtWindowEnd": 29,
       "minSocWithoutCharge": 52.7,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 11.05,
+      "gridExportAfterWindow_kWh": 11.19,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -234,11 +234,11 @@
         0.0,
         0.0,
         0.0,
-        0.743,
+        0.806,
         0.926,
         0.485,
         0.328,
-        0.591,
+        0.66,
         0.601,
         1.287,
         1.862,
@@ -264,7 +264,7 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 11.05
+      "gridExportDay_kWh": 11.19
     }
   },
   "forecastFetchedAt": "2026-11-04T11:31:11Z",
