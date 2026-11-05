@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-05T19:37:44.935106Z",
+  "generatedAt": "2026-11-05T23:37:38.540554Z",
   "dryRun": true,
-  "vehicleSoc": 58.0,
-  "vehicleFetchedAt": "2026-11-05T19:37:44.805589Z",
-  "consumption50km_kWhPer100km": 14.5,
+  "vehicleSoc": 74.0,
+  "vehicleFetchedAt": "2026-11-05T23:37:38.420517Z",
+  "consumption50km_kWhPer100km": 13.9,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-11-06",
     "estimatedDistanceKm": 35.4,
-    "socAfterOvernightCharge": 58.0,
-    "socAfterDriving": 46.6
+    "socAfterOvernightCharge": 74.0,
+    "socAfterDriving": 63.1
   },
   "overnight": {
     "decision": "no_charge",
@@ -31,9 +31,9 @@
     "slots": [],
     "energyFromSolar_kWh": 0,
     "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 58.0,
+    "socAfterCharge": 74.0,
     "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 49.0,
+    "requiredSocForNextThreeDays": 47.8,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": [
