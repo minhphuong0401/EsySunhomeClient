@@ -133,48 +133,56 @@ class ESYSunhomeAPI:
         """
         # Ensure we have a valid token
         await self.get_bearer_token()
-        
+
         headers = kwargs.pop("headers", {})
         headers["Authorization"] = f"bearer {self.access_token}"
-        
+
         session = await self._get_session()
-        
-        async with session.request(method, url, headers=headers, **kwargs) as response:
-            status = response.status
-            
-            # Handle 401 Unauthorized - token may have expired
-            if status == 401 and retry_auth:
-                _LOGGER.warning(
-                    "API rejected the current access token (401); "
-                    "trying refresh token, then password login if refresh fails"
+
+        async def _send() -> tuple[int, Any]:
+            async with session.request(method, url, headers=headers, **kwargs) as response:
+                try:
+                    body = await response.json()
+                except Exception:
+                    body = await response.text()
+                return response.status, body
+
+        status, data = await _send()
+
+        if retry_auth and self._is_auth_rejected(status, data):
+            _LOGGER.warning(
+                "API rejected the current access token (HTTP %s, body: %s); "
+                "trying refresh token, then password login if refresh fails",
+                status,
+                data,
+            )
+
+            # Force token refresh, then retry once with the new token
+            self.access_token = None
+            await self.get_bearer_token()
+            headers["Authorization"] = f"bearer {self.access_token}"
+
+            status, data = await _send()
+            if self._is_auth_rejected(status, data):
+                _LOGGER.error(
+                    "API still rejected authentication after token recovery "
+                    "(HTTP %s, body: %s); no further authentication retry will be attempted",
+                    status,
+                    data,
                 )
-                
-                # Try to refresh the token
-                self.access_token = None  # Force token refresh
-                await self.get_bearer_token()
-                
-                # Retry the request with new token
-                headers["Authorization"] = f"bearer {self.access_token}"
-                async with session.request(method, url, headers=headers, **kwargs) as retry_response:
-                    status = retry_response.status
-                    try:
-                        data = await retry_response.json()
-                    except:
-                        data = await retry_response.text()
-                    if status == 401:
-                        _LOGGER.error(
-                            "API still rejected authentication after token recovery; "
-                            "no further authentication retry will be attempted"
-                        )
-                    return status, data
-            
-            # Parse response
-            try:
-                data = await response.json()
-            except:
-                data = await response.text()
-            
-            return status, data
+
+        return status, data
+
+    @staticmethod
+    def _is_auth_rejected(status: int, data: Any) -> bool:
+        """True if the API rejected the token (HTTP 401, or HTTP 200 with an error body)."""
+        if status == 401:
+            return True
+        if status == 200 and isinstance(data, dict):
+            code = data.get("code")
+            if code is not None and code not in (0, 200, "0", "200"):
+                return True
+        return False
 
     async def get_bearer_token(self):
         """Fetch the bearer token using the provided credentials asynchronously.
@@ -313,10 +321,14 @@ class ESYSunhomeAPI:
         status, data = await self._make_request_with_auth("GET", url)
         
         if status == 200:
-            if isinstance(data, dict) and "data" in data:
-                self.device_id = data["data"]["records"][0]["id"]
+            payload = data.get("data") if isinstance(data, dict) else None
+            records = payload.get("records") if isinstance(payload, dict) else None
+            if records:
+                self.device_id = records[0]["id"]
                 _LOGGER.info(f"Device ID retrieved: {self.device_id}")
             else:
+                # Force re-authentication on the next retry attempt
+                self.access_token = None
                 raise Exception(f"Unexpected response format: {data}")
         else:
             raise Exception(
