@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-09T10:37:40.410833Z",
+  "generatedAt": "2026-11-09T19:37:38.773268Z",
   "dryRun": true,
   "vehicleSoc": 96.0,
-  "vehicleFetchedAt": "2026-11-09T10:37:40.261465Z",
+  "vehicleFetchedAt": "2026-11-09T19:37:38.646712Z",
   "consumption50km_kWhPer100km": 14.8,
   "minimumSoc": 20,
   "tomorrow": {
@@ -13,7 +13,7 @@
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": false,
+    "windowClosed": true,
     "start": null,
     "end": null,
     "currentA": null,
@@ -30,6 +30,12 @@
     "source": "forecast solar surplus after house and home battery",
     "slots": [
       {
+        "start": "2026-11-10T01:00:00Z",
+        "end": "2026-11-10T01:30:00Z",
+        "currentA": 6,
+        "energyFromSolar_kWh": 0.69
+      },
+      {
         "start": "2026-11-10T01:30:00Z",
         "end": "2026-11-10T02:00:00Z",
         "currentA": 9,
@@ -37,32 +43,20 @@
       },
       {
         "start": "2026-11-10T02:00:00Z",
-        "end": "2026-11-10T02:30:00Z",
-        "currentA": 13,
-        "energyFromSolar_kWh": 1.495
-      },
-      {
-        "start": "2026-11-10T02:30:00Z",
-        "end": "2026-11-10T03:00:00Z",
-        "currentA": 19,
-        "energyFromSolar_kWh": 2.185
-      },
-      {
-        "start": "2026-11-10T03:00:00Z",
-        "end": "2026-11-10T03:30:00Z",
-        "currentA": 17,
-        "energyFromSolar_kWh": 1.955
-      },
-      {
-        "start": "2026-11-10T03:30:00Z",
-        "end": "2026-11-10T03:35:00Z",
+        "end": "2026-11-10T02:05:00Z",
         "currentA": 12,
         "energyFromSolar_kWh": 0.23
+      },
+      {
+        "start": "2026-11-10T04:00:00Z",
+        "end": "2026-11-10T04:01:00Z",
+        "currentA": 10,
+        "energyFromSolar_kWh": 0.038
       }
     ],
-    "energyFromSolar_kWh": 6.9,
-    "opportunityCost_AUD": 0.28,
-    "socAfterCharge": 99.9,
+    "energyFromSolar_kWh": 1.99,
+    "opportunityCost_AUD": 0.08,
+    "socAfterCharge": 100.0,
     "estimatedNextDayKm": 31.8,
     "requiredSocForNextThreeDays": 60.6,
     "remainingEnergyBeforeNextNight_kWh": 0
