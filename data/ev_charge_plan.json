@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-08T23:37:32.589181Z",
+  "generatedAt": "2026-11-09T01:37:42.332176Z",
   "dryRun": true,
   "vehicleSoc": 97.0,
-  "vehicleFetchedAt": "2026-11-08T23:37:32.494983Z",
+  "vehicleFetchedAt": "2026-11-09T01:37:42.196125Z",
   "consumption50km_kWhPer100km": 14.6,
   "minimumSoc": 20,
   "tomorrow": {
@@ -31,21 +31,9 @@
     "slots": [
       {
         "start": "2026-11-09T02:30:00Z",
-        "end": "2026-11-09T03:00:00Z",
-        "currentA": 8,
-        "energyFromSolar_kWh": 0.92
-      },
-      {
-        "start": "2026-11-09T03:00:00Z",
-        "end": "2026-11-09T03:10:00Z",
-        "currentA": 14,
-        "energyFromSolar_kWh": 0.537
-      },
-      {
-        "start": "2026-11-09T03:30:00Z",
-        "end": "2026-11-09T03:31:00Z",
-        "currentA": 10,
-        "energyFromSolar_kWh": 0.038
+        "end": "2026-11-09T02:56:00Z",
+        "currentA": 15,
+        "energyFromSolar_kWh": 1.495
       }
     ],
     "energyFromSolar_kWh": 1.5,
