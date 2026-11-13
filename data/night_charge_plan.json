@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-13T15:31:06Z",
+  "generatedAt": "2026-11-13T15:46:04Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
   "gridCharge_kWh": 0.0,
   "estimatedChargeCost_AUD": 0.0,
-  "batterySoc": 69.0,
+  "batterySoc": 68.0,
   "window": {
     "start": "2026-11-13T13:00:00Z",
     "end": "2026-11-13T19:00:00Z",
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 42.97,
       "loadAfterWindow_kWh": 18.79,
-      "projectedSocAtWindowEnd": 66.0,
+      "projectedSocAtWindowEnd": 65.2,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 63.1,
+      "minSocWithoutCharge": 62.3,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.257,
@@ -97,7 +97,7 @@
         0.134
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 20.42,
+      "gridExportAfterWindow_kWh": 20.21,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -144,11 +144,11 @@
         0.0,
         0.0,
         0.0,
-        0.839,
+        0.735,
         0.51,
         0.51,
         0.571,
-        1.308,
+        1.201,
         1.113,
         1.218,
         2.017,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 32.23,
       "loadAfterWindow_kWh": 32.65,
-      "projectedSocAtWindowEnd": 63.7,
+      "projectedSocAtWindowEnd": 63.1,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 51.9,
-      "peakSocWithoutCharge": 99.6,
+      "minSocWithoutCharge": 51.5,
+      "peakSocWithoutCharge": 99.2,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 1.21,
+      "gridExportAfterWindow_kWh": 1.15,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -239,7 +239,7 @@
         0.0,
         0.0,
         0.0,
-        0.14,
+        0.084,
         0.777,
         0.294,
         0.0,
@@ -270,6 +270,8 @@
     "expected": 20.09,
     "worstCase": 34.92
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-13T14:45:58Z."
+  ],
   "trigger": "scheduled"
 }
