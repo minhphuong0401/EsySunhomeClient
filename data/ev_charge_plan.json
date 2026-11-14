@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-14T19:37:38.818581Z",
+  "generatedAt": "2026-11-14T23:37:37.647708Z",
   "dryRun": true,
   "vehicleSoc": 75.0,
-  "vehicleFetchedAt": "2026-11-14T19:37:38.684755Z",
+  "vehicleFetchedAt": "2026-11-14T23:37:37.528496Z",
   "consumption50km_kWhPer100km": 13.6,
   "minimumSoc": 20,
   "tomorrow": {
@@ -37,6 +37,6 @@
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": [
-    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-14T18:01:14Z."
+    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-14T18:01:14Z."
   ]
 }
