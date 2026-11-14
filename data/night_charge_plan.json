@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-14T11:46:02Z",
+  "generatedAt": "2026-11-14T12:01:14Z",
   "dryRun": true,
   "decision": "charge",
   "targetSoc": 80,
-  "gridCharge_kWh": 2.92,
-  "estimatedChargeCost_AUD": 0.23,
-  "batterySoc": 81.0,
+  "gridCharge_kWh": 3.05,
+  "estimatedChargeCost_AUD": 0.24,
+  "batterySoc": 80.0,
   "window": {
     "start": "2026-11-14T13:00:00Z",
     "end": "2026-11-14T19:00:00Z",
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 25.25,
       "loadAfterWindow_kWh": 18.77,
-      "projectedSocAtWindowEnd": 74.1,
+      "projectedSocAtWindowEnd": 73.4,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 70.2,
+      "minSocWithoutCharge": 69.5,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.167,
@@ -92,8 +92,8 @@
         0.247,
         0.194,
         0.155,
-        0.146,
-        0.133,
+        0.15,
+        0.13,
         0.135
       ],
       "gridImportAfterWindow_kWh": 0.0,
@@ -152,7 +152,7 @@
         0.0,
         0.0,
         0.0,
-        0.931,
+        0.932,
         1.606,
         1.448,
         1.125,
@@ -174,17 +174,17 @@
         0.0,
         0.0
       ],
-      "gridImportDay_kWh": 1.55,
+      "gridImportDay_kWh": 1.74,
       "gridExportDay_kWh": 6.73
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 18.93,
       "loadAfterWindow_kWh": 32.62,
-      "projectedSocAtWindowEnd": 68.9,
+      "projectedSocAtWindowEnd": 68.4,
       "requiredSocAtWindowEnd": 80,
       "minSocWithoutCharge": 15.0,
-      "peakSocWithoutCharge": 68.9,
+      "peakSocWithoutCharge": 68.4,
       "gridImportAfterWindow_kWh": 0.0,
       "gridExportAfterWindow_kWh": 0.0,
       "gridImportSlotsAfterWindow_kWh": [
@@ -263,11 +263,11 @@
         0.0,
         0.0
       ],
-      "gridImportDay_kWh": 2.92,
+      "gridImportDay_kWh": 3.05,
       "gridExportDay_kWh": 0.0
     }
   },
-  "forecastFetchedAt": "2026-11-14T11:01:13Z",
+  "forecastFetchedAt": "2026-11-14T12:01:14Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
