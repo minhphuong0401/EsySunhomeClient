@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-15T14:01:13Z",
+  "generatedAt": "2026-11-15T14:16:02Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 48.64,
       "loadAfterWindow_kWh": 18.65,
-      "projectedSocAtWindowEnd": 64.5,
+      "projectedSocAtWindowEnd": 64.8,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 61.5,
+      "minSocWithoutCharge": 61.8,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.247,
@@ -97,7 +97,7 @@
         0.13
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 25.13,
+      "gridExportAfterWindow_kWh": 25.21,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -144,11 +144,11 @@
         0.0,
         0.0,
         0.0,
-        0.247,
+        0.282,
         1.221,
         1.256,
         1.0,
-        1.199,
+        1.244,
         2.076,
         2.222,
         2.589,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 36.48,
       "loadAfterWindow_kWh": 34.36,
-      "projectedSocAtWindowEnd": 60.7,
+      "projectedSocAtWindowEnd": 61.1,
       "requiredSocAtWindowEnd": 31,
-      "minSocWithoutCharge": 50.5,
+      "minSocWithoutCharge": 50.9,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 2.35,
+      "gridExportAfterWindow_kWh": 2.46,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -238,12 +238,12 @@
         0.0,
         0.0,
         0.0,
-        0.0,
-        0.924,
+        0.004,
+        0.967,
         0.426,
         0.08,
-        0.0,
-        0.736,
+        0.028,
+        0.768,
         0.018,
         0.167,
         0.0,
@@ -270,6 +270,8 @@
     "expected": 19.97,
     "worstCase": 36.79
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-15T13:15:55Z."
+  ],
   "trigger": "scheduled"
 }
