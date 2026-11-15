@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-14T23:37:37.647708Z",
+  "generatedAt": "2026-11-15T01:37:36.773306Z",
   "dryRun": true,
   "vehicleSoc": 75.0,
-  "vehicleFetchedAt": "2026-11-14T23:37:37.528496Z",
+  "vehicleFetchedAt": "2026-11-15T01:37:36.680312Z",
   "consumption50km_kWhPer100km": 13.6,
   "minimumSoc": 20,
   "tomorrow": {
@@ -36,7 +36,5 @@
     "requiredSocForNextThreeDays": 51.6,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
-  "warnings": [
-    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-14T18:01:14Z."
-  ]
+  "warnings": []
 }
