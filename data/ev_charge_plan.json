@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-16T19:37:35.942535Z",
+  "generatedAt": "2026-11-16T23:37:45.591302Z",
   "dryRun": true,
-  "vehicleSoc": 60.0,
-  "vehicleFetchedAt": "2026-11-16T19:37:35.799908Z",
-  "consumption50km_kWhPer100km": 14.0,
+  "vehicleSoc": 56.0,
+  "vehicleFetchedAt": "2026-11-16T23:37:45.433976Z",
+  "consumption50km_kWhPer100km": 12.9,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-11-17",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 60.0,
-    "socAfterDriving": 50.7
+    "socAfterOvernightCharge": 56.0,
+    "socAfterDriving": 47.4
   },
   "overnight": {
     "decision": "no_charge",
@@ -30,34 +30,22 @@
     "source": "forecast solar surplus after house and home battery",
     "slots": [
       {
-        "start": "2026-11-17T01:30:00Z",
-        "end": "2026-11-17T02:00:00Z",
-        "currentA": 6,
-        "energyFromSolar_kWh": 0.69
-      },
-      {
-        "start": "2026-11-17T02:00:00Z",
-        "end": "2026-11-17T02:30:00Z",
-        "currentA": 10,
-        "energyFromSolar_kWh": 1.15
-      },
-      {
         "start": "2026-11-17T02:30:00Z",
         "end": "2026-11-17T03:00:00Z",
-        "currentA": 16,
-        "energyFromSolar_kWh": 1.84
-      },
-      {
-        "start": "2026-11-17T03:00:00Z",
-        "end": "2026-11-17T03:30:00Z",
         "currentA": 15,
         "energyFromSolar_kWh": 1.725
       },
       {
+        "start": "2026-11-17T03:00:00Z",
+        "end": "2026-11-17T03:30:00Z",
+        "currentA": 16,
+        "energyFromSolar_kWh": 1.84
+      },
+      {
         "start": "2026-11-17T03:30:00Z",
         "end": "2026-11-17T04:00:00Z",
-        "currentA": 12,
-        "energyFromSolar_kWh": 1.38
+        "currentA": 13,
+        "energyFromSolar_kWh": 1.495
       },
       {
         "start": "2026-11-17T04:00:00Z",
@@ -72,11 +60,11 @@
         "energyFromSolar_kWh": 1.035
       }
     ],
-    "energyFromSolar_kWh": 8.97,
-    "opportunityCost_AUD": 0.36,
-    "socAfterCharge": 77.9,
+    "energyFromSolar_kWh": 7.25,
+    "opportunityCost_AUD": 0.29,
+    "socAfterCharge": 70.5,
     "estimatedNextDayKm": 44.6,
-    "requiredSocForNextThreeDays": 63.9,
+    "requiredSocForNextThreeDays": 60.5,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
