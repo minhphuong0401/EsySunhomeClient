@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-16T13:01:16Z",
+  "generatedAt": "2026-11-16T13:16:01Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 56.29,
       "loadAfterWindow_kWh": 18.48,
-      "projectedSocAtWindowEnd": 71.5,
+      "projectedSocAtWindowEnd": 71.8,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 68.8,
+      "minSocWithoutCharge": 69.0,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.267,
@@ -97,7 +97,7 @@
         0.134
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 34.66,
+      "gridExportAfterWindow_kWh": 34.74,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -142,11 +142,11 @@
         0.0,
         0.0,
         0.0,
-        0.038,
+        0.068,
         1.514,
         1.261,
         1.598,
-        1.727,
+        1.776,
         2.74,
         2.53,
         2.208,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 42.22,
       "loadAfterWindow_kWh": 34.34,
-      "projectedSocAtWindowEnd": 66.8,
+      "projectedSocAtWindowEnd": 67.2,
       "requiredSocAtWindowEnd": 30,
       "minSocWithoutCharge": 54.7,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 9.65,
+      "gridExportAfterWindow_kWh": 9.76,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -233,12 +233,12 @@
         0.0,
         0.0,
         0.0,
-        0.133,
+        0.168,
         0.35,
         0.0,
         0.0,
         0.0,
-        0.837,
+        0.907,
         2.004,
         1.848,
         1.496,
@@ -270,6 +270,8 @@
     "expected": 19.8,
     "worstCase": 36.79
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-16T12:01:21Z."
+  ],
   "trigger": "scheduled"
 }
