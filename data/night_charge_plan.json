@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T15:15:57Z",
+  "generatedAt": "2026-11-17T15:31:16Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 54.78,
       "loadAfterWindow_kWh": 18.65,
-      "projectedSocAtWindowEnd": 68.7,
+      "projectedSocAtWindowEnd": 69.0,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 65.6,
+      "minSocWithoutCharge": 65.8,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.234,
@@ -97,7 +97,7 @@
         0.131
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 32.19,
+      "gridExportAfterWindow_kWh": 32.27,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -143,11 +143,11 @@
         0.0,
         0.0,
         0.0,
-        0.186,
+        0.229,
         0.984,
         1.757,
         1.772,
-        1.837,
+        1.873,
         2.459,
         2.546,
         2.686,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 41.09,
       "loadAfterWindow_kWh": 35.42,
-      "projectedSocAtWindowEnd": 65.7,
+      "projectedSocAtWindowEnd": 66.2,
       "requiredSocAtWindowEnd": 32,
       "minSocWithoutCharge": 53.5,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 7.41,
+      "gridExportAfterWindow_kWh": 7.54,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -234,12 +234,12 @@
         0.0,
         0.0,
         0.0,
-        0.003,
+        0.024,
         0.0,
         0.0,
         0.0,
         0.416,
-        1.781,
+        1.892,
         1.799,
         1.275,
         1.018,
@@ -270,6 +270,8 @@
     "expected": 19.97,
     "worstCase": 37.92
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-17T14:16:00Z."
+  ],
   "trigger": "scheduled"
 }
