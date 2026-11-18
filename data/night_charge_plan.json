@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-18T16:45:57Z",
+  "generatedAt": "2026-11-18T17:01:18Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
   "gridCharge_kWh": 0.0,
   "estimatedChargeCost_AUD": 0.0,
-  "batterySoc": 75.0,
+  "batterySoc": 74.0,
   "window": {
     "start": "2026-11-18T13:00:00Z",
     "end": "2026-11-18T19:00:00Z",
@@ -15,10 +15,10 @@
     "expected": {
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 57.64,
-      "loadAfterWindow_kWh": 18.78,
-      "projectedSocAtWindowEnd": 73.1,
+      "loadAfterWindow_kWh": 18.77,
+      "projectedSocAtWindowEnd": 72.3,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 70.4,
+      "minSocWithoutCharge": 69.6,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.28,
@@ -82,7 +82,7 @@
         0.622,
         0.659,
         0.787,
-        1.26,
+        1.259,
         1.475,
         0.725,
         0.543,
@@ -97,7 +97,7 @@
         0.131
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 36.02,
+      "gridExportAfterWindow_kWh": 35.81,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -142,11 +142,11 @@
         0.0,
         0.0,
         0.0,
-        0.112,
+        0.042,
         1.312,
         1.169,
         1.688,
-        2.007,
+        1.866,
         2.865,
         2.695,
         2.683,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 43.23,
       "loadAfterWindow_kWh": 35.43,
-      "projectedSocAtWindowEnd": 71.2,
+      "projectedSocAtWindowEnd": 70.7,
       "requiredSocAtWindowEnd": 30,
       "minSocWithoutCharge": 54.3,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 10.82,
+      "gridExportAfterWindow_kWh": 10.69,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -233,11 +233,11 @@
         0.0,
         0.0,
         0.0,
-        0.537,
+        0.488,
         0.381,
         0.06,
         0.0,
-        0.839,
+        0.758,
         1.379,
         2.241,
         1.64,
@@ -270,6 +270,8 @@
     "expected": 20.09,
     "worstCase": 37.92
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-18T15:46:01Z."
+  ],
   "trigger": "scheduled"
 }
