@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T15:15:50Z",
+  "generatedAt": "2026-11-18T15:31:12Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 57.64,
       "loadAfterWindow_kWh": 18.78,
-      "projectedSocAtWindowEnd": 72.7,
+      "projectedSocAtWindowEnd": 73.0,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 70.1,
+      "minSocWithoutCharge": 70.3,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.28,
@@ -80,7 +80,7 @@
         0.495,
         0.548,
         0.622,
-        0.659,
+        0.66,
         0.787,
         1.26,
         1.475,
@@ -97,7 +97,7 @@
         0.131
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 35.92,
+      "gridExportAfterWindow_kWh": 36.0,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -142,11 +142,11 @@
         0.0,
         0.0,
         0.0,
-        0.077,
+        0.103,
         1.312,
         1.169,
         1.688,
-        1.936,
+        1.989,
         2.865,
         2.694,
         2.683,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 43.23,
       "loadAfterWindow_kWh": 35.44,
-      "projectedSocAtWindowEnd": 69.7,
+      "projectedSocAtWindowEnd": 70.2,
       "requiredSocAtWindowEnd": 30,
       "minSocWithoutCharge": 54.3,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 10.43,
+      "gridExportAfterWindow_kWh": 10.56,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -233,11 +233,11 @@
         0.0,
         0.0,
         0.0,
-        0.387,
+        0.437,
         0.381,
         0.06,
         0.0,
-        0.593,
+        0.675,
         1.378,
         2.241,
         1.64,
@@ -270,6 +270,8 @@
     "expected": 20.09,
     "worstCase": 37.92
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-18T14:15:59Z."
+  ],
   "trigger": "scheduled"
 }
