@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-11-22T01:37:40.614959Z",
+  "generatedAt": "2026-11-22T10:37:33.294649Z",
   "dryRun": true,
-  "vehicleSoc": 95.0,
-  "vehicleFetchedAt": "2026-11-22T01:37:40.465322Z",
-  "consumption50km_kWhPer100km": 14.1,
+  "vehicleSoc": 93.0,
+  "vehicleFetchedAt": "2026-11-22T10:37:33.190957Z",
+  "consumption50km_kWhPer100km": 14.9,
   "minimumSoc": 20,
   "tomorrow": {
-    "date": "2026-11-22",
+    "date": "2026-11-23",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 95.0,
-    "socAfterDriving": 85.6
+    "socAfterOvernightCharge": 93.0,
+    "socAfterDriving": 83.1
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": true,
+    "windowClosed": false,
     "start": null,
     "end": null,
     "currentA": null,
@@ -23,36 +23,17 @@
   },
   "daytime": {
     "window": {
-      "start": "2026-11-22T00:00:00Z",
-      "end": "2026-11-22T06:00:00Z"
+      "start": "2026-11-23T00:00:00Z",
+      "end": "2026-11-23T06:00:00Z"
     },
-    "decision": "charge",
+    "decision": "no_charge",
     "source": "forecast solar surplus after house and home battery",
-    "slots": [
-      {
-        "start": "2026-11-22T02:00:00Z",
-        "end": "2026-11-22T02:30:00Z",
-        "currentA": 6,
-        "energyFromSolar_kWh": 0.69
-      },
-      {
-        "start": "2026-11-22T02:30:00Z",
-        "end": "2026-11-22T03:00:00Z",
-        "currentA": 12,
-        "energyFromSolar_kWh": 1.38
-      },
-      {
-        "start": "2026-11-22T03:00:00Z",
-        "end": "2026-11-22T03:14:00Z",
-        "currentA": 8,
-        "energyFromSolar_kWh": 0.429
-      }
-    ],
-    "energyFromSolar_kWh": 2.5,
-    "opportunityCost_AUD": 0.1,
-    "socAfterCharge": 100.0,
+    "slots": [],
+    "energyFromSolar_kWh": 0,
+    "opportunityCost_AUD": 0.0,
+    "socAfterCharge": 83.1,
     "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 51.6,
+    "requiredSocForNextThreeDays": 60.3,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": []
