@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-22T14:45:58Z",
+  "generatedAt": "2026-11-22T15:01:16Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 33.49,
       "loadAfterWindow_kWh": 19.89,
-      "projectedSocAtWindowEnd": 70.2,
+      "projectedSocAtWindowEnd": 70.5,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 66.9,
+      "minSocWithoutCharge": 67.1,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.178,
@@ -97,7 +97,7 @@
         0.13
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 10.5,
+      "gridExportAfterWindow_kWh": 10.58,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -151,10 +151,10 @@
         0.0,
         0.0,
         0.0,
-        1.434,
+        1.481,
         1.869,
         1.129,
-        0.973,
+        1.004,
         1.532,
         1.619,
         0.975,
@@ -179,10 +179,10 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 25.12,
       "loadAfterWindow_kWh": 33.86,
-      "projectedSocAtWindowEnd": 67.6,
+      "projectedSocAtWindowEnd": 68.0,
       "requiredSocAtWindowEnd": 60,
-      "minSocWithoutCharge": 27.9,
-      "peakSocWithoutCharge": 72.7,
+      "minSocWithoutCharge": 28.4,
+      "peakSocWithoutCharge": 73.1,
       "gridImportAfterWindow_kWh": 0.0,
       "gridExportAfterWindow_kWh": 0.0,
       "gridImportSlotsAfterWindow_kWh": [
@@ -263,15 +263,13 @@
       ]
     }
   },
-  "forecastFetchedAt": "2026-11-22T13:31:07Z",
+  "forecastFetchedAt": "2026-11-22T15:01:16Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 21.2,
     "worstCase": 36.09
   },
-  "warnings": [
-    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-22T13:31:07Z."
-  ],
+  "warnings": [],
   "trigger": "scheduled"
 }
