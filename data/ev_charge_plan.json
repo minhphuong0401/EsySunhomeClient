@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-22T19:37:43.920428Z",
+  "generatedAt": "2026-11-22T23:37:45.974746Z",
   "dryRun": true,
-  "vehicleSoc": 93.0,
-  "vehicleFetchedAt": "2026-11-22T19:37:43.784441Z",
-  "consumption50km_kWhPer100km": 14.9,
+  "vehicleSoc": 90.0,
+  "vehicleFetchedAt": "2026-11-22T23:37:45.860800Z",
+  "consumption50km_kWhPer100km": 15.0,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-11-23",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 93.0,
-    "socAfterDriving": 83.1
+    "socAfterOvernightCharge": 90.0,
+    "socAfterDriving": 80.0
   },
   "overnight": {
     "decision": "no_charge",
@@ -31,10 +31,12 @@
     "slots": [],
     "energyFromSolar_kWh": 0,
     "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 93.0,
+    "socAfterCharge": 90.0,
     "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 60.3,
+    "requiredSocForNextThreeDays": 60.6,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
-  "warnings": []
+  "warnings": [
+    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-22T18:45:56Z."
+  ]
 }
