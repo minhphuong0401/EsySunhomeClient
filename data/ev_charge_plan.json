@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-11-23T01:37:40.954648Z",
+  "generatedAt": "2026-11-23T10:37:43.232991Z",
   "dryRun": true,
-  "vehicleSoc": 89.0,
-  "vehicleFetchedAt": "2026-11-23T01:37:40.842443Z",
-  "consumption50km_kWhPer100km": 15.3,
+  "vehicleSoc": 84.0,
+  "vehicleFetchedAt": "2026-11-23T10:37:43.119619Z",
+  "consumption50km_kWhPer100km": 15.9,
   "minimumSoc": 20,
   "tomorrow": {
-    "date": "2026-11-23",
+    "date": "2026-11-24",
     "estimatedDistanceKm": 30,
-    "socAfterOvernightCharge": 89.0,
-    "socAfterDriving": 78.8
+    "socAfterOvernightCharge": 84.0,
+    "socAfterDriving": 73.4
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": true,
+    "windowClosed": false,
     "start": null,
     "end": null,
     "currentA": null,
@@ -23,20 +23,37 @@
   },
   "daytime": {
     "window": {
-      "start": "2026-11-23T00:00:00Z",
-      "end": "2026-11-23T06:00:00Z"
+      "start": "2026-11-24T00:00:00Z",
+      "end": "2026-11-24T06:00:00Z"
     },
-    "decision": "no_charge",
+    "decision": "charge",
     "source": "forecast solar surplus after house and home battery",
-    "slots": [],
-    "energyFromSolar_kWh": 0,
-    "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 89.0,
-    "estimatedNextDayKm": 30,
-    "requiredSocForNextThreeDays": 61.4,
+    "slots": [
+      {
+        "start": "2026-11-24T02:30:00Z",
+        "end": "2026-11-24T03:00:00Z",
+        "currentA": 11,
+        "energyFromSolar_kWh": 1.265
+      },
+      {
+        "start": "2026-11-24T03:00:00Z",
+        "end": "2026-11-24T03:30:00Z",
+        "currentA": 12,
+        "energyFromSolar_kWh": 1.38
+      },
+      {
+        "start": "2026-11-24T03:30:00Z",
+        "end": "2026-11-24T04:00:00Z",
+        "currentA": 9,
+        "energyFromSolar_kWh": 1.035
+      }
+    ],
+    "energyFromSolar_kWh": 3.68,
+    "opportunityCost_AUD": 0.15,
+    "socAfterCharge": 80.8,
+    "estimatedNextDayKm": 40.8,
+    "requiredSocForNextThreeDays": 66.2,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
-  "warnings": [
-    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-22T18:45:56Z."
-  ]
+  "warnings": []
 }
