@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T15:15:56Z",
+  "generatedAt": "2026-11-23T15:31:08Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 51.76,
       "loadAfterWindow_kWh": 19.89,
-      "projectedSocAtWindowEnd": 60.8,
+      "projectedSocAtWindowEnd": 61.0,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 58.3,
+      "minSocWithoutCharge": 58.6,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.291,
@@ -97,7 +97,7 @@
         0.129
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 27.7,
+      "gridExportAfterWindow_kWh": 27.75,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -144,11 +144,11 @@
         0.0,
         0.0,
         0.0,
-        0.624,
+        0.651,
         1.662,
         1.727,
         1.802,
-        2.261,
+        2.286,
         2.283,
         2.467,
         2.713,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 38.82,
       "loadAfterWindow_kWh": 33.86,
-      "projectedSocAtWindowEnd": 58.4,
+      "projectedSocAtWindowEnd": 58.8,
       "requiredSocAtWindowEnd": 28,
       "minSocWithoutCharge": 46.9,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 6.43,
+      "gridExportAfterWindow_kWh": 6.53,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -235,11 +235,11 @@
         0.0,
         0.0,
         0.0,
-        0.149,
+        0.164,
         0.0,
         0.0,
         0.413,
-        1.655,
+        1.744,
         1.658,
         1.378,
         0.523,
@@ -263,12 +263,12 @@
       ]
     }
   },
-  "forecastFetchedAt": "2026-11-23T14:15:58Z",
+  "forecastFetchedAt": "2026-11-23T15:31:08Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 21.2,
-    "worstCase": 36.09
+    "worstCase": 36.1
   },
   "warnings": [],
   "trigger": "scheduled"
