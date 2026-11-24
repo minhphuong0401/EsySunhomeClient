@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T14:31:14Z",
+  "generatedAt": "2026-11-24T14:46:02Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 33.17,
       "loadAfterWindow_kWh": 20.8,
-      "projectedSocAtWindowEnd": 61.9,
+      "projectedSocAtWindowEnd": 62.2,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 58.7,
+      "minSocWithoutCharge": 59.0,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.201,
@@ -62,7 +62,7 @@
         0.58,
         0.557,
         0.658,
-        0.566,
+        0.565,
         0.326,
         0.375,
         0.254,
@@ -89,7 +89,7 @@
         0.626,
         0.656,
         0.269,
-        0.205,
+        0.204,
         0.215,
         0.182,
         0.162,
@@ -97,7 +97,7 @@
         0.132
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 9.34,
+      "gridExportAfterWindow_kWh": 9.41,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        0.046,
+        0.078,
         0.808,
         0.718,
         0.293,
-        0.622,
+        0.669,
         1.589,
         1.997,
         1.261,
@@ -178,11 +178,11 @@
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 24.88,
-      "loadAfterWindow_kWh": 33.91,
-      "projectedSocAtWindowEnd": 59.3,
+      "loadAfterWindow_kWh": 33.9,
+      "projectedSocAtWindowEnd": 59.7,
       "requiredSocAtWindowEnd": 62,
-      "minSocWithoutCharge": 18.2,
-      "peakSocWithoutCharge": 77.4,
+      "minSocWithoutCharge": 18.6,
+      "peakSocWithoutCharge": 77.8,
       "gridImportAfterWindow_kWh": 0.0,
       "gridExportAfterWindow_kWh": 0.0,
       "gridImportSlotsAfterWindow_kWh": [
@@ -263,15 +263,13 @@
       ]
     }
   },
-  "forecastFetchedAt": "2026-11-24T13:31:05Z",
+  "forecastFetchedAt": "2026-11-24T14:46:02Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 22.15,
     "worstCase": 36.09
   },
-  "warnings": [
-    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-24T13:31:05Z."
-  ],
+  "warnings": [],
   "trigger": "scheduled"
 }
