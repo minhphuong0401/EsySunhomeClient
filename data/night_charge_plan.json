@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T11:15:56Z",
+  "generatedAt": "2026-11-25T11:31:01Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 51.35,
       "loadAfterWindow_kWh": 20.77,
-      "projectedSocAtWindowEnd": 43.1,
+      "projectedSocAtWindowEnd": 43.5,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 40.8,
+      "minSocWithoutCharge": 41.2,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.294,
@@ -97,7 +97,7 @@
         0.133
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 20.81,
+      "gridExportAfterWindow_kWh": 20.92,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        0.707,
+        0.762,
         1.182,
         1.096,
         0.777,
-        1.722,
+        1.772,
         2.25,
         2.674,
         2.332,
@@ -175,18 +175,18 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 20.81
+      "gridExportDay_kWh": 20.92
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 38.52,
       "loadAfterWindow_kWh": 33.85,
-      "projectedSocAtWindowEnd": 38.0,
+      "projectedSocAtWindowEnd": 38.6,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 30.3,
-      "peakSocWithoutCharge": 95.4,
+      "minSocWithoutCharge": 31.0,
+      "peakSocWithoutCharge": 95.9,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 0.19,
+      "gridExportAfterWindow_kWh": 0.22,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -242,8 +242,8 @@
         0.0,
         0.0,
         0.0,
-        0.0,
-        0.188,
+        0.02,
+        0.203,
         0.0,
         0.0,
         0.0,
@@ -264,7 +264,7 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 0.19
+      "gridExportDay_kWh": 0.22
     }
   },
   "forecastFetchedAt": "2026-11-25T11:01:15Z",
