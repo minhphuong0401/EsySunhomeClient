@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T16:31:09Z",
+  "generatedAt": "2026-11-25T16:46:02Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 52.91,
       "loadAfterWindow_kWh": 19.88,
-      "projectedSocAtWindowEnd": 41.8,
+      "projectedSocAtWindowEnd": 42.0,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 39.7,
+      "minSocWithoutCharge": 39.9,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.29,
@@ -97,7 +97,7 @@
         0.13
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 22.6,
+      "gridExportAfterWindow_kWh": 22.65,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        0.758,
+        0.787,
         1.214,
         1.132,
         0.785,
-        1.691,
+        1.714,
         2.477,
         2.883,
         2.575,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 39.68,
       "loadAfterWindow_kWh": 33.84,
-      "projectedSocAtWindowEnd": 40.2,
+      "projectedSocAtWindowEnd": 40.6,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 32.7,
-      "peakSocWithoutCharge": 99.6,
+      "minSocWithoutCharge": 33.0,
+      "peakSocWithoutCharge": 99.8,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 0.77,
+      "gridExportAfterWindow_kWh": 0.81,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -240,7 +240,7 @@
         0.0,
         0.0,
         0.0,
-        0.374,
+        0.412,
         0.373,
         0.022,
         0.0,
@@ -263,15 +263,13 @@
       ]
     }
   },
-  "forecastFetchedAt": "2026-11-25T15:31:06Z",
+  "forecastFetchedAt": "2026-11-25T16:46:02Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 21.2,
     "worstCase": 36.09
   },
-  "warnings": [
-    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-25T15:31:06Z."
-  ],
+  "warnings": [],
   "trigger": "scheduled"
 }
