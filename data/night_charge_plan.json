@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T11:45:59Z",
+  "generatedAt": "2026-11-26T12:01:14Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 53.43,
       "loadAfterWindow_kWh": 19.93,
-      "projectedSocAtWindowEnd": 67.3,
+      "projectedSocAtWindowEnd": 67.7,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 64.9,
+      "minSocWithoutCharge": 65.3,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.277,
@@ -97,7 +97,7 @@
         0.127
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 29.5,
+      "gridExportAfterWindow_kWh": 29.61,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -143,11 +143,11 @@
         0.0,
         0.0,
         0.0,
-        0.375,
+        0.433,
         1.256,
         1.661,
         1.564,
-        1.65,
+        1.697,
         2.24,
         1.744,
         2.291,
@@ -175,18 +175,18 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 29.5
+      "gridExportDay_kWh": 29.61
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 40.07,
       "loadAfterWindow_kWh": 33.92,
-      "projectedSocAtWindowEnd": 62.6,
+      "projectedSocAtWindowEnd": 63.1,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 54.3,
+      "minSocWithoutCharge": 54.8,
       "peakSocWithoutCharge": 100.0,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 6.59,
+      "gridExportAfterWindow_kWh": 6.72,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -241,7 +241,7 @@
         0.0,
         0.0,
         0.559,
-        1.53,
+        1.661,
         1.581,
         1.42,
         0.767,
@@ -264,7 +264,7 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 6.59
+      "gridExportDay_kWh": 6.72
     }
   },
   "forecastFetchedAt": "2026-11-26T11:16:00Z",
