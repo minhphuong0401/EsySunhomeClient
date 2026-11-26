@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-11-26T01:37:47.395646Z",
+  "generatedAt": "2026-11-26T10:37:42.598587Z",
   "dryRun": true,
-  "vehicleSoc": 57.0,
-  "vehicleFetchedAt": "2026-11-26T01:37:47.280393Z",
-  "consumption50km_kWhPer100km": 12.5,
+  "vehicleSoc": 51.0,
+  "vehicleFetchedAt": "2026-11-26T10:37:42.461922Z",
+  "consumption50km_kWhPer100km": 12.8,
   "minimumSoc": 20,
   "tomorrow": {
-    "date": "2026-11-26",
-    "estimatedDistanceKm": 49.0,
-    "socAfterOvernightCharge": 57.0,
-    "socAfterDriving": 43.4
+    "date": "2026-11-27",
+    "estimatedDistanceKm": 39.0,
+    "socAfterOvernightCharge": 51.0,
+    "socAfterDriving": 39.9
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": true,
+    "windowClosed": false,
     "start": null,
     "end": null,
     "currentA": null,
@@ -23,18 +23,39 @@
   },
   "daytime": {
     "window": {
-      "start": "2026-11-26T00:00:00Z",
-      "end": "2026-11-26T06:00:00Z"
+      "start": "2026-11-27T00:00:00Z",
+      "end": "2026-11-27T06:00:00Z"
     },
-    "decision": "no_charge",
+    "decision": "charge",
     "source": "forecast solar surplus after house and home battery",
-    "slots": [],
-    "energyFromSolar_kWh": 0,
-    "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 57.0,
-    "estimatedNextDayKm": 39.0,
-    "requiredSocForNextThreeDays": 47.5,
+    "slots": [
+      {
+        "start": "2026-11-27T02:30:00Z",
+        "end": "2026-11-27T03:00:00Z",
+        "currentA": 9,
+        "energyFromSolar_kWh": 1.035
+      },
+      {
+        "start": "2026-11-27T03:00:00Z",
+        "end": "2026-11-27T03:30:00Z",
+        "currentA": 13,
+        "energyFromSolar_kWh": 1.495
+      },
+      {
+        "start": "2026-11-27T03:30:00Z",
+        "end": "2026-11-27T04:00:00Z",
+        "currentA": 12,
+        "energyFromSolar_kWh": 1.38
+      }
+    ],
+    "energyFromSolar_kWh": 3.91,
+    "opportunityCost_AUD": 0.16,
+    "socAfterCharge": 47.7,
+    "estimatedNextDayKm": 30,
+    "requiredSocForNextThreeDays": 45.6,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
-  "warnings": []
+  "warnings": [
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-25T18:01:14Z."
+  ]
 }
