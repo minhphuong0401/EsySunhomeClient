@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-25T23:37:40.038361Z",
+  "generatedAt": "2026-11-26T01:37:47.395646Z",
   "dryRun": true,
   "vehicleSoc": 57.0,
-  "vehicleFetchedAt": "2026-11-25T23:37:39.923503Z",
+  "vehicleFetchedAt": "2026-11-26T01:37:47.280393Z",
   "consumption50km_kWhPer100km": 12.5,
   "minimumSoc": 20,
   "tomorrow": {
