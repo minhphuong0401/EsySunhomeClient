@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-26T23:37:40.418008Z",
+  "generatedAt": "2026-11-27T01:37:32.506469Z",
   "dryRun": true,
-  "vehicleSoc": 54.0,
-  "vehicleFetchedAt": "2026-11-26T23:37:40.286988Z",
+  "vehicleSoc": 63.0,
+  "vehicleFetchedAt": "2026-11-27T01:37:32.413433Z",
   "consumption50km_kWhPer100km": 12.8,
   "minimumSoc": 20,
   "tomorrow": {
     "date": "2026-11-27",
     "estimatedDistanceKm": 37.8,
-    "socAfterOvernightCharge": 54.0,
-    "socAfterDriving": 43.2
+    "socAfterOvernightCharge": 63.0,
+    "socAfterDriving": 52.2
   },
   "overnight": {
     "decision": "no_charge",
@@ -26,17 +26,34 @@
       "start": "2026-11-27T00:00:00Z",
       "end": "2026-11-27T06:00:00Z"
     },
-    "decision": "no_charge",
+    "decision": "charge",
     "source": "forecast solar surplus after house and home battery",
-    "slots": [],
-    "energyFromSolar_kWh": 0,
-    "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 54.0,
+    "slots": [
+      {
+        "start": "2026-11-27T02:30:00Z",
+        "end": "2026-11-27T03:00:00Z",
+        "currentA": 7,
+        "energyFromSolar_kWh": 0.805
+      },
+      {
+        "start": "2026-11-27T04:00:00Z",
+        "end": "2026-11-27T04:30:00Z",
+        "currentA": 7,
+        "energyFromSolar_kWh": 0.805
+      },
+      {
+        "start": "2026-11-27T04:30:00Z",
+        "end": "2026-11-27T05:00:00Z",
+        "currentA": 6,
+        "energyFromSolar_kWh": 0.69
+      }
+    ],
+    "energyFromSolar_kWh": 2.3,
+    "opportunityCost_AUD": 0.09,
+    "socAfterCharge": 67.6,
     "estimatedNextDayKm": 30,
     "requiredSocForNextThreeDays": 45.6,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
-  "warnings": [
-    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-26T18:31:01Z."
-  ]
+  "warnings": []
 }
