@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-28T16:15:54Z",
+  "generatedAt": "2026-11-28T16:31:03Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
   "gridCharge_kWh": 0.0,
   "estimatedChargeCost_AUD": 0.0,
-  "batterySoc": 45.0,
+  "batterySoc": 44.0,
   "window": {
     "start": "2026-11-28T13:00:00Z",
     "end": "2026-11-28T19:00:00Z",
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 52.44,
       "loadAfterWindow_kWh": 20.83,
-      "projectedSocAtWindowEnd": 42.7,
+      "projectedSocAtWindowEnd": 41.9,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 40.2,
+      "minSocWithoutCharge": 39.4,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.291,
@@ -97,7 +97,7 @@
         0.13
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 21.23,
+      "gridExportAfterWindow_kWh": 21.02,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        1.412,
+        1.285,
         1.401,
         1.377,
         0.422,
-        2.003,
+        1.919,
         1.919,
         2.326,
         2.325,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 39.33,
       "loadAfterWindow_kWh": 37.24,
-      "projectedSocAtWindowEnd": 40.7,
+      "projectedSocAtWindowEnd": 40.1,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 31.9,
-      "peakSocWithoutCharge": 91.1,
+      "minSocWithoutCharge": 31.3,
+      "peakSocWithoutCharge": 90.6,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 0.07,
+      "gridExportAfterWindow_kWh": 0.04,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -241,7 +241,7 @@
         0.0,
         0.0,
         0.0,
-        0.073,
+        0.039,
         0.0,
         0.0,
         0.0,
@@ -263,15 +263,13 @@
       ]
     }
   },
-  "forecastFetchedAt": "2026-11-28T15:15:53Z",
+  "forecastFetchedAt": "2026-11-28T16:31:03Z",
   "loadHistoryDays": 29,
   "fullLoadHistoryDays": 28,
   "dailyLoad_kWh": {
     "expected": 22.15,
     "worstCase": 39.59
   },
-  "warnings": [
-    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-28T15:15:53Z."
-  ],
+  "warnings": [],
   "trigger": "scheduled"
 }
