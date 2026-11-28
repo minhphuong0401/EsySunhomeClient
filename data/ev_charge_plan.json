@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-28T10:37:41.929487Z",
+  "generatedAt": "2026-11-28T19:37:37.426327Z",
   "dryRun": true,
   "vehicleSoc": 98.0,
-  "vehicleFetchedAt": "2026-11-28T10:37:41.788374Z",
+  "vehicleFetchedAt": "2026-11-28T19:37:37.303457Z",
   "consumption50km_kWhPer100km": 12.9,
   "minimumSoc": 20,
   "tomorrow": {
@@ -13,7 +13,7 @@
   },
   "overnight": {
     "decision": "no_charge",
-    "windowClosed": false,
+    "windowClosed": true,
     "start": null,
     "end": null,
     "currentA": null,
@@ -31,12 +31,12 @@
     "slots": [],
     "energyFromSolar_kWh": 0,
     "opportunityCost_AUD": 0.0,
-    "socAfterCharge": 89.4,
+    "socAfterCharge": 98.0,
     "estimatedNextDayKm": 30,
     "requiredSocForNextThreeDays": 48.1,
     "remainingEnergyBeforeNextNight_kWh": 0
   },
   "warnings": [
-    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-27T18:45:57Z."
+    "PV forecast refresh failed (<urlopen error _ssl.c:1067: The handshake operation timed out>); using forecast fetched at 2026-11-28T18:31:04Z."
   ]
 }
