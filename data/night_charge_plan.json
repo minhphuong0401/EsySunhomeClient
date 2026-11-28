@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-28T16:01:17Z",
+  "generatedAt": "2026-11-28T16:15:54Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 52.44,
       "loadAfterWindow_kWh": 20.83,
-      "projectedSocAtWindowEnd": 42.4,
+      "projectedSocAtWindowEnd": 42.7,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 40.0,
+      "minSocWithoutCharge": 40.2,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.291,
@@ -97,7 +97,7 @@
         0.13
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 21.15,
+      "gridExportAfterWindow_kWh": 21.23,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        1.365,
+        1.412,
         1.401,
         1.377,
         0.422,
-        1.971,
+        2.003,
         1.919,
         2.326,
         2.325,
@@ -179,12 +179,12 @@
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 39.33,
       "loadAfterWindow_kWh": 37.24,
-      "projectedSocAtWindowEnd": 40.3,
+      "projectedSocAtWindowEnd": 40.7,
       "requiredSocAtWindowEnd": 29,
-      "minSocWithoutCharge": 31.5,
-      "peakSocWithoutCharge": 90.8,
+      "minSocWithoutCharge": 31.9,
+      "peakSocWithoutCharge": 91.1,
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 0.05,
+      "gridExportAfterWindow_kWh": 0.07,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -241,7 +241,7 @@
         0.0,
         0.0,
         0.0,
-        0.05,
+        0.073,
         0.0,
         0.0,
         0.0,
@@ -270,6 +270,8 @@
     "expected": 22.15,
     "worstCase": 39.59
   },
-  "warnings": [],
+  "warnings": [
+    "PV forecast refresh failed (HTTP Error 429: Too Many Requests); using forecast fetched at 2026-11-28T15:15:53Z."
+  ],
   "trigger": "scheduled"
 }
