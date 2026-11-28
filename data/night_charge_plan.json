@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-28T11:31:02Z",
+  "generatedAt": "2026-11-28T11:45:58Z",
   "dryRun": true,
   "decision": "no_charge",
   "targetSoc": null,
@@ -16,9 +16,9 @@
       "minSocTarget": 25,
       "pvAfterWindow_kWh": 51.21,
       "loadAfterWindow_kWh": 20.82,
-      "projectedSocAtWindowEnd": 43.8,
+      "projectedSocAtWindowEnd": 44.1,
       "requiredSocAtWindowEnd": 28,
-      "minSocWithoutCharge": 41.2,
+      "minSocWithoutCharge": 41.5,
       "peakSocWithoutCharge": 100.0,
       "pvSlotsAfterWindow_kWh": [
         0.277,
@@ -97,7 +97,7 @@
         0.132
       ],
       "gridImportAfterWindow_kWh": 0.0,
-      "gridExportAfterWindow_kWh": 20.37,
+      "gridExportAfterWindow_kWh": 20.45,
       "gridImportSlotsAfterWindow_kWh": [
         0.0,
         0.0,
@@ -146,11 +146,11 @@
         0.0,
         0.0,
         0.0,
-        0.766,
+        0.811,
         1.319,
         1.295,
         0.0,
-        0.803,
+        0.837,
         2.459,
         2.865,
         2.238,
@@ -175,16 +175,16 @@
         0.0
       ],
       "gridImportDay_kWh": 0.0,
-      "gridExportDay_kWh": 20.37
+      "gridExportDay_kWh": 20.45
     },
     "worstCase": {
       "minSocTarget": 20,
       "pvAfterWindow_kWh": 38.41,
       "loadAfterWindow_kWh": 37.22,
-      "projectedSocAtWindowEnd": 38.0,
+      "projectedSocAtWindowEnd": 38.6,
       "requiredSocAtWindowEnd": 30,
-      "minSocWithoutCharge": 28.6,
-      "peakSocWithoutCharge": 85.1,
+      "minSocWithoutCharge": 29.2,
+      "peakSocWithoutCharge": 85.7,
       "gridImportAfterWindow_kWh": 0.0,
       "gridExportAfterWindow_kWh": 0.0,
       "gridImportSlotsAfterWindow_kWh": [
